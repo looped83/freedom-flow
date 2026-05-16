@@ -36,6 +36,17 @@ export function calculateDayProgress(now: Date): number {
   return Math.min(secondsElapsed / 86_400, 1);
 }
 
+export function calculateWeekProgress(now: Date): number {
+  const dayOfWeek = now.getDay();
+  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  return Math.min((daysSinceMonday + calculateDayProgress(now)) / 7, 1);
+}
+
+export function calculateMonthProgress(now: Date): number {
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  return Math.min((now.getDate() - 1 + calculateDayProgress(now)) / daysInMonth, 1);
+}
+
 export function calculateEarnedThisWeekSoFar(monthlyDividends: number, now: Date): number {
   const daily = calculateDividendRatePerDay(monthlyDividends);
   const dayOfWeek = now.getDay(); // 0 = Sun

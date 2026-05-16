@@ -10,6 +10,8 @@ import {
   calculateEarnedThisWeekSoFar,
   calculateEarnedThisMonthSoFar,
   calculateDayProgress,
+  calculateWeekProgress,
+  calculateMonthProgress,
   formatCurrencyForSmallAmounts,
 } from '../../utils/liveFlowCalculations';
 import { formatEuro } from '../../utils/formatting';
@@ -27,10 +29,12 @@ interface RateCard {
 }
 
 const RATE_CARDS: RateCard[] = [
-  { id: 'minute', label: 'Pro Minute', getValue: (m) => calculateDividendRatePerMinute(m), small: true  },
-  { id: 'hour',   label: 'Pro Stunde', getValue: (m) => calculateDividendRatePerHour(m),   small: true  },
-  { id: 'day',    label: 'Pro Tag',    getValue: (m) => calculateDividendRatePerDay(m),    small: false },
-  { id: 'week',   label: 'Pro Woche',  getValue: (m) => calculateDividendRatePerWeek(m),   small: false },
+  { id: 'minute', label: 'Minute', getValue: (m) => calculateDividendRatePerMinute(m), small: true  },
+  { id: 'hour',   label: 'Stunde', getValue: (m) => calculateDividendRatePerHour(m),   small: true  },
+  { id: 'day',    label: 'Tag',    getValue: (m) => calculateDividendRatePerDay(m),    small: false },
+  { id: 'week',   label: 'Woche',  getValue: (m) => calculateDividendRatePerWeek(m),   small: false },
+  { id: 'month',  label: 'Monat',  getValue: (m) => m,                                 small: false },
+  { id: 'year',   label: 'Jahr',   getValue: (m) => calculateAnnualDividends(m),       small: false },
 ];
 
 const LIVEFLOW_ICON = (
@@ -57,13 +61,48 @@ function mondayLabel(now: Date): string {
   return monday.toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
 }
 
-function monthLabel(now: Date): string {
+function monthStartLabel(now: Date): string {
   return `1. ${now.toLocaleDateString('de-DE', { month: 'long' })}`;
+}
+
+interface MiniHeroProps {
+  label: string;
+  value: number;
+  sublabel: string;
+  progressPct: number;
+  progressAriaLabel: string;
+}
+
+function MiniHeroTile({ label, value, sublabel, progressPct, progressAriaLabel }: MiniHeroProps) {
+  return (
+    <div className="bg-accent-muted border border-accent/20 rounded-2xl p-4">
+      <p className="text-xs font-semibold text-accent uppercase tracking-wider mb-2">{label}</p>
+      <p className="text-2xl font-bold text-accent tabular-nums leading-none" aria-live="off">
+        {formatEuro(value)}
+      </p>
+      <p className="text-white/60 text-xs mt-1.5">{sublabel}</p>
+      <div className="mt-3 space-y-1">
+        <div
+          role="progressbar"
+          aria-label={progressAriaLabel}
+          aria-valuenow={progressPct}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          className="h-1 bg-white/10 rounded-full overflow-hidden"
+        >
+          <div
+            className="h-full bg-accent rounded-full motion-safe:transition-[width] motion-safe:duration-[2000ms] motion-safe:ease-linear"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+        <p className="text-right text-[10px] text-white/40 tabular-nums">{progressPct} %</p>
+      </div>
+    </div>
+  );
 }
 
 export function LiveFlow({ portfolio }: LiveFlowProps) {
   const monthly = portfolio.monthlyIncome;
-  const annual  = calculateAnnualDividends(monthly);
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -71,24 +110,27 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
     return () => clearInterval(id);
   }, []);
 
-  const earnedToday = calculateEarnedTodaySoFar(monthly, now);
-  const earnedWeek  = calculateEarnedThisWeekSoFar(monthly, now);
-  const earnedMonth = calculateEarnedThisMonthSoFar(monthly, now);
-  const dayProgress = calculateDayProgress(now);
-  const progressPct = Math.round(dayProgress * 100);
+  const earnedToday   = calculateEarnedTodaySoFar(monthly, now);
+  const earnedWeek    = calculateEarnedThisWeekSoFar(monthly, now);
+  const earnedMonth   = calculateEarnedThisMonthSoFar(monthly, now);
+  const dayProgress   = calculateDayProgress(now);
+  const weekProgress  = calculateWeekProgress(now);
+  const monthProgress = calculateMonthProgress(now);
+  const dayPct        = Math.round(dayProgress * 100);
+  const weekPct       = Math.round(weekProgress * 100);
+  const monthPct      = Math.round(monthProgress * 100);
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
 
       <PageHeader icon={LIVEFLOW_ICON} title="Live Flow" right={LIVE_BADGE} />
 
-      {/* ── Hero: Heute verdient ── */}
+      {/* ── Hero: Heute ── */}
       <section
         aria-labelledby="lf-hero-heading"
         className="rounded-2xl p-6 border border-accent/20 bg-accent-muted"
       >
         <p className="text-xs font-semibold text-accent uppercase tracking-wider mb-4">Heute</p>
-
         <p
           id="lf-hero-heading"
           className="text-5xl font-bold text-accent tabular-nums leading-none"
@@ -101,50 +143,54 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
         <p className="text-white/50 text-xs mt-0.5">
           Basierend auf {formatEuro(monthly)} monatlichen Dividenden
         </p>
-
-        {/* Day progress bar */}
         <div className="mt-5 space-y-1.5">
           <div className="flex justify-between items-baseline text-xs text-white/60">
             <span>Tagesfortschritt</span>
-            <span>{progressPct}&thinsp;%</span>
+            <span>{dayPct}&thinsp;%</span>
           </div>
           <div
             role="progressbar"
-            aria-label={`Tagesfortschritt: ${progressPct} von 100 Prozent`}
-            aria-valuenow={progressPct}
+            aria-label={`Tagesfortschritt: ${dayPct} von 100 Prozent`}
+            aria-valuenow={dayPct}
             aria-valuemin={0}
             aria-valuemax={100}
             className="h-1.5 bg-white/10 rounded-full overflow-hidden"
           >
             <div
               className="h-full bg-accent rounded-full motion-safe:transition-[width] motion-safe:duration-[2000ms] motion-safe:ease-linear"
-              style={{ width: `${progressPct}%` }}
+              style={{ width: `${dayPct}%` }}
             />
           </div>
         </div>
       </section>
 
-      {/* ── Pro Monat / Pro Jahr – static rates ── */}
+      {/* ── Mini-hero tiles: Woche · Monat ── */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-surface-1 rounded-2xl p-5 border border-white/5">
-          <p className="text-sm font-semibold text-white mb-2">Pro Monat</p>
-          <p className="text-accent font-bold text-2xl tabular-nums">{formatEuro(monthly)}</p>
-        </div>
-        <div className="bg-surface-1 rounded-2xl p-5 border border-white/5">
-          <p className="text-sm font-semibold text-white mb-2">Pro Jahr</p>
-          <p className="text-accent font-bold text-2xl tabular-nums">{formatEuro(annual)}</p>
-        </div>
+        <MiniHeroTile
+          label="Diese Woche"
+          value={earnedWeek}
+          sublabel={`Seit ${mondayLabel(now)}`}
+          progressPct={weekPct}
+          progressAriaLabel={`Wochenverlauf: ${weekPct} %`}
+        />
+        <MiniHeroTile
+          label="Dieser Monat"
+          value={earnedMonth}
+          sublabel={`Seit ${monthStartLabel(now)}`}
+          progressPct={monthPct}
+          progressAriaLabel={`Monatsverlauf: ${monthPct} %`}
+        />
       </div>
 
-      {/* ── Cashflow-Raten ── */}
-      <section aria-labelledby="lf-rates-heading">
+      {/* ── Cashflow ── */}
+      <section aria-labelledby="lf-cashflow-heading">
         <h2
-          id="lf-rates-heading"
+          id="lf-cashflow-heading"
           className="text-sm font-semibold text-white mb-3"
         >
-          Cashflow-Raten
+          Cashflow
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {RATE_CARDS.map(({ id, label, getValue, small }) => (
             <div key={id} className="bg-surface-1 rounded-2xl p-4 border border-white/5">
               <p className="text-xs text-white/60 mb-2">{label}</p>
@@ -156,27 +202,6 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
               </p>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* ── Diese Woche / Dieser Monat – running totals ── */}
-      <section aria-label="Laufende Woche und laufender Monat">
-        <h2 className="text-sm font-semibold text-white mb-3">Bisher verdient</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-surface-1 rounded-2xl p-4 border border-white/5">
-            <p className="text-xs text-white/60 mb-2">Diese Woche</p>
-            <p className="text-accent font-bold text-base tabular-nums" aria-live="off">
-              {formatEuro(earnedWeek)}
-            </p>
-            <p className="text-white/50 text-xs mt-1.5">Seit {mondayLabel(now)}</p>
-          </div>
-          <div className="bg-surface-1 rounded-2xl p-4 border border-white/5">
-            <p className="text-xs text-white/60 mb-2">Dieser Monat</p>
-            <p className="text-accent font-bold text-base tabular-nums" aria-live="off">
-              {formatEuro(earnedMonth)}
-            </p>
-            <p className="text-white/50 text-xs mt-1.5">Seit {monthLabel(now)}</p>
-          </div>
         </div>
       </section>
 
