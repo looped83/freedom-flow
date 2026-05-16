@@ -41,7 +41,7 @@ export function missingForFreedom(monthly: number, total: number): number {
   return Math.max(0, total - monthly);
 }
 
-export const INCOME_THRESHOLDS = [100, 250, 500, 1_000, 2_000];
+export const INCOME_THRESHOLDS = [100, 250, 500, 1_000, 1_500, 2_000];
 export const FREEDOM_THRESHOLDS = [10, 25, 50, 75, 100];
 export const FREE_DAYS_THRESHOLDS = [7, 30, 90, 180, 365]; // days/year
 
@@ -202,22 +202,21 @@ export function freedomYear(portfolio: Portfolio, goals: Goal[]): number | null 
 }
 
 /**
- * Build year-by-year goal unlock timeline.
- * Returns only years that have newly unlocked goals OR are the freedom year.
- * Stops early if all goals covered.
+ * Build year-by-year goal unlock timeline including retrospective past entries.
+ * Returns chronological entries (past → current → future).
+ * The display layer reverses this for "future at top" rendering.
  */
 export function buildFreedomTimeline(goals: Goal[], portfolio: Portfolio): TimelineEntry[] {
   const sortedGoals = byAmountAsc(goals);
-  const entries: TimelineEntry[] = [];
-  const alreadyUnlocked = new Set<string>();
+  const g = portfolio.dividendGrowth / 100;
 
   function getUnlockedIds(monthly: number): Set<string> {
     const unlocked = new Set<string>();
     let rem = monthly;
-    for (const g of sortedGoals) {
-      if (rem >= g.monthlyAmount) {
-        unlocked.add(g.id);
-        rem -= g.monthlyAmount;
+    for (const goal of sortedGoals) {
+      if (rem >= goal.monthlyAmount) {
+        unlocked.add(goal.id);
+        rem -= goal.monthlyAmount;
       } else {
         break;
       }
@@ -225,51 +224,75 @@ export function buildFreedomTimeline(goals: Goal[], portfolio: Portfolio): Timel
     return unlocked;
   }
 
-  // Year 0: currently achieved
-  const year0Monthly = portfolio.monthlyIncome;
-  const year0Unlocked = getUnlockedIds(year0Monthly);
-  const year0New = sortedGoals.filter((g) => year0Unlocked.has(g.id));
-  const isFreedomYear0 = year0Unlocked.size === goals.length;
-
-  if (year0New.length > 0 || isFreedomYear0) {
-    entries.push({
-      year: CURRENT_YEAR,
-      projectedMonthly: year0Monthly,
-      newGoals: year0New,
-      isCurrentYear: true,
-      isFreedomYear: isFreedomYear0,
-    });
+  // Estimate income Y years in the past by reversing the growth model
+  function pastMonthly(yearsAgo: number): number {
+    return g > 0 ? portfolio.monthlyIncome / Math.pow(1 + g, yearsAgo) : portfolio.monthlyIncome;
   }
 
-  year0New.forEach((g) => alreadyUnlocked.add(g.id));
+  // --- Retrospective: up to 5 years back ---
+  const pastEntries: TimelineEntry[] = [];
+  const MAX_PAST = 5;
+  for (let y = MAX_PAST; y >= 1; y--) {
+    const monthly = pastMonthly(y);
+    const prevMonthly = pastMonthly(y + 1);
+    const yearUnlocked = getUnlockedIds(monthly);
+    const prevUnlocked = getUnlockedIds(prevMonthly);
+    const newGoals = sortedGoals.filter((goal) => yearUnlocked.has(goal.id) && !prevUnlocked.has(goal.id));
+    const isFreedomY = yearUnlocked.size === goals.length;
+    if (newGoals.length > 0 || isFreedomY) {
+      pastEntries.push({
+        year: CURRENT_YEAR - y,
+        projectedMonthly: monthly,
+        newGoals,
+        isCurrentYear: false,
+        isFreedomYear: isFreedomY,
+        isPastYear: true,
+      });
+    }
+  }
 
-  if (isFreedomYear0) return entries;
+  // --- Current year ---
+  const year0Monthly = portfolio.monthlyIncome;
+  const year0Unlocked = getUnlockedIds(year0Monthly);
+  // For current year: show goals newly covered vs one step back in past
+  const prevUnlockedForYear0 = getUnlockedIds(pastMonthly(1));
+  const year0New = sortedGoals.filter((goal) => year0Unlocked.has(goal.id) && !prevUnlockedForYear0.has(goal.id));
+  const isFreedomYear0 = year0Unlocked.size === goals.length;
 
-  // Years 1..horizonYears
+  const currentEntry: TimelineEntry | null =
+    year0New.length > 0 || isFreedomYear0
+      ? { year: CURRENT_YEAR, projectedMonthly: year0Monthly, newGoals: year0New, isCurrentYear: true, isFreedomYear: isFreedomYear0, isPastYear: false }
+      : null;
+
+  if (isFreedomYear0) return [...pastEntries, ...(currentEntry ? [currentEntry] : [])];
+
+  // Track what's covered now to find future NEW unlocks
+  const alreadyUnlocked = new Set<string>(year0Unlocked);
+
+  // --- Future years ---
+  const futureEntries: TimelineEntry[] = [];
   for (let y = 1; y <= portfolio.horizonYears; y++) {
     const projMonthly = projectMonthlyDividendsAtYear(portfolio, y);
     const yearUnlocked = getUnlockedIds(projMonthly);
-    const yearNew = sortedGoals.filter(
-      (g) => yearUnlocked.has(g.id) && !alreadyUnlocked.has(g.id),
-    );
+    const yearNew = sortedGoals.filter((goal) => yearUnlocked.has(goal.id) && !alreadyUnlocked.has(goal.id));
     const isFreedomY = yearUnlocked.size === goals.length;
 
     if (yearNew.length > 0 || isFreedomY) {
-      entries.push({
+      futureEntries.push({
         year: CURRENT_YEAR + y,
         projectedMonthly: projMonthly,
         newGoals: yearNew,
         isCurrentYear: false,
         isFreedomYear: isFreedomY,
+        isPastYear: false,
       });
     }
 
-    yearNew.forEach((g) => alreadyUnlocked.add(g.id));
-
+    yearNew.forEach((goal) => alreadyUnlocked.add(goal.id));
     if (isFreedomY) break;
   }
 
-  return entries;
+  return [...pastEntries, ...(currentEntry ? [currentEntry] : []), ...futureEntries];
 }
 
 /**
@@ -286,7 +309,7 @@ export function buildLifeUnlocks(
   const freeDaysPerYear = freeDaysPerMonthVal * 12;
 
   // --- Income unlocks ---
-  const incomeEmojis = ['🌱', '🌿', '🌳', '🏔️', '🌋'];
+  const incomeEmojis = ['🌱', '🌿', '🌳', '🏔️', '🌋', '💎'];
   INCOME_THRESHOLDS.forEach((threshold, i) => {
     const achieved = monthly >= threshold;
     const progressPct = Math.min(100, (monthly / threshold) * 100);

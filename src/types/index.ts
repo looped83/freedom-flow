@@ -44,8 +44,9 @@ export interface TimelineEntry {
   year: number;
   projectedMonthly: number;
   newGoals: Goal[];          // goals newly unlocked this year
-  isCurrentYear: boolean;    // year 0 = already achieved today
-  isFreedomYear: boolean;    // all goals covered this year
+  isCurrentYear: boolean;
+  isFreedomYear: boolean;
+  isPastYear: boolean;       // retrospective entry (estimated from growth model)
 }
 
 export interface GoalResult extends Goal {

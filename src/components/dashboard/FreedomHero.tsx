@@ -1,30 +1,27 @@
-import { useEffect, useRef } from 'react';
-import { formatEuro } from '../../utils/formatting';
+import { useEffect, useRef, useState } from 'react';
+import { formatEuro, parseGerman } from '../../utils/formatting';
 import { freedomPercent, missingForFreedom } from '../../utils/calculations';
 
 interface FreedomHeroProps {
   monthly: number;
   total: number;
-}
-
-function motivationalText(pct: number): string {
-  if (pct >= 100) return 'Dein Portfolio deckt dein gesamtes Leben. Vollständige finanzielle Freiheit.';
-  if (pct >= 75) return `Dein Portfolio übernimmt ${pct.toFixed(1)} % deines Lebens.`;
-  if (pct >= 50) return `Mehr als die Hälfte deines Lebens gehört dir – ${pct.toFixed(1)} % finanziell frei.`;
-  if (pct >= 25) return `Du hast bereits ${pct.toFixed(1)} % deines Lebens finanziell zurückgekauft.`;
-  return 'Dein Portfolio übernimmt Stück für Stück dein Leben.';
+  onIncomeChange: (v: number) => void;
 }
 
 const R = 80;
 const CIRCUMFERENCE = 2 * Math.PI * R;
 const heroId = 'freedom-hero-heading';
 
-export function FreedomHero({ monthly, total }: FreedomHeroProps) {
+export function FreedomHero({ monthly, total, onIncomeChange }: FreedomHeroProps) {
   const pct = freedomPercent(monthly, total);
   const missing = missingForFreedom(monthly, total);
   const dashOffset = CIRCUMFERENCE * (1 - Math.min(pct, 100) / 100);
 
   const circleRef = useRef<SVGCircleElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [editing, setEditing] = useState(false);
+  const [raw, setRaw] = useState('');
+
   const reducedMotion =
     typeof window !== 'undefined' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -36,7 +33,6 @@ export function FreedomHero({ monthly, total }: FreedomHeroProps) {
       el.style.strokeDashoffset = String(dashOffset);
       return;
     }
-    // Animate from full offset to current
     el.style.transition = 'none';
     el.style.strokeDashoffset = String(CIRCUMFERENCE);
     requestAnimationFrame(() => {
@@ -47,15 +43,29 @@ export function FreedomHero({ monthly, total }: FreedomHeroProps) {
     });
   }, [dashOffset, reducedMotion]);
 
+  function startEdit() {
+    setRaw(String(Math.round(monthly)));
+    setEditing(true);
+    requestAnimationFrame(() => inputRef.current?.select());
+  }
+
+  function commit(value: string) {
+    const parsed = parseGerman(value);
+    if (!isNaN(parsed) && parsed >= 0) onIncomeChange(parsed);
+    setEditing(false);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') e.currentTarget.blur();
+    else if (e.key === 'Escape') setEditing(false);
+  }
+
   return (
-    <section
-      className="bg-surface-1 rounded-2xl p-5"
-      aria-labelledby={heroId}
-    >
+    <section className="bg-surface-1 rounded-2xl p-5" aria-labelledby={heroId}>
       <h2 id={heroId} className="sr-only">Finanzielle Freiheit</h2>
 
-      {/* SVG Ring */}
       <div className="flex flex-col items-center gap-4">
+        {/* SVG Ring */}
         <svg
           viewBox="0 0 200 200"
           width="200"
@@ -63,74 +73,78 @@ export function FreedomHero({ monthly, total }: FreedomHeroProps) {
           role="img"
           aria-label={`${pct.toFixed(1)} % finanziell frei`}
         >
-          {/* Track */}
-          <circle
-            cx="100"
-            cy="100"
-            r={R}
-            fill="none"
-            stroke="rgba(255,255,255,0.08)"
-            strokeWidth="14"
-          />
-          {/* Progress */}
+          <circle cx="100" cy="100" r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="14" />
           <circle
             ref={circleRef}
-            cx="100"
-            cy="100"
-            r={R}
-            fill="none"
-            stroke="#4ade80"
-            strokeWidth="14"
+            cx="100" cy="100" r={R}
+            fill="none" stroke="#4ade80" strokeWidth="14"
             strokeLinecap="round"
             strokeDasharray={CIRCUMFERENCE}
             strokeDashoffset={CIRCUMFERENCE}
             transform="rotate(-90 100 100)"
           />
-          {/* Center text */}
-          <text
-            x="100"
-            y="93"
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fill="white"
-            fontSize="28"
-            fontWeight="700"
-            fontFamily="inherit"
-          >
+          <text x="100" y="93" textAnchor="middle" dominantBaseline="middle"
+            fill="white" fontSize="28" fontWeight="700" fontFamily="inherit">
             {pct.toFixed(1)} %
           </text>
-          <text
-            x="100"
-            y="117"
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fill="rgba(255,255,255,0.6)"
-            fontSize="12"
-            fontFamily="inherit"
-          >
+          <text x="100" y="117" textAnchor="middle" dominantBaseline="middle"
+            fill="rgba(255,255,255,0.6)" fontSize="12" fontFamily="inherit">
             finanziell frei
           </text>
         </svg>
 
-        {/* Motivational copy */}
-        <p className="text-sm text-white/75 text-center max-w-xs">
-          {motivationalText(pct)}
-        </p>
-
-        {/* 3-column stats */}
-        <div className="grid grid-cols-3 gap-3 w-full mt-1">
+        {/* Stats row */}
+        <div className="grid grid-cols-3 gap-3 w-full">
+          {/* Dividenden – tappable to edit */}
           <div className="text-center">
             <p className="text-xs text-white/55 mb-1">Dividenden</p>
-            <p className="text-accent font-bold text-sm tabular-nums">{formatEuro(monthly)}</p>
+            {editing ? (
+              <input
+                ref={inputRef}
+                type="text"
+                inputMode="decimal"
+                value={raw}
+                autoFocus
+                onChange={(e) => setRaw(e.target.value)}
+                onBlur={(e) => commit(e.target.value)}
+                onKeyDown={handleKeyDown}
+                aria-label="Monatliche Dividenden eingeben"
+                className="text-sm font-bold text-accent text-center bg-transparent border-b border-accent focus:outline-none w-full tabular-nums"
+              />
+            ) : (
+              <button
+                onClick={startEdit}
+                aria-label={`Dividenden: ${formatEuro(monthly)}, tippen zum Bearbeiten`}
+                className="text-accent font-bold text-sm tabular-nums underline decoration-dotted underline-offset-2 hover:opacity-75 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
+              >
+                {formatEuro(monthly)}
+              </button>
+            )}
           </div>
+
           <div className="text-center">
-            <p className="text-xs text-white/55 mb-1">Kosten</p>
+            <p className="text-xs text-white/55 mb-1">Monatliche Kosten</p>
             <p className="text-white font-bold text-sm tabular-nums">{formatEuro(total)}</p>
           </div>
+
           <div className="text-center">
             <p className="text-xs text-white/55 mb-1">Noch fehlt</p>
             <p className="text-white/65 font-bold text-sm tabular-nums">{formatEuro(missing)}</p>
           </div>
+        </div>
+
+        {/* Income steppers */}
+        <div className="flex justify-center gap-2 w-full">
+          {([25, 50, 100] as const).map((delta) => (
+            <button
+              key={delta}
+              onClick={() => onIncomeChange(monthly + delta)}
+              aria-label={`+${delta} € hinzufügen`}
+              className="flex-1 text-xs bg-surface-2 hover:bg-white/10 rounded-lg py-1.5 text-white/60 hover:text-white/90 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent font-medium"
+            >
+              +{delta}
+            </button>
+          ))}
         </div>
       </div>
     </section>
