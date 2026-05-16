@@ -44,9 +44,9 @@ const LIVEFLOW_ICON = (
 );
 
 const LIVE_BADGE = (
-  <div className="flex items-center gap-1.5" aria-hidden="true">
+  <div className="flex items-center gap-1.5 bg-accent/15 border border-accent/35 rounded-full px-2.5 py-1" aria-hidden="true">
     <span className="w-1.5 h-1.5 rounded-full bg-accent motion-safe:animate-pulse" />
-    <span className="text-xs text-accent/70 font-medium uppercase tracking-wide">Live</span>
+    <span className="text-xs text-accent font-bold uppercase tracking-wide">Live</span>
   </div>
 );
 
@@ -65,7 +65,7 @@ interface MiniHeroProps {
 function MiniHeroTile({ label, value, progressPct, progressAriaLabel }: MiniHeroProps) {
   return (
     <div className="bg-accent-muted border border-accent/20 rounded-2xl p-4">
-      <p className="text-xs font-semibold text-accent uppercase tracking-wider mb-2">{label}</p>
+      <p className="text-sm font-bold text-white mb-2">{label}</p>
       <p className="text-2xl font-bold text-accent tabular-nums leading-none" aria-live="off">
         {formatEuro(value)}
       </p>
@@ -117,7 +117,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
         aria-labelledby="lf-hero-heading"
         className="rounded-2xl p-6 border border-accent/20 bg-accent-muted"
       >
-        <p className="text-xs font-semibold text-accent uppercase tracking-wider mb-2">Heute</p>
+        <p className="text-sm font-bold text-white mb-2">Heute</p>
         <p
           id="lf-hero-heading"
           className="text-5xl font-bold text-accent tabular-nums leading-none"
@@ -126,7 +126,6 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
         >
           {formatEuro(earnedToday)}
         </p>
-        <p className="text-white/70 text-sm mt-2">Seit Tagesbeginn verdient</p>
         <div className="mt-4 space-y-1.5">
           <div
             role="progressbar"

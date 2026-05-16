@@ -34,8 +34,8 @@ const ICONS: Record<Tab, ReactNode> = {
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'dashboard', label: 'Dashboard' },
-  { id: 'timeline',  label: 'Timeline'  },
   { id: 'liveflow',  label: 'Live Flow' },
+  { id: 'timeline',  label: 'Timeline'  },
   { id: 'setup',     label: 'Setup'     },
 ];
 
