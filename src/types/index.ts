@@ -9,6 +9,7 @@ export type GoalCategory =
   | 'Sport'
   | 'Körperpflege'
   | 'Kleidung'
+  | 'Elektronik'
   | 'Haustiere'
   | 'Freizeit'
   | 'Gaming'

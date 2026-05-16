@@ -66,6 +66,12 @@ const PATHS: Record<GoalCategory, IconPath> = {
   Kleidung: (
     <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/>
   ),
+  Elektronik: (
+    <>
+      <rect x="2" y="3" width="20" height="13" rx="2"/>
+      <path d="M8 21h8M12 16v5"/>
+    </>
+  ),
   Haustiere: (
     <>
       <circle cx="9" cy="8" r="2"/>
