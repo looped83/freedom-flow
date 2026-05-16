@@ -5,15 +5,17 @@ import type {
   GoalStatus,
   Portfolio,
   ProjectionYear,
+  TimelineEntry,
+  Unlock,
 } from '../types';
 import { CATEGORY_ORDER, CURRENT_YEAR } from '../constants/defaultData';
 
 export function annualDividends(portfolio: Portfolio): number {
-  return portfolio.value * (portfolio.dividendYield / 100);
+  return portfolio.monthlyIncome * 12;
 }
 
 export function monthlyDividends(portfolio: Portfolio): number {
-  return annualDividends(portfolio) / 12;
+  return portfolio.monthlyIncome;
 }
 
 export function totalMonthlyCosts(goals: Goal[]): number {
@@ -29,6 +31,19 @@ export function freeDaysPerMonth(monthly: number, total: number): number {
   if (total <= 0) return 0;
   return Math.min((monthly / total) * 30, 30);
 }
+
+export function freedomPercent(monthly: number, total: number): number {
+  if (total <= 0) return 100;
+  return Math.min(100, (monthly / total) * 100);
+}
+
+export function missingForFreedom(monthly: number, total: number): number {
+  return Math.max(0, total - monthly);
+}
+
+export const INCOME_THRESHOLDS = [100, 250, 500, 1_000, 2_000];
+export const FREEDOM_THRESHOLDS = [10, 25, 50, 75, 100];
+export const FREE_DAYS_THRESHOLDS = [7, 30, 90, 180, 365]; // days/year
 
 function goalStatus(pct: number): GoalStatus {
   if (pct >= 100) return 'covered';
@@ -46,7 +61,7 @@ function byAmountAsc(goals: Goal[]): Goal[] {
 // new savings contribute at the current dividend yield.
 function projectMonthlyDividendsAtYear(portfolio: Portfolio, years: number): number {
   const g = portfolio.dividendGrowth / 100;
-  const baseMonthly = monthlyDividends(portfolio);
+  const baseMonthly = portfolio.monthlyIncome;
   const annualSavingsDividends = portfolio.monthlySavings * 12 * (portfolio.dividendYield / 100);
 
   const existingFV = baseMonthly * Math.pow(1 + g, years);
@@ -184,4 +199,202 @@ export function freedomYear(portfolio: Portfolio, goals: Goal[]): number | null 
     if (proj >= total) return CURRENT_YEAR + y;
   }
   return null;
+}
+
+/**
+ * Build year-by-year goal unlock timeline.
+ * Returns only years that have newly unlocked goals OR are the freedom year.
+ * Stops early if all goals covered.
+ */
+export function buildFreedomTimeline(goals: Goal[], portfolio: Portfolio): TimelineEntry[] {
+  const sortedGoals = byAmountAsc(goals);
+  const entries: TimelineEntry[] = [];
+  const alreadyUnlocked = new Set<string>();
+
+  function getUnlockedIds(monthly: number): Set<string> {
+    const unlocked = new Set<string>();
+    let rem = monthly;
+    for (const g of sortedGoals) {
+      if (rem >= g.monthlyAmount) {
+        unlocked.add(g.id);
+        rem -= g.monthlyAmount;
+      } else {
+        break;
+      }
+    }
+    return unlocked;
+  }
+
+  // Year 0: currently achieved
+  const year0Monthly = portfolio.monthlyIncome;
+  const year0Unlocked = getUnlockedIds(year0Monthly);
+  const year0New = sortedGoals.filter((g) => year0Unlocked.has(g.id));
+  const isFreedomYear0 = year0Unlocked.size === goals.length;
+
+  if (year0New.length > 0 || isFreedomYear0) {
+    entries.push({
+      year: CURRENT_YEAR,
+      projectedMonthly: year0Monthly,
+      newGoals: year0New,
+      isCurrentYear: true,
+      isFreedomYear: isFreedomYear0,
+    });
+  }
+
+  year0New.forEach((g) => alreadyUnlocked.add(g.id));
+
+  if (isFreedomYear0) return entries;
+
+  // Years 1..horizonYears
+  for (let y = 1; y <= portfolio.horizonYears; y++) {
+    const projMonthly = projectMonthlyDividendsAtYear(portfolio, y);
+    const yearUnlocked = getUnlockedIds(projMonthly);
+    const yearNew = sortedGoals.filter(
+      (g) => yearUnlocked.has(g.id) && !alreadyUnlocked.has(g.id),
+    );
+    const isFreedomY = yearUnlocked.size === goals.length;
+
+    if (yearNew.length > 0 || isFreedomY) {
+      entries.push({
+        year: CURRENT_YEAR + y,
+        projectedMonthly: projMonthly,
+        newGoals: yearNew,
+        isCurrentYear: false,
+        isFreedomYear: isFreedomY,
+      });
+    }
+
+    yearNew.forEach((g) => alreadyUnlocked.add(g.id));
+
+    if (isFreedomY) break;
+  }
+
+  return entries;
+}
+
+/**
+ * Build a list of life unlock cards/badges for the LifeUnlocks component.
+ */
+export function buildLifeUnlocks(
+  goalResults: GoalResult[],
+  monthly: number,
+  total: number,
+  freeDaysPerMonthVal: number,
+): Unlock[] {
+  const unlocks: Unlock[] = [];
+  const fPct = freedomPercent(monthly, total);
+  const freeDaysPerYear = freeDaysPerMonthVal * 12;
+
+  // --- Income unlocks ---
+  const incomeEmojis = ['🌱', '🌿', '🌳', '🏔️', '🌋'];
+  INCOME_THRESHOLDS.forEach((threshold, i) => {
+    const achieved = monthly >= threshold;
+    const progressPct = Math.min(100, (monthly / threshold) * 100);
+    const missingMonthly = Math.max(0, threshold - monthly);
+    unlocks.push({
+      id: `income-${threshold}`,
+      type: 'income',
+      title: `${threshold.toLocaleString('de-DE')} € / Monat`,
+      subtitle: achieved ? 'Erreicht!' : `Noch ${(threshold - monthly).toFixed(0)} € / Monat`,
+      emoji: incomeEmojis[i],
+      achieved,
+      progressPct,
+      missingMonthly,
+    });
+  });
+
+  // --- Freedom percent unlocks ---
+  const freedomEmojis = ['✨', '🔓', '🚀', '⭐', '🏆'];
+  FREEDOM_THRESHOLDS.forEach((threshold, i) => {
+    const achieved = fPct >= threshold;
+    const progressPct = Math.min(100, (fPct / threshold) * 100);
+    const needed = (threshold / 100) * total;
+    const missingMonthly = Math.max(0, needed - monthly);
+    unlocks.push({
+      id: `freedom-${threshold}`,
+      type: 'freedom',
+      title: `${threshold} % finanziell frei`,
+      subtitle: achieved
+        ? 'Erreicht!'
+        : `Noch ${missingMonthly.toFixed(0)} € / Monat`,
+      emoji: freedomEmojis[i],
+      achieved,
+      progressPct,
+      missingMonthly,
+    });
+  });
+
+  // --- Goal unlocks ---
+  // Show covered goals as achieved, next uncovered goal as upcoming
+  const coveredGoals = goalResults.filter((g) => g.status === 'covered');
+  const uncoveredGoals = goalResults
+    .filter((g) => g.status !== 'covered')
+    .sort((a, b) => a.monthlyAmount - b.monthlyAmount);
+
+  coveredGoals.forEach((g) => {
+    unlocks.push({
+      id: `goal-${g.id}`,
+      type: 'goal',
+      title: g.name,
+      subtitle: `${g.monthlyAmount.toFixed(2).replace('.', ',')} € / Monat`,
+      emoji: g.emoji,
+      achieved: true,
+      progressPct: 100,
+      missingMonthly: 0,
+    });
+  });
+
+  // Only include the NEXT uncovered goal
+  if (uncoveredGoals.length > 0) {
+    const ng = uncoveredGoals[0];
+    const progressPct = Math.min(100, (ng.coveredAmount / ng.monthlyAmount) * 100);
+    const missingMonthly = Math.max(0, ng.monthlyAmount - ng.coveredAmount);
+    unlocks.push({
+      id: `goal-${ng.id}`,
+      type: 'goal',
+      title: ng.name,
+      subtitle: `${ng.coveredAmount.toFixed(2).replace('.', ',')} / ${ng.monthlyAmount.toFixed(2).replace('.', ',')} € / Monat`,
+      emoji: ng.emoji,
+      achieved: false,
+      progressPct,
+      missingMonthly,
+    });
+  }
+
+  // --- Lifetime / free days unlocks ---
+  const lifetimeLabels = [
+    '1 freie Woche / Jahr',
+    '1 freier Monat / Jahr',
+    '3 freie Monate / Jahr',
+    '6 freie Monate / Jahr',
+    '1 vollständig freies Jahr',
+  ];
+  const lifetimeEmojis = ['🗓️', '🌙', '📅', '🌊', '🕊️'];
+
+  FREE_DAYS_THRESHOLDS.forEach((threshold, i) => {
+    const achieved = freeDaysPerYear >= threshold;
+    const progressPct = Math.min(100, (freeDaysPerYear / threshold) * 100);
+    const neededMonthly = total > 0 ? (threshold / 365) * total : 0;
+    const missingMonthly = Math.max(0, neededMonthly - monthly);
+    unlocks.push({
+      id: `lifetime-${threshold}`,
+      type: 'lifetime',
+      title: lifetimeLabels[i],
+      subtitle: achieved
+        ? 'Erreicht!'
+        : `Noch ${missingMonthly.toFixed(0)} € / Monat`,
+      emoji: lifetimeEmojis[i],
+      achieved,
+      progressPct,
+      missingMonthly,
+    });
+  });
+
+  // Sort: achieved first (by threshold asc = by index), then non-achieved by progressPct desc
+  const achieved = unlocks.filter((u) => u.achieved);
+  const notAchieved = unlocks
+    .filter((u) => !u.achieved)
+    .sort((a, b) => b.progressPct - a.progressPct);
+
+  return [...achieved, ...notAchieved];
 }

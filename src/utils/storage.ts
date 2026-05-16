@@ -10,6 +10,11 @@ export function loadState(): AppState {
     if (!raw) return getDefaultState();
     const parsed = JSON.parse(raw) as AppState;
     if (!parsed.portfolio || !Array.isArray(parsed.goals)) return getDefaultState();
+    // Migration: add monthlyIncome if missing from old data
+    if (parsed.portfolio.monthlyIncome === undefined) {
+      parsed.portfolio.monthlyIncome =
+        (parsed.portfolio.value * parsed.portfolio.dividendYield) / 100 / 12;
+    }
     return parsed;
   } catch {
     return getDefaultState();
