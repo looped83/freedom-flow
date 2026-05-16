@@ -34,9 +34,17 @@ function UnlockCard({ unlock }: { unlock: Unlock }) {
   );
 }
 
+// Split array into chunks of size n
+function chunks<T>(arr: T[], n: number): T[][] {
+  const result: T[][] = [];
+  for (let i = 0; i < arr.length; i += n) result.push(arr.slice(i, i + n));
+  return result;
+}
+
 function AchievedCarousel({ achieved }: { achieved: Unlock[] }) {
   const [activeIdx, setActiveIdx] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const slides = chunks(achieved, 2);
 
   function handleScroll() {
     const el = scrollRef.current;
@@ -46,7 +54,9 @@ function AchievedCarousel({ achieved }: { achieved: Unlock[] }) {
 
   return (
     <div>
-      <p className="text-xs text-white/30 mb-2 px-1">Erreicht</p>
+      <h3 className="text-xs text-white/55 font-medium uppercase tracking-wider mb-2 px-1">
+        Erreicht
+      </h3>
       <div className="bg-surface-1 rounded-2xl overflow-hidden">
         <div
           ref={scrollRef}
@@ -55,26 +65,33 @@ function AchievedCarousel({ achieved }: { achieved: Unlock[] }) {
           role="list"
           aria-label="Erreichte Meilensteine"
         >
-          {achieved.map((unlock, i) => (
+          {slides.map((pair, slideIdx) => (
             <div
-              key={unlock.id}
-              role="listitem"
-              aria-label={unlock.title}
-              aria-hidden={i !== activeIdx}
-              className="flex-shrink-0 w-full snap-center px-5 pt-5 pb-4 flex flex-col items-center gap-2 text-center"
+              key={slideIdx}
+              className="flex-shrink-0 w-full snap-center grid grid-cols-2 gap-px px-4 py-5"
+              aria-hidden={slideIdx !== activeIdx}
             >
-              <span className="text-4xl" aria-hidden="true">{unlock.emoji}</span>
-              <p className="text-white font-semibold text-sm">{unlock.title}</p>
-              <span className="text-xs text-accent font-semibold bg-accent/10 px-3 py-0.5 rounded-full">
-                ✓ Erreicht
-              </span>
+              {pair.map((unlock) => (
+                <div
+                  key={unlock.id}
+                  role="listitem"
+                  aria-label={unlock.title}
+                  className="flex flex-col items-center gap-1.5 text-center px-2"
+                >
+                  <span className="text-3xl" aria-hidden="true">{unlock.emoji}</span>
+                  <p className="text-white/80 font-medium text-xs leading-tight">{unlock.title}</p>
+                  <span className="text-[10px] text-accent font-semibold bg-accent/10 px-2 py-0.5 rounded-full">
+                    ✓ Erreicht
+                  </span>
+                </div>
+              ))}
             </div>
           ))}
         </div>
 
-        {achieved.length > 1 && (
+        {slides.length > 1 && (
           <div className="flex justify-center gap-1.5 pb-3" aria-hidden="true">
-            {achieved.map((_, i) => (
+            {slides.map((_, i) => (
               <div
                 key={i}
                 className={`rounded-full transition-all duration-200 ${

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-type Tab = 'dashboard' | 'goals' | 'timeline' | 'portfolio';
+type Tab = 'dashboard' | 'timeline' | 'setup';
 
 interface TabNavProps {
   active: Tab;
@@ -13,23 +13,16 @@ const ICONS: Record<Tab, ReactNode> = {
       <path d="M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z"/>
     </svg>
   ),
-  goals: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="w-5 h-5" aria-hidden="true">
-      <circle cx="12" cy="12" r="9"/>
-      <circle cx="12" cy="12" r="5"/>
-      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>
-    </svg>
-  ),
   timeline: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
       <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
       <polyline points="16 7 22 7 22 13"/>
     </svg>
   ),
-  portfolio: (
+  setup: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
-      <rect x="2" y="7" width="20" height="14" rx="2"/>
-      <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
     </svg>
   ),
 };
@@ -37,8 +30,7 @@ const ICONS: Record<Tab, ReactNode> = {
 const TABS: { id: Tab; label: string }[] = [
   { id: 'dashboard', label: 'Dashboard' },
   { id: 'timeline',  label: 'Timeline'  },
-  { id: 'goals',     label: 'Ziele'     },
-  { id: 'portfolio', label: 'Portfolio' },
+  { id: 'setup',     label: 'Setup'     },
 ];
 
 export function TabNav({ active, onChange }: TabNavProps) {
@@ -47,7 +39,7 @@ export function TabNav({ active, onChange }: TabNavProps) {
       aria-label="Hauptnavigation"
       className="fixed bottom-0 inset-x-0 z-20 bg-surface-1 border-t border-white/5
                  sm:static sm:border-t-0 sm:border-b sm:z-auto"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
     >
       <div className="max-w-4xl mx-auto flex sm:px-4 sm:gap-0">
         {TABS.map((tab) => {
@@ -58,7 +50,7 @@ export function TabNav({ active, onChange }: TabNavProps) {
               onClick={() => onChange(tab.id)}
               aria-current={isActive ? 'page' : undefined}
               className={`
-                flex-1 flex flex-col items-center justify-center py-4 gap-1 transition-colors
+                flex-1 flex flex-col items-center justify-center py-5 gap-1.5 transition-colors
                 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent
                 sm:flex-none sm:flex-row sm:py-3 sm:px-5 sm:gap-0
                 ${isActive
