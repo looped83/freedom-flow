@@ -54,34 +54,22 @@ function formatTime(date: Date): string {
   return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 }
 
-function mondayLabel(now: Date): string {
-  const dayOfWeek = now.getDay();
-  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday);
-  return monday.toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
-}
-
-function monthStartLabel(now: Date): string {
-  return `1. ${now.toLocaleDateString('de-DE', { month: 'long' })}`;
-}
 
 interface MiniHeroProps {
   label: string;
   value: number;
-  sublabel: string;
   progressPct: number;
   progressAriaLabel: string;
 }
 
-function MiniHeroTile({ label, value, sublabel, progressPct, progressAriaLabel }: MiniHeroProps) {
+function MiniHeroTile({ label, value, progressPct, progressAriaLabel }: MiniHeroProps) {
   return (
     <div className="bg-accent-muted border border-accent/20 rounded-2xl p-4">
       <p className="text-xs font-semibold text-accent uppercase tracking-wider mb-2">{label}</p>
       <p className="text-2xl font-bold text-accent tabular-nums leading-none" aria-live="off">
         {formatEuro(value)}
       </p>
-      <p className="text-white/60 text-xs mt-1.5">{sublabel}</p>
-      <div className="mt-3 space-y-1">
+      <div className="mt-3">
         <div
           role="progressbar"
           aria-label={progressAriaLabel}
@@ -95,7 +83,6 @@ function MiniHeroTile({ label, value, sublabel, progressPct, progressAriaLabel }
             style={{ width: `${progressPct}%` }}
           />
         </div>
-        <p className="text-right text-[10px] text-white/40 tabular-nums">{progressPct} %</p>
       </div>
     </div>
   );
@@ -130,7 +117,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
         aria-labelledby="lf-hero-heading"
         className="rounded-2xl p-6 border border-accent/20 bg-accent-muted"
       >
-        <p className="text-xs font-semibold text-accent uppercase tracking-wider mb-4">Heute</p>
+        <p className="text-xs font-semibold text-accent uppercase tracking-wider mb-2">Heute</p>
         <p
           id="lf-hero-heading"
           className="text-5xl font-bold text-accent tabular-nums leading-none"
@@ -140,14 +127,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
           {formatEuro(earnedToday)}
         </p>
         <p className="text-white/70 text-sm mt-2">Seit Tagesbeginn verdient</p>
-        <p className="text-white/50 text-xs mt-0.5">
-          Basierend auf {formatEuro(monthly)} monatlichen Dividenden
-        </p>
-        <div className="mt-5 space-y-1.5">
-          <div className="flex justify-between items-baseline text-xs text-white/60">
-            <span>Tagesfortschritt</span>
-            <span>{dayPct}&thinsp;%</span>
-          </div>
+        <div className="mt-4 space-y-1.5">
           <div
             role="progressbar"
             aria-label={`Tagesfortschritt: ${dayPct} von 100 Prozent`}
@@ -169,14 +149,12 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
         <MiniHeroTile
           label="Diese Woche"
           value={earnedWeek}
-          sublabel={`Seit ${mondayLabel(now)}`}
           progressPct={weekPct}
           progressAriaLabel={`Wochenverlauf: ${weekPct} %`}
         />
         <MiniHeroTile
           label="Dieser Monat"
           value={earnedMonth}
-          sublabel={`Seit ${monthStartLabel(now)}`}
           progressPct={monthPct}
           progressAriaLabel={`Monatsverlauf: ${monthPct} %`}
         />
