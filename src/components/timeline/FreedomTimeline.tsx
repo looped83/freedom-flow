@@ -1,12 +1,8 @@
 import { Fragment } from 'react';
 import type { TimelineEntry, Goal, Portfolio } from '../../types';
 import { CategoryIcon } from '../goals/CategoryIcon';
-import {
-  buildFreedomTimeline,
-  freedomYear,
-} from '../../utils/calculations';
+import { buildFreedomTimeline } from '../../utils/calculations';
 import { formatEuro } from '../../utils/formatting';
-import { CURRENT_YEAR } from '../../constants/defaultData';
 import { PageHeader } from '../layout/PageHeader';
 
 interface FreedomTimelineProps {
@@ -57,7 +53,7 @@ function EntryCard({ entry, isHero }: { entry: TimelineEntry; isHero?: boolean }
 
         {/* Dividende row – shown above goals label */}
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-white/50">Dividende</span>
+          <span className="text-xs font-bold text-orange-400">Dividende</span>
           <span className="text-sm font-bold text-orange-400 tabular-nums">
             {formatEuro(entry.projectedMonthly)} / Mo.
           </span>
@@ -103,7 +99,6 @@ function TimelineSeparator({ label }: { label: string }) {
 
 export function FreedomTimeline({ portfolio, goals }: FreedomTimelineProps) {
   const allEntries = buildFreedomTimeline(goals, portfolio);
-  const fyear = freedomYear(portfolio, goals);
 
   const beyondHorizonIds = new Set(allEntries.flatMap((e) => e.newGoals.map((g) => g.id)));
   const beyondHorizonGoals = goals.filter((g) => !beyondHorizonIds.has(g.id));
@@ -114,22 +109,6 @@ export function FreedomTimeline({ portfolio, goals }: FreedomTimelineProps) {
     <main className="max-w-4xl mx-auto px-4 py-6">
 
       <PageHeader icon={TIMELINE_ICON} title="Timeline" />
-
-      {/* Narrow "Vollständige Freiheit" hero above the timeline */}
-      {fyear != null ? (
-        <div className="rounded-2xl px-4 py-3 mb-5 bg-accent-muted border border-accent/30 flex items-center justify-between">
-          <span className="text-sm font-bold text-white">🏆 Vollständige Freiheit</span>
-          <span className="text-sm font-bold text-accent tabular-nums">
-            {fyear}
-            {fyear > CURRENT_YEAR ? ` · in ${fyear - CURRENT_YEAR} J.` : ' · erreicht!'}
-          </span>
-        </div>
-      ) : (
-        <div className="rounded-2xl px-4 py-3 mb-5 bg-surface-1 border border-white/10 flex items-center justify-between">
-          <span className="text-sm font-semibold text-white/60">Vollständige Freiheit</span>
-          <span className="text-xs text-white/40">nicht im Horizont erreichbar</span>
-        </div>
-      )}
 
       {displayEntries.length === 0 ? (
         <div className="bg-surface-1 rounded-2xl p-8 text-center">
