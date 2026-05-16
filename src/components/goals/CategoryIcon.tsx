@@ -107,8 +107,12 @@ const PATHS: Record<GoalCategory, IconPath> = {
   ),
   Urlaub: (
     <>
-      <line x1="22" y1="2" x2="11" y2="13"/>
-      <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      <path d="M13 22v-8"/>
+      <path d="M13 14c0-3-2.5-5.5-7-5 2 0 5 2 5 5"/>
+      <path d="M13 14c0-3 2.5-5.5 7-5-2 0-5 2-5 5"/>
+      <path d="M13 11c-1-4-4.5-5.5-7-4 2 0 5 1.5 5 5"/>
+      <path d="M13 11c1-4 4.5-5.5 7-4-2 0-5 1.5-5 5"/>
+      <path d="M10 22h6"/>
     </>
   ),
   Kommunikation: (
