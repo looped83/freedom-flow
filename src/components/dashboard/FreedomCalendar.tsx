@@ -17,7 +17,7 @@ export function FreedomCalendar({ freeDaysPerMonth }: FreedomCalendarProps) {
   return (
     <section className="bg-surface-1 rounded-2xl p-5" aria-labelledby="freedom-cal-title">
       <div className="flex items-center justify-between mb-4">
-        <h2 id="freedom-cal-title" className="text-xs text-white/55 font-medium uppercase tracking-wider">
+        <h2 id="freedom-cal-title" className="text-sm font-semibold text-white">
           Freedom Calendar
         </h2>
         <div className="flex rounded-lg overflow-hidden border border-white/10" role="group" aria-label="Ansicht wählen">
