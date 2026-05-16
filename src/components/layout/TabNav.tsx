@@ -34,11 +34,10 @@ const ICONS: Record<Tab, ReactNode> = {
   ),
 };
 
-// Portfolio intentionally last
 const TABS: { id: Tab; label: string }[] = [
   { id: 'dashboard', label: 'Dashboard' },
-  { id: 'goals',     label: 'Ziele'     },
   { id: 'timeline',  label: 'Timeline'  },
+  { id: 'goals',     label: 'Ziele'     },
   { id: 'portfolio', label: 'Portfolio' },
 ];
 

@@ -15,32 +15,21 @@ function barColor(progressPct: number): string {
 function UnlockCard({ unlock }: { unlock: Unlock }) {
   return (
     <div className="bg-surface-2 rounded-2xl p-4 flex gap-3 items-start">
-      <span className="text-3xl flex-shrink-0" aria-hidden="true">
-        {unlock.emoji}
-      </span>
+      <span className="text-2xl flex-shrink-0 mt-0.5" aria-hidden="true">{unlock.emoji}</span>
       <div className="flex-1 min-w-0">
-        <p className="text-white font-semibold text-sm leading-tight mb-1">{unlock.title}</p>
-        <p className="text-xs text-white/55 mb-2">{unlock.subtitle}</p>
+        <div className="flex items-baseline justify-between gap-2 mb-0.5">
+          <p className="text-white font-semibold text-sm leading-tight">{unlock.title}</p>
+          <span className="text-xs text-white/45 flex-shrink-0 tabular-nums">
+            {unlock.progressPct.toFixed(0)} %
+          </span>
+        </div>
+        <p className="text-xs text-white/45 mb-2">{unlock.subtitle}</p>
         <ProgressBar
           percent={unlock.progressPct}
           label={`${unlock.title}: ${unlock.progressPct.toFixed(0)} % erreicht`}
           colorClass={barColor(unlock.progressPct)}
         />
       </div>
-      <span className="text-xs text-white/55 flex-shrink-0 tabular-nums font-medium">
-        {unlock.progressPct.toFixed(0)} %
-      </span>
-    </div>
-  );
-}
-
-function AchievedBadge({ unlock }: { unlock: Unlock }) {
-  return (
-    <div className="flex items-center gap-1.5 bg-surface-2 rounded-full px-3 py-1.5 border border-accent/20">
-      <span className="text-sm" aria-hidden="true">
-        {unlock.emoji}
-      </span>
-      <span className="text-xs text-white/75 font-medium whitespace-nowrap">{unlock.title}</span>
     </div>
   );
 }
@@ -50,19 +39,16 @@ export function LifeUnlocks({ unlocks }: LifeUnlocksProps) {
 
   const achieved = unlocks.filter((u) => u.achieved);
   const notAchieved = unlocks.filter((u) => !u.achieved);
-
-  // When collapsed: show next 3 not-yet-achieved (already sorted by progressPct desc)
   const visibleCards = showAll ? notAchieved : notAchieved.slice(0, 3);
 
   return (
-    <section aria-label="Life Unlocks" className="space-y-4">
+    <section aria-label="Life Unlocks" className="space-y-3">
       <h2 className="text-xs text-white/55 font-medium uppercase tracking-wider px-1">
         Life Unlocks
       </h2>
 
-      {/* Upcoming unlock cards */}
       {visibleCards.length > 0 ? (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {visibleCards.map((unlock) => (
             <UnlockCard key={unlock.id} unlock={unlock} />
           ))}
@@ -71,26 +57,31 @@ export function LifeUnlocks({ unlocks }: LifeUnlocksProps) {
         <p className="text-sm text-white/55 px-1">Alle Meilensteine erreicht! 🎉</p>
       )}
 
-      {/* Toggle button */}
       {notAchieved.length > 3 && (
         <button
           onClick={() => setShowAll((v) => !v)}
           aria-expanded={showAll}
-          className="text-xs text-white/55 hover:text-white/80 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded px-2 py-1"
+          className="text-xs text-white/45 hover:text-white/70 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded px-1 py-0.5"
         >
-          {showAll
-            ? 'Weniger anzeigen ↑'
-            : `Alle ${notAchieved.length} Unlocks anzeigen ↓`}
+          {showAll ? 'Weniger ↑' : `+${notAchieved.length - 3} weitere anzeigen`}
         </button>
       )}
 
-      {/* Achieved badges */}
+      {/* Achieved – compact emoji row with tooltip-style labels */}
       {achieved.length > 0 && (
-        <div>
-          <p className="text-xs text-white/40 mb-2 px-1">Bereits erreicht</p>
-          <div className="flex flex-wrap gap-2">
+        <div className="pt-1">
+          <p className="text-xs text-white/30 mb-1.5 px-1">Erreicht</p>
+          <div className="flex flex-wrap gap-1.5">
             {achieved.map((unlock) => (
-              <AchievedBadge key={unlock.id} unlock={unlock} />
+              <span
+                key={unlock.id}
+                title={unlock.title}
+                aria-label={unlock.title}
+                className="flex items-center gap-1 bg-accent/10 border border-accent/15 rounded-full px-2 py-0.5"
+              >
+                <span className="text-sm" aria-hidden="true">{unlock.emoji}</span>
+                <span className="text-xs text-white/50 font-medium">{unlock.title}</span>
+              </span>
             ))}
           </div>
         </div>
