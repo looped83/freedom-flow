@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Goal, GoalCategory } from '../../types';
 import { parseGerman } from '../../utils/formatting';
 
@@ -39,6 +39,17 @@ const EMOJI_OPTIONS: { emoji: string; name: string }[] = [
 
 const fmt2 = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+/** Add German thousand-separator dots to the integer part while preserving the decimal comma. */
+function liveFormatAmount(raw: string): string {
+  // Strip existing thousand-separator dots, keep only digits + one comma
+  const stripped = raw.replace(/\./g, '').replace(/[^0-9,]/g, '');
+  const commaIdx = stripped.indexOf(',');
+  const intPart = commaIdx >= 0 ? stripped.slice(0, commaIdx) : stripped;
+  const decPart = commaIdx >= 0 ? stripped.slice(commaIdx + 1) : null;
+  const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return decPart !== null ? `${formattedInt},${decPart}` : formattedInt;
+}
+
 interface GoalFormProps {
   initial?: Goal;
   onSave: (goal: Goal) => void;
@@ -54,6 +65,28 @@ export function GoalForm({ initial, onSave, onSaveAsDefault, onCancel }: GoalFor
   const [name, setName] = useState(initial?.name ?? '');
   const [amount, setAmount] = useState(initial ? fmt2.format(initial.monthlyAmount) : '');
   const [category, setCategory] = useState<GoalCategory>(initial?.category ?? 'Sonstiges');
+  const amountRef = useRef<HTMLInputElement>(null);
+
+  function handleAmountChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const input = e.target;
+    const cursorPos = input.selectionStart ?? input.value.length;
+    const raw = input.value;
+    const formatted = liveFormatAmount(raw);
+    setAmount(formatted);
+    // Restore cursor: count non-dot chars before cursor in old value,
+    // then position after the same count in the formatted string.
+    const charsBeforeCursor = raw.slice(0, cursorPos).replace(/\./g, '').length;
+    requestAnimationFrame(() => {
+      if (!amountRef.current) return;
+      let i = 0;
+      let count = 0;
+      for (; i < formatted.length && count < charsBeforeCursor; i++) {
+        if (formatted[i] !== '.') count++;
+      }
+      amountRef.current.selectionStart = i;
+      amountRef.current.selectionEnd = i;
+    });
+  }
   const [emoji, setEmoji] = useState(initial?.emoji ?? '🎯');
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [saveAsDefault, setSaveAsDefault] = useState(false);
@@ -108,11 +141,12 @@ export function GoalForm({ initial, onSave, onSaveAsDefault, onCancel }: GoalFor
           Monatlicher Betrag (€)
         </label>
         <input
+          ref={amountRef}
           id="goal-amount"
           type="text"
           inputMode="decimal"
           value={amount}
-          onChange={(e) => setAmount(e.target.value)}
+          onChange={handleAmountChange}
           placeholder="z. B. 42,90"
           className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/55 focus:outline-none focus:border-accent text-sm"
           aria-describedby={errors.amount ? 'goal-amount-error' : undefined}
