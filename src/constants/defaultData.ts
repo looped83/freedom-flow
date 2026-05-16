@@ -11,7 +11,7 @@ export const DEFAULT_PORTFOLIO: Portfolio = {
   monthlyIncome: 808,
 };
 
-export const CURRENT_YEAR = 2026;
+export const CURRENT_YEAR = new Date().getFullYear();
 
 let _id = 1;
 const id = () => String(_id++);
