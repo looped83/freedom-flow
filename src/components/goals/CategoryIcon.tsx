@@ -66,6 +66,12 @@ const PATHS: Record<GoalCategory, IconPath> = {
   Kleidung: (
     <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/>
   ),
+  Elektronik: (
+    <>
+      <rect x="2" y="3" width="20" height="13" rx="2"/>
+      <path d="M8 21h8M12 16v5"/>
+    </>
+  ),
   Haustiere: (
     <>
       <circle cx="9" cy="8" r="2"/>
@@ -73,14 +79,6 @@ const PATHS: Record<GoalCategory, IconPath> = {
       <circle cx="5.5" cy="14" r="2"/>
       <circle cx="18.5" cy="14" r="2"/>
       <path d="M8 19c0-2.2 1.8-4 4-4s4 1.8 4 4v1H8v-1z"/>
-    </>
-  ),
-  Kinder: (
-    <>
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-      <circle cx="9" cy="7" r="4"/>
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
     </>
   ),
   Freizeit: (
