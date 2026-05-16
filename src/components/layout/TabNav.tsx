@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-type Tab = 'dashboard' | 'timeline' | 'setup';
+type Tab = 'dashboard' | 'timeline' | 'liveflow' | 'setup';
 
 interface TabNavProps {
   active: Tab;
@@ -19,6 +19,11 @@ const ICONS: Record<Tab, ReactNode> = {
       <polyline points="16 7 22 7 22 13"/>
     </svg>
   ),
+  liveflow: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
+      <polyline points="2 12 6 8 10 16 14 4 18 12 22 12"/>
+    </svg>
+  ),
   setup: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
       <circle cx="12" cy="12" r="3"/>
@@ -30,6 +35,7 @@ const ICONS: Record<Tab, ReactNode> = {
 const TABS: { id: Tab; label: string }[] = [
   { id: 'dashboard', label: 'Dashboard' },
   { id: 'timeline',  label: 'Timeline'  },
+  { id: 'liveflow',  label: 'Live Flow' },
   { id: 'setup',     label: 'Setup'     },
 ];
 

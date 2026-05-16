@@ -11,6 +11,9 @@ const FreedomTimeline = lazy(() =>
 const SetupPage = lazy(() =>
   import('./components/setup/SetupPage').then(({ SetupPage: C }) => ({ default: C })),
 );
+const LiveFlow = lazy(() =>
+  import('./components/liveflow/LiveFlow').then(({ LiveFlow: C }) => ({ default: C })),
+);
 
 function TabFallback() {
   return (
@@ -61,6 +64,9 @@ export default function App() {
       <Suspense fallback={<TabFallback />}>
         {tab === 'timeline' && (
           <FreedomTimeline portfolio={state.portfolio} goals={state.goals} />
+        )}
+        {tab === 'liveflow' && (
+          <LiveFlow portfolio={state.portfolio} />
         )}
         {tab === 'setup' && (
           <SetupPage
