@@ -88,3 +88,12 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Prevent iOS Safari auto-zoom on input focus (triggers when font-size < 16px) */
+@supports (-webkit-touch-callout: none) {
+  input:not([type='range']),
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+}
