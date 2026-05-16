@@ -20,12 +20,6 @@ const PATHS: Record<GoalCategory, IconPath> = {
       <line x1="9.5" y1="17" x2="14.5" y2="17"/>
     </>
   ),
-  Versicherungen: (
-    <>
-      <path d="M12 2L4 5v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V5L12 2z"/>
-      <polyline points="9 12 11 14 15 10"/>
-    </>
-  ),
   Ernährung: (
     <>
       <circle cx="9" cy="21" r="1"/>
@@ -44,6 +38,12 @@ const PATHS: Record<GoalCategory, IconPath> = {
   ),
   Gesundheit: (
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+  ),
+  Medizin: (
+    <>
+      <path d="M10.5 20.5 3.5 13.5a5 5 0 1 1 7.07-7.07l7 7a5 5 0 1 1-7.07 7.07z"/>
+      <line x1="8.5" y1="15.5" x2="15.5" y2="8.5"/>
+    </>
   ),
   Sport: (
     <>
@@ -75,11 +75,36 @@ const PATHS: Record<GoalCategory, IconPath> = {
       <path d="M8 19c0-2.2 1.8-4 4-4s4 1.8 4 4v1H8v-1z"/>
     </>
   ),
+  Kinder: (
+    <>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+      <circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    </>
+  ),
   Freizeit: (
     <>
       <path d="M9 18V5l12-2v13"/>
       <circle cx="6" cy="18" r="3"/>
       <circle cx="18" cy="16" r="3"/>
+    </>
+  ),
+  Gaming: (
+    <>
+      <rect x="2" y="7" width="20" height="12" rx="5"/>
+      <path d="M6 13h4M8 11v4"/>
+      <circle cx="15" cy="11" r="1"/>
+      <circle cx="17" cy="13" r="1"/>
+    </>
+  ),
+  Geschenke: (
+    <>
+      <polyline points="20 12 20 22 4 22 4 12"/>
+      <rect x="2" y="7" width="20" height="5"/>
+      <line x1="12" y1="22" x2="12" y2="7"/>
+      <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+      <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
     </>
   ),
   Urlaub: (
@@ -101,6 +126,12 @@ const PATHS: Record<GoalCategory, IconPath> = {
     <>
       <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
       <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+    </>
+  ),
+  Versicherungen: (
+    <>
+      <path d="M12 2L4 5v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V5L12 2z"/>
+      <polyline points="9 12 11 14 15 10"/>
     </>
   ),
   Sonstiges: (

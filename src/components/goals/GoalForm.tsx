@@ -6,10 +6,11 @@ import { CategoryIcon } from './CategoryIcon';
 const CATEGORIES: GoalCategory[] = [
   'Wohnen', 'Nebenkosten', 'Mobilität',
   'Ernährung', 'Restaurant',
-  'Gesundheit', 'Sport', 'Körperpflege',
-  'Kleidung', 'Haustiere', 'Freizeit', 'Urlaub',
+  'Gesundheit', 'Medizin', 'Sport', 'Körperpflege',
+  'Kleidung', 'Haustiere', 'Kinder', 'Freizeit', 'Gaming', 'Geschenke', 'Urlaub',
   'Kommunikation', 'Streaming', 'Bildung',
-  'Versicherungen', 'Sonstiges',
+  'Versicherungen',
+  'Sonstiges',
 ];
 
 const fmt2 = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
