@@ -56,7 +56,7 @@ export function TabNav({ active, onChange }: TabNavProps) {
               onClick={() => onChange(tab.id)}
               aria-current={isActive ? 'page' : undefined}
               className={`
-                flex-1 flex flex-col items-center justify-center py-5 gap-1.5 transition-colors
+                flex-1 flex flex-col items-center justify-center tabnav-btn gap-1.5 transition-colors
                 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent
                 sm:flex-none sm:flex-row sm:py-3 sm:px-5 sm:gap-0
                 ${isActive

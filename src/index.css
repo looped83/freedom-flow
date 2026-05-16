@@ -97,3 +97,22 @@
     font-size: max(16px, 1em);
   }
 }
+
+/*
+ * Mobile nav height: compact in Safari browser, taller in standalone PWA.
+ * In browser mode the browser chrome already fills vertical space, so py-3
+ * keeps the nav unobtrusive. In standalone (home-screen app) we restore py-5
+ * for comfortable thumb reach above the home indicator.
+ * The `sm:py-3` Tailwind class takes over at ≥ 640 px regardless.
+ */
+.tabnav-btn {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+@media (display-mode: standalone) and (max-width: 639px) {
+  .tabnav-btn {
+    padding-top: 1.25rem;
+    padding-bottom: 1.25rem;
+  }
+}
