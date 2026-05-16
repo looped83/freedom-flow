@@ -23,6 +23,16 @@ export const formatDays = (days: number): string => {
   return `${rounded.toFixed(1).replace('.', ',')}`;
 };
 
+/** Add German thousand-separator dots to the integer part while preserving the decimal comma. */
+export function liveFormatAmount(raw: string): string {
+  const stripped = raw.replace(/\./g, '').replace(/[^0-9,]/g, '');
+  const commaIdx = stripped.indexOf(',');
+  const intPart = commaIdx >= 0 ? stripped.slice(0, commaIdx) : stripped;
+  const decPart = commaIdx >= 0 ? stripped.slice(commaIdx + 1) : null;
+  const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return decPart !== null ? `${formattedInt},${decPart}` : formattedInt;
+}
+
 /** Parse a German-formatted number: "1.000,00" → 1000, "6,5" → 6.5, "42.90" → 42.90 */
 export function parseGerman(raw: string): number {
   const s = raw.trim().replace(/\s/g, '');

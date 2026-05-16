@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Portfolio } from '../../types';
-import { formatEuro, parseGerman } from '../../utils/formatting';
+import { formatEuro, liveFormatAmount, parseGerman } from '../../utils/formatting';
 import { annualDividends, monthlyDividends } from '../../utils/calculations';
 
 const deDE = (decimals: number) =>
@@ -30,7 +30,11 @@ function NumberField({ fieldId, label, value, unit, min, max, step, description,
 
   function handleFocus() {
     setFocused(true);
-    setRaw(String(value).replace('.', ','));
+    setRaw(formatFieldValue(value, unit));
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setRaw(unit === '€' ? liveFormatAmount(e.target.value) : e.target.value);
   }
 
   function commit(input: string) {
@@ -54,9 +58,10 @@ function NumberField({ fieldId, label, value, unit, min, max, step, description,
           <input
             type="text"
             inputMode="decimal"
+            style={{ fontSize: '16px' }}
             value={displayValue}
             onFocus={handleFocus}
-            onChange={(e) => setRaw(e.target.value)}
+            onChange={handleChange}
             onBlur={(e) => commit(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter')  e.currentTarget.blur();

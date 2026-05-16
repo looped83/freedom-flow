@@ -109,7 +109,8 @@ export function FreedomHero({ monthly, total, onIncomeChange }: FreedomHeroProps
                 onBlur={(e) => commit(e.target.value)}
                 onKeyDown={handleKeyDown}
                 aria-label="Monatliche Dividenden eingeben"
-                className="text-sm font-bold text-accent text-center bg-transparent border-b border-accent focus:outline-none w-full tabular-nums"
+                style={{ fontSize: '16px' }}
+                className="font-bold text-accent text-center bg-transparent border-b border-accent focus:outline-none w-full tabular-nums"
               />
             ) : (
               <button
@@ -133,19 +134,6 @@ export function FreedomHero({ monthly, total, onIncomeChange }: FreedomHeroProps
           </div>
         </div>
 
-        {/* Income steppers */}
-        <div className="flex justify-center gap-2 w-full">
-          {([25, 50, 100] as const).map((delta) => (
-            <button
-              key={delta}
-              onClick={() => onIncomeChange(monthly + delta)}
-              aria-label={`+${delta} € hinzufügen`}
-              className="flex-1 text-xs bg-surface-2 hover:bg-white/10 rounded-lg py-1.5 text-white/60 hover:text-white/90 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent font-medium"
-            >
-              +{delta}
-            </button>
-          ))}
-        </div>
       </div>
     </section>
   );

@@ -229,10 +229,16 @@ export function buildFreedomTimeline(goals: Goal[], portfolio: Portfolio): Timel
     return g > 0 ? portfolio.monthlyIncome / Math.pow(1 + g, yearsAgo) : portfolio.monthlyIncome;
   }
 
-  // --- Retrospective: up to 5 years back ---
+  // --- Retrospective: go back until income falls below the cheapest goal ---
   const pastEntries: TimelineEntry[] = [];
-  const MAX_PAST = 5;
-  for (let y = MAX_PAST; y >= 1; y--) {
+  const cheapestGoalAmount = sortedGoals.length > 0 ? sortedGoals[0].monthlyAmount : 0;
+  const MAX_PAST = 50;
+  // Find how far back we need to go: stop when income would be below cheapest goal
+  let effectivePast = MAX_PAST;
+  for (let y = 1; y <= MAX_PAST; y++) {
+    if (pastMonthly(y) < cheapestGoalAmount) { effectivePast = y - 1; break; }
+  }
+  for (let y = effectivePast; y >= 1; y--) {
     const monthly = pastMonthly(y);
     const prevMonthly = pastMonthly(y + 1);
     const yearUnlocked = getUnlockedIds(monthly);

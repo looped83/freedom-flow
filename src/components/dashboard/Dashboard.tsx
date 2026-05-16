@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { DisplayFilter, FilterMode, Goal, Portfolio } from '../../types';
 import {
   applyDisplayFilter,
@@ -12,6 +13,8 @@ import { ProgressBar } from './ProgressBar';
 import { FreedomCalendar } from './FreedomCalendar';
 import { FreedomHero } from './FreedomHero';
 import { LifeUnlocks } from './LifeUnlocks';
+
+const MAX_VISIBLE_GOALS = 5;
 
 interface DashboardProps {
   portfolio: Portfolio;
@@ -34,6 +37,8 @@ function dirArrow(filter: DisplayFilter, mode: FilterMode): string {
 }
 
 export function Dashboard({ portfolio, goals, displayFilter, onFilterChange, onIncomeChange }: DashboardProps) {
+  const [showAllGoals, setShowAllGoals] = useState(false);
+
   const monthly = monthlyDividends(portfolio);
   const total = totalMonthlyCosts(goals);
   const freeDays = freeDaysPerMonth(monthly, total);
@@ -48,10 +53,18 @@ export function Dashboard({ portfolio, goals, displayFilter, onFilterChange, onI
 
   const lifeUnlocks = buildLifeUnlocks(allResults, monthly, total, freeDays);
 
+  const visibleGoals = showAllGoals ? displayResults : displayResults.slice(0, MAX_VISIBLE_GOALS);
+
   return (
     <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
 
-      {/* 1. FreedomHero – SVG ring, stats, inline income edit + steppers */}
+      {/* Page heading */}
+      <div>
+        <h1 className="text-lg font-bold text-white">Dashboard</h1>
+        <p className="text-sm text-white/45 mt-0.5">Dein Weg zur finanziellen Freiheit.</p>
+      </div>
+
+      {/* 1. FreedomHero – SVG ring, stats, inline income edit */}
       <FreedomHero monthly={monthly} total={total} onIncomeChange={onIncomeChange} />
 
       {/* 2. Nächstes Ziel */}
@@ -126,44 +139,57 @@ export function Dashboard({ portfolio, goals, displayFilter, onFilterChange, onI
         {displayResults.length === 0 ? (
           <p className="text-sm text-white/45 px-1 py-4">Keine Ziele in dieser Ansicht.</p>
         ) : (
-          <ul className="space-y-2" role="list">
-            {displayResults.map((g) => {
-              const barColor =
-                g.status === 'covered' ? 'bg-accent'
-                : g.status === 'partial' ? 'bg-gold'
-                : 'bg-white/20';
-              return (
-                <li key={g.id} className="bg-surface-1 rounded-xl px-4 py-3 flex items-center gap-3">
-                  <span className="text-xl flex-shrink-0" aria-hidden="true">{g.emoji}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-baseline mb-1">
-                      <span className="text-sm text-white font-medium truncate pr-2">{g.name}</span>
-                      <span className="text-xs text-white/55 flex-shrink-0 tabular-nums">
-                        {formatEuro(g.coveredAmount)} / {formatEuro(g.monthlyAmount)}
-                      </span>
+          <>
+            <ul className="space-y-2" role="list">
+              {visibleGoals.map((g) => {
+                const barColor =
+                  g.status === 'covered' ? 'bg-accent'
+                  : g.status === 'partial' ? 'bg-gold'
+                  : 'bg-white/20';
+                return (
+                  <li key={g.id} className="bg-surface-1 rounded-xl px-4 py-3 flex items-center gap-3">
+                    <span className="text-xl flex-shrink-0" aria-hidden="true">{g.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-baseline mb-1">
+                        <span className="text-sm text-white font-medium truncate pr-2">{g.name}</span>
+                        <span className="text-xs text-white/55 flex-shrink-0 tabular-nums">
+                          {formatEuro(g.coveredAmount)} / {formatEuro(g.monthlyAmount)}
+                        </span>
+                      </div>
+                      <ProgressBar
+                        percent={g.coveragePercent}
+                        label={`${g.name}: ${formatPercent(g.coveragePercent)} gedeckt`}
+                        colorClass={barColor}
+                      />
                     </div>
-                    <ProgressBar
-                      percent={g.coveragePercent}
-                      label={`${g.name}: ${formatPercent(g.coveragePercent)} gedeckt`}
-                      colorClass={barColor}
-                    />
-                  </div>
-                  <div className="flex-shrink-0 text-right min-w-[2.5rem]">
-                    <span className={`text-xs font-bold ${
-                      g.status === 'covered' ? 'text-accent'
-                      : g.status === 'partial' ? 'text-gold'
-                      : 'text-white/45'
-                    }`}>
-                      {g.status === 'covered' ? '✓' : formatPercent(g.coveragePercent, 0)}
-                    </span>
-                    {g.achievedYear != null && g.status !== 'covered' && (
-                      <p className="text-xs text-white/40">{g.achievedYear}</p>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                    <div className="flex-shrink-0 text-right min-w-[2.5rem]">
+                      <span className={`text-xs font-bold ${
+                        g.status === 'covered' ? 'text-accent'
+                        : g.status === 'partial' ? 'text-gold'
+                        : 'text-white/45'
+                      }`}>
+                        {g.status === 'covered' ? '✓' : formatPercent(g.coveragePercent, 0)}
+                      </span>
+                      {g.achievedYear != null && g.status !== 'covered' && (
+                        <p className="text-xs text-white/40">{g.achievedYear}</p>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            {displayResults.length > MAX_VISIBLE_GOALS && (
+              <button
+                onClick={() => setShowAllGoals((v) => !v)}
+                aria-expanded={showAllGoals}
+                className="mt-2 w-full text-xs text-white/45 hover:text-white/70 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded-xl py-2.5 bg-surface-1"
+              >
+                {showAllGoals
+                  ? 'Weniger anzeigen ↑'
+                  : `${displayResults.length - MAX_VISIBLE_GOALS} weitere Ziele anzeigen ↓`}
+              </button>
+            )}
+          </>
         )}
       </section>
     </main>

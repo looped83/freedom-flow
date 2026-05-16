@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Unlock } from '../../types';
 import { ProgressBar } from './ProgressBar';
 
@@ -29,6 +29,61 @@ function UnlockCard({ unlock }: { unlock: Unlock }) {
           label={`${unlock.title}: ${unlock.progressPct.toFixed(0)} % erreicht`}
           colorClass={barColor(unlock.progressPct)}
         />
+      </div>
+    </div>
+  );
+}
+
+function AchievedCarousel({ achieved }: { achieved: Unlock[] }) {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  function handleScroll() {
+    const el = scrollRef.current;
+    if (!el || el.offsetWidth === 0) return;
+    setActiveIdx(Math.round(el.scrollLeft / el.offsetWidth));
+  }
+
+  return (
+    <div>
+      <p className="text-xs text-white/30 mb-2 px-1">Erreicht</p>
+      <div className="bg-surface-1 rounded-2xl overflow-hidden">
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory"
+          role="list"
+          aria-label="Erreichte Meilensteine"
+        >
+          {achieved.map((unlock, i) => (
+            <div
+              key={unlock.id}
+              role="listitem"
+              aria-label={unlock.title}
+              aria-hidden={i !== activeIdx}
+              className="flex-shrink-0 w-full snap-center px-5 pt-5 pb-4 flex flex-col items-center gap-2 text-center"
+            >
+              <span className="text-4xl" aria-hidden="true">{unlock.emoji}</span>
+              <p className="text-white font-semibold text-sm">{unlock.title}</p>
+              <span className="text-xs text-accent font-semibold bg-accent/10 px-3 py-0.5 rounded-full">
+                ✓ Erreicht
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {achieved.length > 1 && (
+          <div className="flex justify-center gap-1.5 pb-3" aria-hidden="true">
+            {achieved.map((_, i) => (
+              <div
+                key={i}
+                className={`rounded-full transition-all duration-200 ${
+                  i === activeIdx ? 'w-4 h-1.5 bg-accent' : 'w-1.5 h-1.5 bg-white/20'
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -67,25 +122,7 @@ export function LifeUnlocks({ unlocks }: LifeUnlocksProps) {
         </button>
       )}
 
-      {/* Achieved – compact emoji row with tooltip-style labels */}
-      {achieved.length > 0 && (
-        <div className="pt-1">
-          <p className="text-xs text-white/30 mb-1.5 px-1">Erreicht</p>
-          <div className="flex flex-wrap gap-1.5">
-            {achieved.map((unlock) => (
-              <span
-                key={unlock.id}
-                title={unlock.title}
-                aria-label={unlock.title}
-                className="flex items-center gap-1 bg-accent/10 border border-accent/15 rounded-full px-2 py-0.5"
-              >
-                <span className="text-sm" aria-hidden="true">{unlock.emoji}</span>
-                <span className="text-xs text-white/50 font-medium">{unlock.title}</span>
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
+      {achieved.length > 0 && <AchievedCarousel achieved={achieved} />}
     </section>
   );
 }
