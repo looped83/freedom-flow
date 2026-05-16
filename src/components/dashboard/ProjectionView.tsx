@@ -15,9 +15,9 @@ export function ProjectionView({ portfolio, goals }: ProjectionViewProps) {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
-      <div>
+      <div className="mb-5">
         <h1 className="text-lg font-bold text-white">Projektion</h1>
-        <p className="text-sm text-white/65">Dein Weg zur finanziellen Freiheit.</p>
+        <p className="text-sm text-white/65 mt-1">Dein Weg zur finanziellen Freiheit.</p>
       </div>
 
       {freedom != null && (
@@ -39,11 +39,11 @@ export function ProjectionView({ portfolio, goals }: ProjectionViewProps) {
           <table className="w-full text-sm" aria-label="Jahresprojektion">
             <thead>
               <tr className="border-b border-white/10">
-                <th scope="col" className="text-left text-xs text-white/65 font-medium px-4 py-3">Jahr</th>
-                <th scope="col" className="text-right text-xs text-white/65 font-medium px-3 py-3">Portfolio</th>
-                <th scope="col" className="text-right text-xs text-white/65 font-medium px-3 py-3">Div. / Monat</th>
-                <th scope="col" className="text-right text-xs text-white/65 font-medium px-3 py-3">Deckung</th>
-                <th scope="col" className="text-right text-xs text-white/65 font-medium px-3 py-3">Freie Tage</th>
+                <th scope="col" className="text-left   text-xs text-white/65 font-medium px-4 py-3">Jahr</th>
+                <th scope="col" className="text-right  text-xs text-white/65 font-medium px-3 py-3">Portfolio</th>
+                <th scope="col" className="text-right  text-xs text-white/65 font-medium px-3 py-3">Div. / Monat</th>
+                <th scope="col" className="text-right  text-xs text-white/65 font-medium px-3 py-3">Deckung</th>
+                <th scope="col" className="text-right  text-xs text-white/65 font-medium px-3 py-3">Freie Tage</th>
               </tr>
             </thead>
             <tbody>
@@ -58,7 +58,9 @@ export function ProjectionView({ portfolio, goals }: ProjectionViewProps) {
                   >
                     <td className="px-4 py-3 font-medium text-white">
                       {row.year}
-                      {isFreedom && <span className="ml-2 text-accent text-xs" aria-label="Freiheitsjahr">🎉</span>}
+                      {isFreedom && (
+                        <span className="ml-2 text-accent text-xs" aria-label="Freiheitsjahr">🎉</span>
+                      )}
                     </td>
                     <td className="px-3 py-3 text-right text-white/70 tabular-nums">
                       {formatEuroCompact(row.portfolioValue)}
@@ -82,10 +84,6 @@ export function ProjectionView({ portfolio, goals }: ProjectionViewProps) {
             </tbody>
           </table>
         </div>
-      </div>
-
-      <div className="text-center py-4">
-        <p className="text-white/60 text-sm">Dein Portfolio übernimmt Stück für Stück dein Leben. 💹</p>
       </div>
     </main>
   );

@@ -1,15 +1,16 @@
-type Tab = 'dashboard' | 'goals' | 'portfolio' | 'projection';
+type Tab = 'dashboard' | 'goals' | 'projection' | 'portfolio';
 
 interface TabNavProps {
   active: Tab;
   onChange: (tab: Tab) => void;
 }
 
+// Portfolio intentionally last
 const TABS: { id: Tab; label: string; emoji: string }[] = [
-  { id: 'dashboard', label: 'Dashboard', emoji: '📊' },
-  { id: 'goals', label: 'Ziele', emoji: '🎯' },
-  { id: 'portfolio', label: 'Portfolio', emoji: '💼' },
-  { id: 'projection', label: 'Projektion', emoji: '📈' },
+  { id: 'dashboard',  label: 'Dashboard', emoji: '📊' },
+  { id: 'goals',      label: 'Ziele',     emoji: '🎯' },
+  { id: 'projection', label: 'Projektion',emoji: '📈' },
+  { id: 'portfolio',  label: 'Portfolio', emoji: '💼' },
 ];
 
 export function TabNav({ active, onChange }: TabNavProps) {
