@@ -1,5 +1,6 @@
 import { Fragment } from 'react';
 import type { TimelineEntry, Goal, Portfolio } from '../../types';
+import { CategoryIcon } from '../goals/CategoryIcon';
 import {
   buildFreedomTimeline,
   freedomYear,
@@ -80,7 +81,9 @@ function EntryCard({ entry }: { entry: TimelineEntry }) {
               {entry.newGoals.map((goal) => (
                 <li key={goal.id} className="flex items-center gap-2 text-sm">
                   <span className="text-xs font-bold flex-shrink-0 text-accent">✓</span>
-                  <span className="text-lg flex-shrink-0" aria-hidden="true">{goal.emoji}</span>
+                  <span className="flex-shrink-0 text-white/60">
+                    <CategoryIcon category={goal.category} className="w-4 h-4" />
+                  </span>
                   <span className="flex-1 min-w-0 truncate text-white/90">{goal.name}</span>
                   <span className="text-xs text-white/50 flex-shrink-0 tabular-nums">
                     {formatEuro(goal.monthlyAmount)} / Mo.
