@@ -1,4 +1,11 @@
-import type { Goal, GoalResult, GoalStatus, Portfolio, ProjectionYear, SortMode } from '../types';
+import type {
+  DisplayFilter,
+  Goal,
+  GoalResult,
+  GoalStatus,
+  Portfolio,
+  ProjectionYear,
+} from '../types';
 import { CATEGORY_ORDER, CURRENT_YEAR } from '../constants/defaultData';
 
 export function annualDividends(portfolio: Portfolio): number {
@@ -29,18 +36,10 @@ function goalStatus(pct: number): GoalStatus {
   return 'open';
 }
 
-export function sortGoals(goals: Goal[], mode: SortMode): Goal[] {
-  const copy = [...goals];
-  if (mode === 'amount') {
-    return copy.sort((a, b) => a.monthlyAmount - b.monthlyAmount);
-  }
-  if (mode === 'category') {
-    return copy.sort((a, b) => {
-      const catDiff = (CATEGORY_ORDER[a.category] ?? 99) - (CATEGORY_ORDER[b.category] ?? 99);
-      return catDiff !== 0 ? catDiff : a.monthlyAmount - b.monthlyAmount;
-    });
-  }
-  return copy;
+// Internal: sort goals ascending by amount (cheap → expensive).
+// Coverage always allocates in this order so the most goals get fully covered.
+function byAmountAsc(goals: Goal[]): Goal[] {
+  return [...goals].sort((a, b) => a.monthlyAmount - b.monthlyAmount);
 }
 
 // Compound projection: dividends grow at dividendGrowth % per year,
@@ -50,27 +49,32 @@ function projectMonthlyDividendsAtYear(portfolio: Portfolio, years: number): num
   const baseMonthly = monthlyDividends(portfolio);
   const annualSavingsDividends = portfolio.monthlySavings * 12 * (portfolio.dividendYield / 100);
 
-  // Future value of existing dividends growing at g
   const existingFV = baseMonthly * Math.pow(1 + g, years);
-
-  // Future value of annuity: each year's new dividend contribution grows for remaining years
-  const savingsFV = g > 0
-    ? (annualSavingsDividends / 12) * ((Math.pow(1 + g, years) - 1) / g)
-    : (annualSavingsDividends / 12) * years;
+  const savingsFV =
+    g > 0
+      ? (annualSavingsDividends / 12) * ((Math.pow(1 + g, years) - 1) / g)
+      : (annualSavingsDividends / 12) * years;
 
   return existingFV + savingsFV;
 }
 
+/**
+ * Compute coverage for each goal.
+ * Allocation is always ascending by amount (cheapest covered first).
+ * Results are returned in the original `goals` array order
+ * so the caller can apply any display filter independently.
+ */
 export function computeGoalResults(
   goals: Goal[],
   monthly: number,
-  sortMode: SortMode,
   portfolio: Portfolio,
 ): GoalResult[] {
-  const sorted = sortGoals(goals, sortMode);
+  const allocationOrder = byAmountAsc(goals);
   let remaining = monthly;
 
-  return sorted.map((goal) => {
+  const resultMap = new Map<string, GoalResult>();
+
+  for (const goal of allocationOrder) {
     const covered = Math.min(remaining, goal.monthlyAmount);
     remaining = Math.max(0, remaining - goal.monthlyAmount);
     const pct = goal.monthlyAmount > 0 ? (covered / goal.monthlyAmount) * 100 : 0;
@@ -81,9 +85,9 @@ export function computeGoalResults(
     } else {
       for (let y = 1; y <= 50; y++) {
         const projMonthly = projectMonthlyDividendsAtYear(portfolio, y);
-        const projSorted = sortGoals(goals, sortMode);
+        const projOrder = byAmountAsc(goals);
         let rem = projMonthly;
-        for (const g of projSorted) {
+        for (const g of projOrder) {
           const c = Math.min(rem, g.monthlyAmount);
           rem = Math.max(0, rem - g.monthlyAmount);
           if (g.id === goal.id && c >= g.monthlyAmount) {
@@ -95,39 +99,64 @@ export function computeGoalResults(
       }
     }
 
-    return {
+    resultMap.set(goal.id, {
       ...goal,
       status: goalStatus(pct),
       coveredAmount: covered,
       coveragePercent: pct,
       achievedYear,
-    };
-  });
+    });
+  }
+
+  // Preserve original order; filter out any orphan ids (safety)
+  return goals.map((g) => resultMap.get(g.id)).filter((r): r is GoalResult => r != null);
+}
+
+/**
+ * Sort and optionally filter goal results for display purposes.
+ * Does not affect coverage allocation.
+ */
+export function applyDisplayFilter(results: GoalResult[], filter: DisplayFilter): GoalResult[] {
+  let out = [...results];
+
+  if (filter.mode === 'covered') {
+    out = out.filter((r) => r.status === 'covered');
+  } else if (filter.mode === 'open') {
+    out = out.filter((r) => r.status !== 'covered');
+  }
+
+  const sign = filter.dir === 'asc' ? 1 : -1;
+
+  if (filter.mode === 'category') {
+    out.sort((a, b) => {
+      const catDiff =
+        ((CATEGORY_ORDER[a.category] ?? 99) - (CATEGORY_ORDER[b.category] ?? 99)) * sign;
+      return catDiff !== 0 ? catDiff : (a.monthlyAmount - b.monthlyAmount) * sign;
+    });
+  } else {
+    out.sort((a, b) => (a.monthlyAmount - b.monthlyAmount) * sign);
+  }
+
+  return out;
 }
 
 export function buildProjection(portfolio: Portfolio, goals: Goal[]): ProjectionYear[] {
   const total = totalMonthlyCosts(goals);
   const results: ProjectionYear[] = [];
-
   let pv = portfolio.value;
   const baseMonthly = monthlyDividends(portfolio);
 
   for (let y = 0; y <= portfolio.horizonYears; y++) {
     const projMonthly = y === 0 ? baseMonthly : projectMonthlyDividendsAtYear(portfolio, y);
-    const projAnnual = projMonthly * 12;
     const covPct = coveragePercent(projMonthly, total);
     const freeDays = freeDaysPerMonth(projMonthly, total);
 
-    const sorted = sortGoals(goals, 'amount');
+    const sorted = byAmountAsc(goals);
     let rem = projMonthly;
     let covGoals = 0;
     for (const g of sorted) {
-      if (rem >= g.monthlyAmount) {
-        covGoals++;
-        rem -= g.monthlyAmount;
-      } else {
-        break;
-      }
+      if (rem >= g.monthlyAmount) { covGoals++; rem -= g.monthlyAmount; }
+      else break;
     }
 
     if (y > 0) {
@@ -137,7 +166,7 @@ export function buildProjection(portfolio: Portfolio, goals: Goal[]): Projection
     results.push({
       year: CURRENT_YEAR + y,
       portfolioValue: pv,
-      annualDividends: projAnnual,
+      annualDividends: projMonthly * 12,
       monthlyDividends: projMonthly,
       coveragePercent: covPct,
       coveredGoals: covGoals,

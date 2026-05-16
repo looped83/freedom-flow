@@ -48,4 +48,10 @@ export interface AppState {
   goals: Goal[];
 }
 
-export type SortMode = 'amount' | 'category' | 'default';
+// Dashboard display filter – separate from coverage allocation order
+export type FilterMode = 'amount' | 'category' | 'covered' | 'open';
+export type SortDir = 'asc' | 'desc';
+export interface DisplayFilter {
+  mode: FilterMode;
+  dir: SortDir;
+}
