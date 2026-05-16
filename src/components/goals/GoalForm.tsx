@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import type { Goal, GoalCategory } from '../../types';
-import { parseGerman } from '../../utils/formatting';
+import { liveFormatAmount, parseGerman } from '../../utils/formatting';
 
 const CATEGORIES: GoalCategory[] = [
   'Wohnen', 'Kommunikation', 'Versicherungen', 'Ernährung', 'Gesundheit', 'Freizeit', 'Sonstiges',
@@ -38,17 +38,6 @@ const EMOJI_OPTIONS: { emoji: string; name: string }[] = [
 ];
 
 const fmt2 = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-/** Add German thousand-separator dots to the integer part while preserving the decimal comma. */
-function liveFormatAmount(raw: string): string {
-  // Strip existing thousand-separator dots, keep only digits + one comma
-  const stripped = raw.replace(/\./g, '').replace(/[^0-9,]/g, '');
-  const commaIdx = stripped.indexOf(',');
-  const intPart = commaIdx >= 0 ? stripped.slice(0, commaIdx) : stripped;
-  const decPart = commaIdx >= 0 ? stripped.slice(commaIdx + 1) : null;
-  const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  return decPart !== null ? `${formattedInt},${decPart}` : formattedInt;
-}
 
 interface GoalFormProps {
   initial?: Goal;
