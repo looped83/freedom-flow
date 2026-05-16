@@ -24,6 +24,28 @@ export interface Portfolio {
   dividendGrowth: number;
   priceReturn: number;
   horizonYears: number;
+  monthlyIncome: number;
+}
+
+export type UnlockType = 'income' | 'goal' | 'freedom' | 'lifetime';
+
+export interface Unlock {
+  id: string;
+  type: UnlockType;
+  title: string;
+  subtitle: string;
+  emoji: string;
+  achieved: boolean;
+  progressPct: number;      // 0–100
+  missingMonthly: number;   // how much more €/month needed (0 if achieved)
+}
+
+export interface TimelineEntry {
+  year: number;
+  projectedMonthly: number;
+  newGoals: Goal[];          // goals newly unlocked this year
+  isCurrentYear: boolean;    // year 0 = already achieved today
+  isFreedomYear: boolean;    // all goals covered this year
 }
 
 export interface GoalResult extends Goal {

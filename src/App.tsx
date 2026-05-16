@@ -11,8 +11,8 @@ const GoalList = lazy(() =>
 const PortfolioForm = lazy(() =>
   import('./components/portfolio/PortfolioForm').then(({ PortfolioForm: C }) => ({ default: C })),
 );
-const ProjectionView = lazy(() =>
-  import('./components/dashboard/ProjectionView').then(({ ProjectionView: C }) => ({ default: C })),
+const FreedomTimeline = lazy(() =>
+  import('./components/timeline/FreedomTimeline').then(({ FreedomTimeline: C }) => ({ default: C })),
 );
 
 function TabFallback() {
@@ -44,6 +44,10 @@ export default function App() {
     }
   }
 
+  function handleIncomeChange(v: number) {
+    actions.setPortfolio({ ...state.portfolio, monthlyIncome: v });
+  }
+
   return (
     <div className="min-h-screen bg-surface text-white pb-16 sm:pb-0">
       <Header />
@@ -55,6 +59,7 @@ export default function App() {
           goals={state.goals}
           displayFilter={displayFilter}
           onFilterChange={handleFilterChange}
+          onIncomeChange={handleIncomeChange}
         />
       )}
 
@@ -67,8 +72,8 @@ export default function App() {
             onDelete={actions.deleteGoal}
           />
         )}
-        {tab === 'projection' && (
-          <ProjectionView portfolio={state.portfolio} goals={state.goals} />
+        {tab === 'timeline' && (
+          <FreedomTimeline portfolio={state.portfolio} goals={state.goals} />
         )}
         {tab === 'portfolio' && (
           <PortfolioForm portfolio={state.portfolio} onSave={actions.setPortfolio} onReset={handleReset} />

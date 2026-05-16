@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-type Tab = 'dashboard' | 'goals' | 'projection' | 'portfolio';
+type Tab = 'dashboard' | 'goals' | 'timeline' | 'portfolio';
 
 interface TabNavProps {
   active: Tab;
@@ -20,7 +20,7 @@ const ICONS: Record<Tab, ReactNode> = {
       <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>
     </svg>
   ),
-  projection: (
+  timeline: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
       <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
       <polyline points="16 7 22 7 22 13"/>
@@ -36,10 +36,10 @@ const ICONS: Record<Tab, ReactNode> = {
 
 // Portfolio intentionally last
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'dashboard',  label: 'Dashboard'  },
-  { id: 'goals',      label: 'Ziele'      },
-  { id: 'projection', label: 'Projektion' },
-  { id: 'portfolio',  label: 'Portfolio'  },
+  { id: 'dashboard', label: 'Dashboard' },
+  { id: 'goals',     label: 'Ziele'     },
+  { id: 'timeline',  label: 'Timeline'  },
+  { id: 'portfolio', label: 'Portfolio' },
 ];
 
 export function TabNav({ active, onChange }: TabNavProps) {

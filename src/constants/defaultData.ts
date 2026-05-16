@@ -8,6 +8,7 @@ export const DEFAULT_PORTFOLIO: Portfolio = {
   dividendGrowth: 6.5,
   priceReturn: 5.0,
   horizonYears: 10,
+  monthlyIncome: 808,
 };
 
 export const CURRENT_YEAR = 2026;

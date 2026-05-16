@@ -1,23 +1,25 @@
-import { useRef, useState } from 'react';
 import type { DisplayFilter, FilterMode, Goal, Portfolio } from '../../types';
 import {
   applyDisplayFilter,
+  buildLifeUnlocks,
   computeGoalResults,
-  coveragePercent,
   freeDaysPerMonth,
   monthlyDividends,
   totalMonthlyCosts,
 } from '../../utils/calculations';
 import { formatEuro, formatPercent } from '../../utils/formatting';
-import { MetricCard } from './MetricCard';
 import { ProgressBar } from './ProgressBar';
 import { FreedomCalendar } from './FreedomCalendar';
+import { FreedomHero } from './FreedomHero';
+import { QuickIncome } from './QuickIncome';
+import { LifeUnlocks } from './LifeUnlocks';
 
 interface DashboardProps {
   portfolio: Portfolio;
   goals: Goal[];
   displayFilter: DisplayFilter;
   onFilterChange: (mode: FilterMode) => void;
+  onIncomeChange: (v: number) => void;
 }
 
 const FILTER_CONFIG: { mode: FilterMode; label: string }[] = [
@@ -32,22 +34,9 @@ function dirArrow(filter: DisplayFilter, mode: FilterMode): string {
   return filter.dir === 'desc' ? ' ↓' : ' ↑';
 }
 
-export function Dashboard({ portfolio, goals, displayFilter, onFilterChange }: DashboardProps) {
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const [activeDot, setActiveDot] = useState(0);
-
-  function handleCarouselScroll() {
-    const el = carouselRef.current;
-    if (!el) return;
-    const maxScroll = el.scrollWidth - el.clientWidth;
-    if (maxScroll <= 0) return;
-    setActiveDot(Math.min(2, Math.round((el.scrollLeft / maxScroll) * 2)));
-  }
-
+export function Dashboard({ portfolio, goals, displayFilter, onFilterChange, onIncomeChange }: DashboardProps) {
   const monthly = monthlyDividends(portfolio);
   const total = totalMonthlyCosts(goals);
-  const covPct = coveragePercent(monthly, total);
-  const missing = Math.max(0, total - monthly);
   const freeDays = freeDaysPerMonth(monthly, total);
 
   // Coverage allocation is always ascending-by-amount (cheapest covered first)
@@ -55,73 +44,27 @@ export function Dashboard({ portfolio, goals, displayFilter, onFilterChange }: D
   // Display is filtered/sorted per user selection
   const displayResults = applyDisplayFilter(allResults, displayFilter);
 
-  const coveredAll = allResults.filter((g) => g.status === 'covered');
   // Next goal: first not-yet-covered in allocation order (ascending amount)
   const nextGoal = allResults
     .slice()
     .sort((a, b) => a.monthlyAmount - b.monthlyAmount)
     .find((g) => g.status !== 'covered');
 
-  const showCoveredSection =
-    coveredAll.length > 0 &&
-    displayFilter.mode !== 'covered'; // redundant when filter already shows only covered
+  const lifeUnlocks = buildLifeUnlocks(allResults, monthly, total, freeDays);
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
 
-      {/* 1. Hero metrics – carousel on mobile, grid on desktop */}
-      <div>
-        <div
-          ref={carouselRef}
-          role="group"
-          aria-label="Kennzahlen"
-          onScroll={handleCarouselScroll}
-          className="no-scrollbar flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-pl-4 -mx-4 px-4 pb-1
-                     sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:mx-0 sm:px-0 sm:pb-0 sm:scroll-pl-0"
-        >
-          {[
-            { label: 'Monatliche Dividenden', value: formatEuro(monthly),    sub: 'Passives Einkommen',            accent: 'green' as const },
-            { label: 'Deckungsgrad',          value: formatPercent(covPct),  sub: `von ${formatEuro(total)} mtl.`, accent: 'gold'  as const },
-            { label: 'Noch fehlend',          value: formatEuro(missing),    sub: 'bis zur vollen Freiheit',       accent: 'blue'  as const },
-          ].map((m) => (
-            <div key={m.label} className="flex-none w-[82vw] snap-start sm:w-full sm:flex-auto">
-              <MetricCard {...m} />
-            </div>
-          ))}
-        </div>
+      {/* 1. FreedomHero – SVG ring + 3 stats */}
+      <FreedomHero monthly={monthly} total={total} />
 
-        {/* Slide dots – mobile only */}
-        <div className="flex justify-center gap-2 mt-2 sm:hidden" aria-hidden="true">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className={`rounded-full transition-all duration-200 ${
-                activeDot === i ? 'w-4 h-1.5 bg-accent' : 'w-1.5 h-1.5 bg-white/20'
-              }`}
-            />
-          ))}
-        </div>
-      </div>
+      {/* 2. QuickIncome – large editable income + steppers */}
+      <QuickIncome monthly={monthly} onChange={onIncomeChange} />
 
-      {/* 2. Overall progress */}
-      <section className="bg-surface-1 rounded-2xl p-5" aria-labelledby="overall-progress-title">
-        <div className="flex justify-between items-center mb-3">
-          <h2 id="overall-progress-title" className="text-xs text-white/65 font-medium uppercase tracking-wider">
-            Gesamtfortschritt
-          </h2>
-          <span className="text-accent font-bold text-sm">{formatPercent(covPct)}</span>
-        </div>
-        <ProgressBar
-          percent={covPct}
-          label={`Gesamtdeckungsgrad: ${formatPercent(covPct)}`}
-          colorClass="bg-accent"
-        />
-        <p className="text-xs text-white/60 mt-2">
-          {coveredAll.length} von {goals.length} Zielen vollständig erreicht
-        </p>
-      </section>
+      {/* 3. Life Unlocks */}
+      <LifeUnlocks unlocks={lifeUnlocks} />
 
-      {/* 3. Next milestone */}
+      {/* 4. Nächstes Ziel */}
       {nextGoal && (
         <section
           className="bg-surface-1 rounded-2xl p-5 border border-accent/20"
@@ -154,29 +97,6 @@ export function Dashboard({ portfolio, goals, displayFilter, onFilterChange }: D
             Noch {formatEuro(nextGoal.monthlyAmount - nextGoal.coveredAmount)} monatliche Dividenden
             bis zum nächsten Meilenstein.
           </p>
-        </section>
-      )}
-
-      {/* 4. Covered goals quick-view */}
-      {showCoveredSection && (
-        <section aria-labelledby="covered-goals-title">
-          <h2 id="covered-goals-title" className="text-xs text-white/65 font-medium uppercase tracking-wider mb-2 px-1">
-            Bereits erreicht ✅
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {coveredAll.map((g) => (
-              <div
-                key={g.id}
-                className="bg-accent-muted border border-accent/20 rounded-xl px-3 py-2 flex items-center gap-2"
-              >
-                <span aria-hidden="true">{g.emoji}</span>
-                <div className="min-w-0">
-                  <p className="text-sm text-white font-medium truncate">{g.name}</p>
-                  <p className="text-xs text-accent">{formatEuro(g.monthlyAmount)}</p>
-                </div>
-              </div>
-            ))}
-          </div>
         </section>
       )}
 
