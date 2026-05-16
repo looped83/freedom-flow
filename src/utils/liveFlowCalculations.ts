@@ -36,6 +36,22 @@ export function calculateDayProgress(now: Date): number {
   return Math.min(secondsElapsed / 86_400, 1);
 }
 
+export function calculateEarnedThisWeekSoFar(monthlyDividends: number, now: Date): number {
+  const daily = calculateDividendRatePerDay(monthlyDividends);
+  const dayOfWeek = now.getDay(); // 0 = Sun
+  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday);
+  const secondsElapsed = (now.getTime() - startOfWeek.getTime()) / 1000;
+  return daily * (secondsElapsed / 86_400);
+}
+
+export function calculateEarnedThisMonthSoFar(monthlyDividends: number, now: Date): number {
+  const daily = calculateDividendRatePerDay(monthlyDividends);
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const secondsElapsed = (now.getTime() - startOfMonth.getTime()) / 1000;
+  return daily * (secondsElapsed / 86_400);
+}
+
 /**
  * Format a currency value with adaptive decimal places so small amounts
  * never display as 0,00 €.
