@@ -76,7 +76,7 @@ export function Dashboard({ portfolio, goals, displayFilter, onFilterChange }: D
           role="group"
           aria-label="Kennzahlen"
           onScroll={handleCarouselScroll}
-          className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-pl-4 -mx-4 px-4 pb-1
+          className="no-scrollbar flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-pl-4 -mx-4 px-4 pb-1
                      sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:mx-0 sm:px-0 sm:pb-0 sm:scroll-pl-0"
         >
           {[
