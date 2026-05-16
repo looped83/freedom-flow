@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import type { TimelineEntry, Goal, Portfolio } from '../../types';
 import {
   buildFreedomTimeline,
@@ -17,7 +18,7 @@ function YearBadge({ entry }: { entry: TimelineEntry }) {
   if (entry.isCurrentYear) {
     return (
       <div
-        className="absolute left-0 top-1.5 w-10 h-7 rounded-lg flex items-center justify-center text-xs font-bold border-2 bg-surface-3 border-accent text-accent"
+        className="absolute left-0 top-1.5 w-14 h-7 rounded-lg flex items-center justify-center text-xs font-bold border-2 bg-surface-3 border-accent text-accent"
         aria-hidden="true"
       >
         Heute
@@ -29,8 +30,6 @@ function YearBadge({ entry }: { entry: TimelineEntry }) {
       className={`absolute left-0 top-1.5 w-14 h-7 rounded-lg flex items-center justify-center text-xs font-bold border-2 ${
         entry.isFreedomYear
           ? 'bg-accent border-accent text-surface'
-          : entry.isPastYear
-          ? 'bg-surface-2 border-white/10 text-white/35'
           : 'bg-surface-2 border-white/20 text-white/70'
       }`}
       aria-hidden="true"
@@ -48,22 +47,17 @@ function EntryCard({ entry }: { entry: TimelineEntry }) {
     >
       <YearBadge entry={entry} />
 
-      <div className={`rounded-2xl p-4 ${
-        entry.isFreedomYear ? 'bg-surface-1 border border-accent/30' :
-        entry.isPastYear    ? 'bg-surface-1/60' :
-        'bg-surface-1'
-      }`}>
-        {/* Badges row */}
-        <div className="flex items-center gap-2 mb-3 min-h-[1.25rem]">
-          {entry.isFreedomYear && (
-            <span className="text-xs bg-accent/15 text-accent px-2 py-0.5 rounded-full font-semibold">
-              🏆 Vollständige Freiheit
-            </span>
-          )}
-          {entry.isPastYear && !entry.isFreedomYear && (
-            <span className="text-xs text-white/25">Rückblick</span>
-          )}
-          <span className="text-xs text-white/30 ml-auto tabular-nums">
+      <div className={`bg-surface-1 rounded-2xl p-4 ${entry.isFreedomYear ? 'border border-accent/30' : ''}`}>
+        {/* Info row: freedom badge (if any) + monthly income */}
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            {entry.isFreedomYear && (
+              <span className="text-xs bg-accent/15 text-accent px-2 py-0.5 rounded-full font-semibold">
+                🏆 Vollständige Freiheit
+              </span>
+            )}
+          </div>
+          <span className="text-xs text-white/30 tabular-nums ml-auto">
             {formatEuro(entry.projectedMonthly)} / Mo.
           </span>
         </div>
@@ -72,11 +66,9 @@ function EntryCard({ entry }: { entry: TimelineEntry }) {
           <ul className="space-y-1.5" role="list">
             {entry.newGoals.map((goal) => (
               <li key={goal.id} className="flex items-center gap-2 text-sm">
-                <span className={`text-xs font-bold flex-shrink-0 ${entry.isPastYear ? 'text-white/35' : 'text-accent'}`}>✓</span>
+                <span className="text-xs font-bold flex-shrink-0 text-accent">✓</span>
                 <span className="text-lg flex-shrink-0" aria-hidden="true">{goal.emoji}</span>
-                <span className={`flex-1 min-w-0 truncate ${entry.isPastYear ? 'text-white/45' : 'text-white/90'}`}>
-                  {goal.name}
-                </span>
+                <span className="flex-1 min-w-0 truncate text-white/90">{goal.name}</span>
                 <span className="text-xs text-white/40 flex-shrink-0 tabular-nums">
                   {formatEuro(goal.monthlyAmount)} / Mo.
                 </span>
@@ -86,6 +78,18 @@ function EntryCard({ entry }: { entry: TimelineEntry }) {
         ) : entry.isFreedomYear ? (
           <p className="text-sm text-white/45">Alle Ziele vollständig gedeckt.</p>
         ) : null}
+      </div>
+    </li>
+  );
+}
+
+function TimelineSeparator({ label }: { label: string }) {
+  return (
+    <li className="relative pl-16" aria-hidden="true">
+      <div className="flex items-center gap-3 py-1">
+        <div className="flex-1 h-px bg-white/10" />
+        <span className="text-xs text-white/30 font-medium uppercase tracking-wider px-1">{label}</span>
+        <div className="flex-1 h-px bg-white/10" />
       </div>
     </li>
   );
@@ -110,7 +114,7 @@ export function FreedomTimeline({ portfolio, goals }: FreedomTimelineProps) {
       <div className="mb-5">
         <h1 className="text-lg font-bold text-white">Freedom Timeline</h1>
         <p className="text-sm text-white/45 mt-1">
-          Welche Ziele dein Portfolio wann übernimmt – Vergangenheit und Zukunft.
+          Welche Ziele dein Portfolio wann übernimmt.
         </p>
       </div>
 
@@ -149,9 +153,17 @@ export function FreedomTimeline({ portfolio, goals }: FreedomTimelineProps) {
         <div className="relative">
           <div className="absolute left-7 top-0 bottom-0 w-px bg-white/8" aria-hidden="true" />
           <ol className="space-y-5" aria-label="Freedom Timeline">
-            {displayEntries.map((entry) => (
-              <EntryCard key={entry.year} entry={entry} />
-            ))}
+            {displayEntries.map((entry, idx) => {
+              // Insert separator before the first past entry
+              const showSeparator =
+                entry.isPastYear && (idx === 0 || !displayEntries[idx - 1].isPastYear);
+              return (
+                <Fragment key={entry.year}>
+                  {showSeparator && <TimelineSeparator label="Rückblick" />}
+                  <EntryCard entry={entry} />
+                </Fragment>
+              );
+            })}
           </ol>
         </div>
       )}
@@ -170,9 +182,6 @@ export function FreedomTimeline({ portfolio, goals }: FreedomTimelineProps) {
               </li>
             ))}
           </ul>
-          <p className="text-xs text-white/30 mt-3">
-            Anlagehorizont oder Sparrate erhöhen, um diese Ziele zu erreichen.
-          </p>
         </div>
       )}
     </main>

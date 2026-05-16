@@ -224,9 +224,15 @@ export function buildFreedomTimeline(goals: Goal[], portfolio: Portfolio): Timel
     return unlocked;
   }
 
-  // Estimate income Y years in the past by reversing the growth model
+  // Estimate income Y years in the past by reversing the full compound model
+  // (accounts for both dividend growth AND savings contributions)
   function pastMonthly(yearsAgo: number): number {
-    return g > 0 ? portfolio.monthlyIncome / Math.pow(1 + g, yearsAgo) : portfolio.monthlyIncome;
+    const growth = Math.pow(1 + g, yearsAgo);
+    const S = portfolio.monthlySavings * (portfolio.dividendYield / 100); // monthly dividend from savings
+    if (g > 0) {
+      return Math.max(0, (portfolio.monthlyIncome - S * (growth - 1) / g) / growth);
+    }
+    return Math.max(0, portfolio.monthlyIncome - S * yearsAgo);
   }
 
   // --- Retrospective: go back until income falls below the cheapest goal ---

@@ -5,14 +5,11 @@ import { Header } from './components/layout/Header';
 import { TabNav, type Tab } from './components/layout/TabNav';
 import { Dashboard } from './components/dashboard/Dashboard';
 
-const GoalList = lazy(() =>
-  import('./components/goals/GoalList').then(({ GoalList: C }) => ({ default: C })),
-);
-const PortfolioForm = lazy(() =>
-  import('./components/portfolio/PortfolioForm').then(({ PortfolioForm: C }) => ({ default: C })),
-);
 const FreedomTimeline = lazy(() =>
   import('./components/timeline/FreedomTimeline').then(({ FreedomTimeline: C }) => ({ default: C })),
+);
+const SetupPage = lazy(() =>
+  import('./components/setup/SetupPage').then(({ SetupPage: C }) => ({ default: C })),
 );
 
 function TabFallback() {
@@ -25,14 +22,12 @@ function TabFallback() {
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('dashboard');
-  // Default: expensive goals shown first
   const [displayFilter, setDisplayFilter] = useState<DisplayFilter>({ mode: 'amount', dir: 'desc' });
   const { state, actions } = useAppState();
 
   function handleFilterChange(mode: DisplayFilter['mode']) {
     setDisplayFilter((prev) => ({
       mode,
-      // Clicking the active filter toggles direction; new filter starts desc
       dir: prev.mode === mode ? (prev.dir === 'desc' ? 'asc' : 'desc') : 'desc',
     }));
   }
@@ -49,7 +44,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-surface text-white pb-16 sm:pb-0">
+    <div className="min-h-screen bg-surface text-white pb-28 sm:pb-0">
       <Header />
       <TabNav active={tab} onChange={setTab} />
 
@@ -64,19 +59,19 @@ export default function App() {
       )}
 
       <Suspense fallback={<TabFallback />}>
-        {tab === 'goals' && (
-          <GoalList
-            goals={state.goals}
-            onAdd={actions.addGoal}
-            onUpdate={actions.updateGoal}
-            onDelete={actions.deleteGoal}
-          />
-        )}
         {tab === 'timeline' && (
           <FreedomTimeline portfolio={state.portfolio} goals={state.goals} />
         )}
-        {tab === 'portfolio' && (
-          <PortfolioForm portfolio={state.portfolio} onSave={actions.setPortfolio} onReset={handleReset} />
+        {tab === 'setup' && (
+          <SetupPage
+            goals={state.goals}
+            portfolio={state.portfolio}
+            onAdd={actions.addGoal}
+            onUpdate={actions.updateGoal}
+            onDelete={actions.deleteGoal}
+            onSavePortfolio={actions.setPortfolio}
+            onReset={handleReset}
+          />
         )}
       </Suspense>
     </div>
