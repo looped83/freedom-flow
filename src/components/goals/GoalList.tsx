@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Goal } from '../../types';
 import { totalMonthlyCosts } from '../../utils/calculations';
 import { formatEuro } from '../../utils/formatting';
@@ -10,6 +10,7 @@ interface GoalListProps {
   onAdd: (g: Goal) => void;
   onUpdate: (g: Goal) => void;
   onDelete: (id: string) => void;
+  focusGoalId?: string | null;
 }
 
 const SWIPE_DELETE_PX = 160;
@@ -36,10 +37,21 @@ function IconChevron({ open }: { open: boolean }) {
   );
 }
 
-export function GoalList({ goals, onAdd, onUpdate, onDelete }: GoalListProps) {
+export function GoalList({ goals, onAdd, onUpdate, onDelete, focusGoalId }: GoalListProps) {
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  const liRefs = useRef<Map<string, HTMLLIElement>>(new Map());
+
+  useEffect(() => {
+    if (!focusGoalId) return;
+    const timer = setTimeout(() => {
+      setEditingId(focusGoalId);
+      liRefs.current.get(focusGoalId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [focusGoalId]);
 
   // Swipe state – only one item can be actively swiped at a time
   const touchRef = useRef<{
@@ -148,7 +160,11 @@ export function GoalList({ goals, onAdd, onUpdate, onDelete }: GoalListProps) {
           const opacity = getDeleteBgOpacity(goal.id);
 
           return (
-            <li key={goal.id} className="rounded-xl relative overflow-hidden">
+            <li
+              key={goal.id}
+              className="rounded-xl relative overflow-hidden"
+              ref={(el) => { if (el) liRefs.current.set(goal.id, el); else liRefs.current.delete(goal.id); }}
+            >
 
               {/* Swipe-delete background – fades in as card slides left */}
               <div

@@ -14,6 +14,7 @@ interface SetupPageProps {
   onDelete: (id: string) => void;
   onSavePortfolio: (p: Portfolio) => void;
   onReset: () => void;
+  focusGoalId?: string | null;
 }
 
 const SETUP_ICON = (
@@ -23,7 +24,7 @@ const SETUP_ICON = (
   </svg>
 );
 
-export function SetupPage({ goals, portfolio, onAdd, onUpdate, onDelete, onSavePortfolio, onReset }: SetupPageProps) {
+export function SetupPage({ goals, portfolio, onAdd, onUpdate, onDelete, onSavePortfolio, onReset, focusGoalId }: SetupPageProps) {
   const [active, setActive] = useState<SetupTab>('goals');
 
   return (
@@ -58,7 +59,7 @@ export function SetupPage({ goals, portfolio, onAdd, onUpdate, onDelete, onSaveP
 
       <div role="tabpanel">
         {active === 'goals' ? (
-          <GoalList goals={goals} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} />
+          <GoalList goals={goals} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} focusGoalId={focusGoalId} />
         ) : (
           <PortfolioForm portfolio={portfolio} onSave={onSavePortfolio} onReset={onReset} />
         )}

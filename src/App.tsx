@@ -1,5 +1,4 @@
 import { lazy, Suspense, useState } from 'react';
-import type { DisplayFilter } from './types';
 import { useAppState } from './hooks/useAppState';
 import { Header } from './components/layout/Header';
 import { TabNav, type Tab } from './components/layout/TabNav';
@@ -25,14 +24,12 @@ function TabFallback() {
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('dashboard');
-  const [displayFilter, setDisplayFilter] = useState<DisplayFilter>({ mode: 'amount', dir: 'desc' });
+  const [focusGoalId, setFocusGoalId] = useState<string | null>(null);
   const { state, actions } = useAppState();
 
-  function handleFilterChange(mode: DisplayFilter['mode']) {
-    setDisplayFilter((prev) => ({
-      mode,
-      dir: prev.mode === mode ? (prev.dir === 'desc' ? 'asc' : 'desc') : 'desc',
-    }));
+  function handleGoalClick(id: string) {
+    setFocusGoalId(id);
+    setTab('setup');
   }
 
   function handleReset() {
@@ -55,9 +52,8 @@ export default function App() {
         <Dashboard
           portfolio={state.portfolio}
           goals={state.goals}
-          displayFilter={displayFilter}
-          onFilterChange={handleFilterChange}
           onIncomeChange={handleIncomeChange}
+          onGoalClick={handleGoalClick}
         />
       )}
 
@@ -77,6 +73,7 @@ export default function App() {
             onDelete={actions.deleteGoal}
             onSavePortfolio={actions.setPortfolio}
             onReset={handleReset}
+            focusGoalId={focusGoalId}
           />
         )}
       </Suspense>

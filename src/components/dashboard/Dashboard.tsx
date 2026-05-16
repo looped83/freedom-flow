@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import type { DisplayFilter, FilterMode, Goal, Portfolio } from '../../types';
+import type { Goal, GoalResult, Portfolio } from '../../types';
 import {
-  applyDisplayFilter,
   buildLifeUnlocks,
   computeGoalResults,
   freeDaysPerMonth,
@@ -17,24 +16,35 @@ import { LifeUnlocks } from './LifeUnlocks';
 
 const MAX_VISIBLE_GOALS = 5;
 
+type GoalFilter = 'all' | 'covered' | 'open';
+type SortType = 'alpha' | 'amount';
+type SortDir = 'asc' | 'desc';
+
+interface GoalSort { type: SortType; dir: SortDir }
+
 interface DashboardProps {
   portfolio: Portfolio;
   goals: Goal[];
-  displayFilter: DisplayFilter;
-  onFilterChange: (mode: FilterMode) => void;
   onIncomeChange: (v: number) => void;
+  onGoalClick?: (id: string) => void;
 }
 
-const FILTER_CONFIG: { mode: FilterMode; label: string }[] = [
-  { mode: 'amount',   label: 'Betrag'    },
-  { mode: 'category', label: 'Kategorie' },
-  { mode: 'covered',  label: 'Erreicht'  },
-  { mode: 'open',     label: 'Offen'     },
-];
+function applyFilter(results: GoalResult[], filter: GoalFilter): GoalResult[] {
+  if (filter === 'covered') return results.filter((g) => g.status === 'covered');
+  if (filter === 'open')    return results.filter((g) => g.status !== 'covered');
+  return results;
+}
 
-function dirArrow(filter: DisplayFilter, mode: FilterMode): string {
-  if (filter.mode !== mode) return '';
-  return filter.dir === 'desc' ? ' ↓' : ' ↑';
+function applySort(results: GoalResult[], sort: GoalSort): GoalResult[] {
+  const sorted = [...results];
+  if (sort.type === 'alpha') {
+    sorted.sort((a, b) => a.name.localeCompare(b.name, 'de'));
+    if (sort.dir === 'desc') sorted.reverse();
+  } else {
+    sorted.sort((a, b) => a.monthlyAmount - b.monthlyAmount);
+    if (sort.dir === 'desc') sorted.reverse();
+  }
+  return sorted;
 }
 
 const DASHBOARD_ICON = (
@@ -43,15 +53,17 @@ const DASHBOARD_ICON = (
   </svg>
 );
 
-export function Dashboard({ portfolio, goals, displayFilter, onFilterChange, onIncomeChange }: DashboardProps) {
+export function Dashboard({ portfolio, goals, onIncomeChange, onGoalClick }: DashboardProps) {
   const [showAllGoals, setShowAllGoals] = useState(false);
+  const [goalFilter, setGoalFilter] = useState<GoalFilter>('all');
+  const [goalSort, setGoalSort] = useState<GoalSort>({ type: 'amount', dir: 'desc' });
 
   const monthly = monthlyDividends(portfolio);
   const total = totalMonthlyCosts(goals);
   const freeDays = freeDaysPerMonth(monthly, total);
 
   const allResults = computeGoalResults(goals, monthly, portfolio);
-  const displayResults = applyDisplayFilter(allResults, displayFilter);
+  const displayResults = applySort(applyFilter(allResults, goalFilter), goalSort);
 
   const nextGoal = allResults
     .slice()
@@ -63,9 +75,16 @@ export function Dashboard({ portfolio, goals, displayFilter, onFilterChange, onI
   const visibleGoals = showAllGoals ? displayResults : displayResults.slice(0, MAX_VISIBLE_GOALS);
 
   const goalsTitle =
-    displayFilter.mode === 'covered' ? 'Erreichte Ziele'
-    : displayFilter.mode === 'open'  ? 'Offene Ziele'
+    goalFilter === 'covered' ? 'Erreichte Ziele'
+    : goalFilter === 'open'  ? 'Offene Ziele'
     : 'Alle Ziele';
+
+  function handleSortChange(type: SortType) {
+    setGoalSort((prev) => {
+      if (prev.type === type) return { type, dir: prev.dir === 'asc' ? 'desc' : 'asc' };
+      return { type, dir: type === 'amount' ? 'desc' : 'asc' };
+    });
+  }
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
@@ -89,17 +108,19 @@ export function Dashboard({ portfolio, goals, displayFilter, onFilterChange, onI
                 {formatEuro(nextGoal.coveredAmount)} / {formatEuro(nextGoal.monthlyAmount)}
                 {nextGoal.achievedYear != null && ` · erreichbar ${nextGoal.achievedYear}`}
               </p>
-              <div className="mt-2">
-                <ProgressBar
-                  percent={nextGoal.coveragePercent}
-                  label={`Fortschritt ${nextGoal.name}: ${formatPercent(nextGoal.coveragePercent)}`}
-                  colorClass="bg-gold"
-                />
+              <div className="mt-2 flex items-center gap-2">
+                <div className="flex-1">
+                  <ProgressBar
+                    percent={nextGoal.coveragePercent}
+                    label={`Fortschritt ${nextGoal.name}: ${formatPercent(nextGoal.coveragePercent)}`}
+                    colorClass="bg-gold"
+                  />
+                </div>
+                <span className="text-gold font-bold text-xs flex-shrink-0">
+                  {formatPercent(nextGoal.coveragePercent)}
+                </span>
               </div>
             </div>
-            <span className="text-gold font-bold text-sm flex-shrink-0">
-              {formatPercent(nextGoal.coveragePercent)}
-            </span>
           </div>
           <p className="text-xs text-accent/70 mt-3">
             Noch {formatEuro(nextGoal.monthlyAmount - nextGoal.coveredAmount)} bis zum nächsten Meilenstein.
@@ -110,7 +131,7 @@ export function Dashboard({ portfolio, goals, displayFilter, onFilterChange, onI
       {/* Freedom Calendar */}
       <FreedomCalendar freeDaysPerMonth={freeDays} />
 
-      {/* Consolidated tile: Life Unlocks · Erreicht · Alle Ziele */}
+      {/* Consolidated tile: Meilensteine · Alle Ziele */}
       <section className="bg-surface-1 rounded-2xl p-5 border border-white/5 space-y-5">
 
         <LifeUnlocks unlocks={lifeUnlocks} />
@@ -119,32 +140,52 @@ export function Dashboard({ portfolio, goals, displayFilter, onFilterChange, onI
 
         {/* Alle Ziele */}
         <div className="space-y-3">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center justify-between gap-2">
             <h2 className="text-sm font-semibold text-white">
               {goalsTitle}
               <span className="text-white/40 font-normal ml-1.5">({displayResults.length})</span>
             </h2>
-            <div className="flex gap-1.5 flex-wrap" role="group" aria-label="Ansicht wählen">
-              {FILTER_CONFIG.map(({ mode, label }) => {
-                const active = displayFilter.mode === mode;
-                const fullLabel = active ? `${label}${dirArrow(displayFilter, mode)}` : label;
-                return (
-                  <button
-                    key={mode}
-                    onClick={() => onFilterChange(mode)}
-                    aria-pressed={active}
-                    aria-label={active ? `Sortierung: ${fullLabel}, zum Umkehren erneut klicken` : `Nach ${label} filtern`}
-                    className={`text-xs px-3 py-1 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
-                      active
-                        ? 'bg-accent text-surface font-semibold'
-                        : 'bg-surface-2 text-white/55 hover:text-white/80'
-                    }`}
-                  >
-                    {fullLabel}
-                  </button>
-                );
-              })}
+            {/* Sort control */}
+            <div className="flex rounded-lg overflow-hidden border border-white/10" role="group" aria-label="Sortierung">
+              <button
+                onClick={() => handleSortChange('alpha')}
+                aria-pressed={goalSort.type === 'alpha'}
+                className={`text-xs px-3 py-1 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+                  goalSort.type === 'alpha' ? 'bg-accent/20 text-accent font-semibold' : 'text-white/45 hover:text-white/70'
+                }`}
+              >
+                {goalSort.type === 'alpha' ? (goalSort.dir === 'asc' ? 'A–Z' : 'Z–A') : 'A–Z'}
+              </button>
+              <button
+                onClick={() => handleSortChange('amount')}
+                aria-pressed={goalSort.type === 'amount'}
+                className={`text-xs px-3 py-1 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+                  goalSort.type === 'amount' ? 'bg-accent/20 text-accent font-semibold' : 'text-white/45 hover:text-white/70'
+                }`}
+              >
+                {goalSort.type === 'amount' ? (goalSort.dir === 'desc' ? '↓ €' : '↑ €') : '↓↑ €'}
+              </button>
             </div>
+          </div>
+
+          {/* Filter control */}
+          <div className="flex rounded-lg overflow-hidden border border-white/10 self-start w-fit" role="group" aria-label="Ziele filtern">
+            {([
+              { id: 'all',     label: 'Alle'    },
+              { id: 'covered', label: 'Erreicht' },
+              { id: 'open',    label: 'Offen'   },
+            ] as { id: GoalFilter; label: string }[]).map(({ id, label }) => (
+              <button
+                key={id}
+                onClick={() => setGoalFilter(id)}
+                aria-pressed={goalFilter === id}
+                className={`text-xs px-3 py-1 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+                  goalFilter === id ? 'bg-accent/20 text-accent font-semibold' : 'text-white/45 hover:text-white/70'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
           {displayResults.length === 0 ? (
@@ -158,33 +199,39 @@ export function Dashboard({ portfolio, goals, displayFilter, onFilterChange, onI
                     : g.status === 'partial' ? 'bg-gold'
                     : 'bg-white/20';
                   return (
-                    <li key={g.id} className="bg-surface-2 rounded-xl px-4 py-3 flex items-center gap-3">
-                      <span className="text-xl flex-shrink-0" aria-hidden="true">{g.emoji}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-baseline mb-1">
-                          <span className="text-sm text-white font-medium truncate pr-2">{g.name}</span>
-                          <span className="text-xs text-white/55 flex-shrink-0 tabular-nums">
-                            {formatEuro(g.coveredAmount)} / {formatEuro(g.monthlyAmount)}
-                          </span>
+                    <li key={g.id}>
+                      <button
+                        onClick={() => onGoalClick?.(g.id)}
+                        className="w-full bg-surface-2 rounded-xl px-4 py-3 flex items-center gap-3 text-left hover:bg-surface-3 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                        aria-label={`${g.name} in Setup öffnen`}
+                      >
+                        <span className="text-xl flex-shrink-0" aria-hidden="true">{g.emoji}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-baseline mb-1">
+                            <span className="text-sm text-white font-medium truncate pr-2">{g.name}</span>
+                            <span className="text-xs text-white/55 flex-shrink-0 tabular-nums">
+                              {formatEuro(g.coveredAmount)} / {formatEuro(g.monthlyAmount)}
+                            </span>
+                          </div>
+                          <ProgressBar
+                            percent={g.coveragePercent}
+                            label={`${g.name}: ${formatPercent(g.coveragePercent)} gedeckt`}
+                            colorClass={barColor}
+                          />
                         </div>
-                        <ProgressBar
-                          percent={g.coveragePercent}
-                          label={`${g.name}: ${formatPercent(g.coveragePercent)} gedeckt`}
-                          colorClass={barColor}
-                        />
-                      </div>
-                      <div className="flex-shrink-0 text-right min-w-[2.5rem]">
-                        <span className={`text-xs font-bold ${
-                          g.status === 'covered' ? 'text-accent'
-                          : g.status === 'partial' ? 'text-gold'
-                          : 'text-white/45'
-                        }`}>
-                          {g.status === 'covered' ? '✓' : formatPercent(g.coveragePercent, 0)}
-                        </span>
-                        {g.achievedYear != null && g.status !== 'covered' && (
-                          <p className="text-xs text-white/40">{g.achievedYear}</p>
-                        )}
-                      </div>
+                        <div className="flex-shrink-0 text-right min-w-[2.5rem]">
+                          <span className={`text-xs font-bold ${
+                            g.status === 'covered' ? 'text-accent'
+                            : g.status === 'partial' ? 'text-gold'
+                            : 'text-white/45'
+                          }`}>
+                            {g.status === 'covered' ? '✓' : formatPercent(g.coveragePercent, 0)}
+                          </span>
+                          {g.achievedYear != null && g.status !== 'covered' && (
+                            <p className="text-xs text-white/40">{g.achievedYear}</p>
+                          )}
+                        </div>
+                      </button>
                     </li>
                   );
                 })}

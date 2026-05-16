@@ -19,7 +19,7 @@ function UnlockCard({ unlock }: { unlock: Unlock }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline justify-between gap-2 mb-0.5">
           <p className="text-white font-semibold text-sm leading-tight">{unlock.title}</p>
-          <span className="text-xs text-white/50 flex-shrink-0 tabular-nums">
+          <span className="text-xs text-gold font-bold flex-shrink-0 tabular-nums">
             {unlock.progressPct.toFixed(0)} %
           </span>
         </div>
@@ -40,6 +40,8 @@ function chunks<T>(arr: T[], n: number): T[][] {
   return result;
 }
 
+const MAX_DOTS = 5;
+
 function AchievedCarousel({ achieved }: { achieved: Unlock[] }) {
   const [activeIdx, setActiveIdx] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -51,54 +53,55 @@ function AchievedCarousel({ achieved }: { achieved: Unlock[] }) {
     setActiveIdx(Math.round(el.scrollLeft / el.offsetWidth));
   }
 
+  const visibleDotCount = Math.min(slides.length, MAX_DOTS);
+  const dotStart = Math.max(0, Math.min(activeIdx - Math.floor(MAX_DOTS / 2), slides.length - visibleDotCount));
+
   return (
     <div>
-      <h3 className="text-sm font-semibold text-white mb-2 px-1">Erreicht</h3>
-      <div className="bg-surface-2 rounded-2xl overflow-hidden">
-        <div
-          ref={scrollRef}
-          onScroll={handleScroll}
-          className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory"
-          role="list"
-          aria-label="Erreichte Meilensteine"
-        >
-          {slides.map((pair, slideIdx) => (
-            <div
-              key={slideIdx}
-              className="flex-shrink-0 w-full snap-center grid grid-cols-2 gap-px px-4 py-5"
-              aria-hidden={slideIdx !== activeIdx}
-            >
-              {pair.map((unlock) => (
-                <div
-                  key={unlock.id}
-                  role="listitem"
-                  aria-label={unlock.title}
-                  className="flex flex-col items-center gap-1.5 text-center px-2"
-                >
-                  <span className="text-3xl" aria-hidden="true">{unlock.emoji}</span>
-                  <p className="text-white/80 font-medium text-xs leading-tight">{unlock.title}</p>
-                  <span className="text-[10px] text-accent font-semibold bg-accent/10 px-2 py-0.5 rounded-full">
-                    ✓ Erreicht
-                  </span>
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-
-        {slides.length > 1 && (
-          <div className="flex justify-center gap-1.5 pb-3" aria-hidden="true">
-            {slides.map((_, i) => (
+      <h3 className="text-sm font-semibold text-white mb-2 px-1">Erreichte Meilensteine</h3>
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory"
+        role="list"
+        aria-label="Erreichte Meilensteine"
+      >
+        {slides.map((pair, slideIdx) => (
+          <div
+            key={slideIdx}
+            className="flex-shrink-0 w-full snap-center grid grid-cols-2 gap-3 px-0.5 py-0.5"
+            aria-hidden={slideIdx !== activeIdx}
+          >
+            {pair.map((unlock) => (
               <div
-                key={i}
-                className={`rounded-full transition-all duration-200 ${
-                  i === activeIdx ? 'w-4 h-1.5 bg-accent' : 'w-1.5 h-1.5 bg-white/20'
-                }`}
-              />
+                key={unlock.id}
+                role="listitem"
+                aria-label={unlock.title}
+                className="bg-surface-2 rounded-2xl p-3 flex flex-col items-center gap-1.5 text-center"
+              >
+                <span className="text-3xl" aria-hidden="true">{unlock.emoji}</span>
+                <p className="text-white/80 font-medium text-xs leading-tight">{unlock.title}</p>
+                <span className="text-[10px] text-accent font-semibold bg-accent/10 px-2 py-0.5 rounded-full">
+                  ✓ Erreicht
+                </span>
+              </div>
             ))}
           </div>
-        )}
+        ))}
       </div>
+
+      {slides.length > 1 && (
+        <div className="flex justify-center gap-1.5 mt-2" aria-hidden="true">
+          {Array.from({ length: visibleDotCount }, (_, i) => i + dotStart).map((si) => (
+            <div
+              key={si}
+              className={`rounded-full transition-all duration-200 ${
+                si === activeIdx ? 'w-4 h-1.5 bg-accent' : 'w-1.5 h-1.5 bg-white/20'
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -111,14 +114,18 @@ export function LifeUnlocks({ unlocks }: LifeUnlocksProps) {
   const visibleCards = showAll ? notAchieved : notAchieved.slice(0, 3);
 
   return (
-    <section aria-label="Life Unlocks" className="space-y-3">
+    <section aria-label="Meilensteine" className="space-y-3">
       <div className="flex items-center justify-between px-1">
-        <h2 className="text-sm font-semibold text-white">Life Unlocks</h2>
+        <h2 className="text-sm font-semibold text-white">Meilensteine</h2>
         {notAchieved.length > 3 && (
           <button
             onClick={() => setShowAll((v) => !v)}
             aria-expanded={showAll}
-            className="text-xs text-white/55 hover:text-white/80 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded-full px-3 py-1 border border-white/10 hover:border-white/20"
+            className={`text-xs px-3 py-1 rounded-lg border border-white/10 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+              showAll
+                ? 'bg-accent/20 text-accent font-semibold'
+                : 'text-white/45 hover:text-white/70'
+            }`}
           >
             {showAll ? '↑ Weniger' : `+${notAchieved.length - 3} weitere`}
           </button>
