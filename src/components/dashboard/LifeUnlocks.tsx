@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
-import type { Unlock } from '../../types';
+import type { GoalCategory, Unlock, UnlockType } from '../../types';
 import { ProgressBar } from './ProgressBar';
+import { CategoryIcon } from '../goals/CategoryIcon';
 
 interface LifeUnlocksProps {
   unlocks: Unlock[];
@@ -12,10 +13,54 @@ function barColor(progressPct: number): string {
   return 'bg-white/30';
 }
 
+function UnlockIcon({ type, iconCategory, className = 'w-5 h-5' }: { type: UnlockType; iconCategory?: GoalCategory; className?: string }) {
+  if (type === 'goal' && iconCategory) {
+    return <CategoryIcon category={iconCategory} className={className} />;
+  }
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      {type === 'income' && (
+        <>
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+          <polyline points="16 7 22 7 22 13"/>
+        </>
+      )}
+      {type === 'freedom' && (
+        <>
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+        </>
+      )}
+      {type === 'lifetime' && (
+        <>
+          <circle cx="12" cy="12" r="4"/>
+          <line x1="12" y1="2" x2="12" y2="4"/>
+          <line x1="12" y1="20" x2="12" y2="22"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="2" y1="12" x2="4" y2="12"/>
+          <line x1="20" y1="12" x2="22" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </>
+      )}
+      {type === 'goal' && (
+        <>
+          <circle cx="12" cy="12" r="10"/>
+          <circle cx="12" cy="12" r="6"/>
+          <circle cx="12" cy="12" r="2"/>
+        </>
+      )}
+    </svg>
+  );
+}
+
 function UnlockCard({ unlock }: { unlock: Unlock }) {
   return (
     <div className="bg-surface-2 rounded-2xl p-4 flex gap-3 items-start">
-      <span className="text-2xl flex-shrink-0 mt-0.5" aria-hidden="true">{unlock.emoji}</span>
+      <span className="flex-shrink-0 mt-0.5 text-white/60">
+        <UnlockIcon type={unlock.type} iconCategory={unlock.iconCategory} />
+      </span>
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline justify-between gap-2 mb-0.5">
           <p className="text-white font-semibold text-sm leading-tight">{unlock.title}</p>
@@ -74,7 +119,9 @@ function AchievedCarousel({ achieved }: { achieved: Unlock[] }) {
                 aria-label={unlock.title}
                 className="bg-surface-2 rounded-2xl p-3 flex flex-col items-center gap-1.5 text-center"
               >
-                <span className="text-3xl" aria-hidden="true">{unlock.emoji}</span>
+                <span className="text-white/60">
+                  <UnlockIcon type={unlock.type} iconCategory={unlock.iconCategory} className="w-7 h-7" />
+                </span>
                 <p className="text-white/80 font-medium text-xs leading-tight">{unlock.title}</p>
                 <span className="text-[10px] text-accent font-semibold bg-accent/10 px-2 py-0.5 rounded-full">
                   ✓ Erreicht

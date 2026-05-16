@@ -1,10 +1,20 @@
 export type GoalCategory =
   | 'Wohnen'
+  | 'Nebenkosten'
+  | 'Mobilität'
   | 'Versicherungen'
-  | 'Kommunikation'
-  | 'Gesundheit'
   | 'Ernährung'
+  | 'Restaurant'
+  | 'Gesundheit'
+  | 'Sport'
+  | 'Körperpflege'
+  | 'Kleidung'
+  | 'Haustiere'
   | 'Freizeit'
+  | 'Urlaub'
+  | 'Kommunikation'
+  | 'Streaming'
+  | 'Bildung'
   | 'Sonstiges';
 
 export type GoalStatus = 'covered' | 'partial' | 'open';
@@ -38,6 +48,7 @@ export interface Unlock {
   achieved: boolean;
   progressPct: number;      // 0–100
   missingMonthly: number;   // how much more €/month needed (0 if achieved)
+  iconCategory?: GoalCategory;
 }
 
 export interface TimelineEntry {

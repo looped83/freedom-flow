@@ -376,6 +376,7 @@ export function buildLifeUnlocks(
       achieved: true,
       progressPct: 100,
       missingMonthly: 0,
+      iconCategory: g.category,
     });
   });
 
@@ -393,6 +394,7 @@ export function buildLifeUnlocks(
       achieved: false,
       progressPct,
       missingMonthly,
+      iconCategory: ng.category,
     });
   }
 
