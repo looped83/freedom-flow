@@ -71,25 +71,7 @@ export interface GoalResult extends Goal {
   achievedYear: number | null;
 }
 
-export interface ProjectionYear {
-  year: number;
-  portfolioValue: number;
-  annualDividends: number;
-  monthlyDividends: number;
-  coveragePercent: number;
-  coveredGoals: number;
-  freeDaysPerMonth: number;
-}
-
 export interface AppState {
   portfolio: Portfolio;
   goals: Goal[];
-}
-
-// Dashboard display filter – separate from coverage allocation order
-export type FilterMode = 'amount' | 'category' | 'covered' | 'open';
-export type SortDir = 'asc' | 'desc';
-export interface DisplayFilter {
-  mode: FilterMode;
-  dir: SortDir;
 }
