@@ -38,14 +38,15 @@ export default function App() {
   }
 
   function handleReset() {
-    if (confirm('Alle Daten auf die 2026-Beispieldaten zurücksetzen?')) {
+    if (confirm('Alle Daten zurücksetzen?')) {
       actions.reset();
+      setTab('dashboard');
     }
   }
 
   return (
     <div className="min-h-screen bg-surface text-white pb-16 sm:pb-0">
-      <Header onReset={handleReset} />
+      <Header />
       <TabNav active={tab} onChange={setTab} />
 
       {tab === 'dashboard' && (
@@ -70,7 +71,7 @@ export default function App() {
           <ProjectionView portfolio={state.portfolio} goals={state.goals} />
         )}
         {tab === 'portfolio' && (
-          <PortfolioForm portfolio={state.portfolio} onSave={actions.setPortfolio} />
+          <PortfolioForm portfolio={state.portfolio} onSave={actions.setPortfolio} onReset={handleReset} />
         )}
       </Suspense>
     </div>

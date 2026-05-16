@@ -1,7 +1,8 @@
-import type { AppState } from '../types';
+import type { AppState, Goal } from '../types';
 import { DEFAULT_GOALS, DEFAULT_PORTFOLIO } from '../constants/defaultData';
 
-const STORAGE_KEY = 'dividend-goal-tracker-v1';
+const STORAGE_KEY   = 'dividend-goal-tracker-v1';
+const DEFAULTS_KEY  = 'dividend-goal-tracker-defaults-v1';
 
 export function loadState(): AppState {
   try {
@@ -18,15 +19,34 @@ export function loadState(): AppState {
 export function saveState(state: AppState): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch { /* quota exceeded */ }
+}
+
+/** Persist one goal as part of the user-defined reset baseline. */
+export function saveGoalDefault(goal: Goal): void {
+  try {
+    const raw = localStorage.getItem(DEFAULTS_KEY);
+    const defaults: Goal[] = raw ? JSON.parse(raw) : DEFAULT_GOALS.map(g => ({ ...g }));
+    const idx = defaults.findIndex(g => g.id === goal.id);
+    if (idx >= 0) defaults[idx] = goal;
+    else defaults.push(goal);
+    localStorage.setItem(DEFAULTS_KEY, JSON.stringify(defaults));
+  } catch { /* quota exceeded */ }
+}
+
+function loadDefaultGoals(): Goal[] {
+  try {
+    const raw = localStorage.getItem(DEFAULTS_KEY);
+    return raw ? JSON.parse(raw) : DEFAULT_GOALS.map(g => ({ ...g }));
   } catch {
-    // Silently fail if storage quota exceeded
+    return DEFAULT_GOALS.map(g => ({ ...g }));
   }
 }
 
 export function getDefaultState(): AppState {
   return {
     portfolio: { ...DEFAULT_PORTFOLIO },
-    goals: DEFAULT_GOALS.map((g) => ({ ...g })),
+    goals: loadDefaultGoals(),
   };
 }
 
