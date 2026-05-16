@@ -8,7 +8,7 @@ export function Header({ onReset }: HeaderProps) {
       <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-accent text-xl" aria-hidden="true">💹</span>
-          <span className="font-semibold text-white tracking-tight">Dividend Goal Tracker</span>
+          <span className="font-semibold text-white tracking-tight">Freedom Flow</span>
         </div>
         <button
           onClick={onReset}
