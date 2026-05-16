@@ -19,11 +19,11 @@ function UnlockCard({ unlock }: { unlock: Unlock }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline justify-between gap-2 mb-0.5">
           <p className="text-white font-semibold text-sm leading-tight">{unlock.title}</p>
-          <span className="text-xs text-white/45 flex-shrink-0 tabular-nums">
+          <span className="text-xs text-white/50 flex-shrink-0 tabular-nums">
             {unlock.progressPct.toFixed(0)} %
           </span>
         </div>
-        <p className="text-xs text-white/45 mb-2">{unlock.subtitle}</p>
+        <p className="text-xs text-white/50 mb-2">{unlock.subtitle}</p>
         <ProgressBar
           percent={unlock.progressPct}
           label={`${unlock.title}: ${unlock.progressPct.toFixed(0)} % erreicht`}
@@ -34,7 +34,6 @@ function UnlockCard({ unlock }: { unlock: Unlock }) {
   );
 }
 
-// Split array into chunks of size n
 function chunks<T>(arr: T[], n: number): T[][] {
   const result: T[][] = [];
   for (let i = 0; i < arr.length; i += n) result.push(arr.slice(i, i + n));
@@ -54,10 +53,8 @@ function AchievedCarousel({ achieved }: { achieved: Unlock[] }) {
 
   return (
     <div>
-      <h3 className="text-xs text-white/55 font-medium uppercase tracking-wider mb-2 px-1">
-        Erreicht
-      </h3>
-      <div className="bg-surface-1 rounded-2xl overflow-hidden">
+      <h3 className="text-sm font-semibold text-white mb-2 px-1">Erreicht</h3>
+      <div className="bg-surface-2 rounded-2xl overflow-hidden">
         <div
           ref={scrollRef}
           onScroll={handleScroll}
@@ -115,28 +112,27 @@ export function LifeUnlocks({ unlocks }: LifeUnlocksProps) {
 
   return (
     <section aria-label="Life Unlocks" className="space-y-3">
-      <h2 className="text-xs text-white/55 font-medium uppercase tracking-wider px-1">
-        Life Unlocks
-      </h2>
+      <div className="flex items-center justify-between px-1">
+        <h2 className="text-sm font-semibold text-white">Life Unlocks</h2>
+        {notAchieved.length > 3 && (
+          <button
+            onClick={() => setShowAll((v) => !v)}
+            aria-expanded={showAll}
+            className="text-xs text-white/55 hover:text-white/80 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded-full px-3 py-1 border border-white/10 hover:border-white/20"
+          >
+            {showAll ? '↑ Weniger' : `+${notAchieved.length - 3} weitere`}
+          </button>
+        )}
+      </div>
 
       {visibleCards.length > 0 ? (
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {visibleCards.map((unlock) => (
             <UnlockCard key={unlock.id} unlock={unlock} />
           ))}
         </div>
       ) : (
         <p className="text-sm text-white/55 px-1">Alle Meilensteine erreicht! 🎉</p>
-      )}
-
-      {notAchieved.length > 3 && (
-        <button
-          onClick={() => setShowAll((v) => !v)}
-          aria-expanded={showAll}
-          className="text-xs text-white/45 hover:text-white/70 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded px-1 py-0.5"
-        >
-          {showAll ? 'Weniger ↑' : `+${notAchieved.length - 3} weitere anzeigen`}
-        </button>
       )}
 
       {achieved.length > 0 && <AchievedCarousel achieved={achieved} />}
