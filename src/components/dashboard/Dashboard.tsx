@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Goal, GoalResult, Portfolio } from '../../types';
 import {
   buildLifeUnlocks,
@@ -59,19 +59,29 @@ export function Dashboard({ portfolio, goals, onIncomeChange, onGoalClick }: Das
   const [goalFilter, setGoalFilter] = useState<GoalFilter>('all');
   const [goalSort, setGoalSort] = useState<GoalSort>({ type: 'amount', dir: 'desc' });
 
-  const monthly = monthlyDividends(portfolio);
-  const total = totalMonthlyCosts(goals);
-  const freeDays = freeDaysPerMonth(monthly, total);
+  const monthly = useMemo(() => monthlyDividends(portfolio), [portfolio]);
+  const total   = useMemo(() => totalMonthlyCosts(goals), [goals]);
+  const freeDays = useMemo(() => freeDaysPerMonth(monthly, total), [monthly, total]);
 
-  const allResults = computeGoalResults(goals, monthly, portfolio);
-  const displayResults = applySort(applyFilter(allResults, goalFilter), goalSort);
+  const allResults = useMemo(
+    () => computeGoalResults(goals, monthly, portfolio),
+    [goals, monthly, portfolio],
+  );
 
-  const nextGoal = allResults
-    .slice()
-    .sort((a, b) => a.monthlyAmount - b.monthlyAmount)
-    .find((g) => g.status !== 'covered');
+  const nextGoal = useMemo(
+    () => [...allResults].sort((a, b) => a.monthlyAmount - b.monthlyAmount).find((g) => g.status !== 'covered'),
+    [allResults],
+  );
 
-  const lifeUnlocks = buildLifeUnlocks(allResults, monthly, total, freeDays);
+  const lifeUnlocks = useMemo(
+    () => buildLifeUnlocks(allResults, monthly, total, freeDays),
+    [allResults, monthly, total, freeDays],
+  );
+
+  const displayResults = useMemo(
+    () => applySort(applyFilter(allResults, goalFilter), goalSort),
+    [allResults, goalFilter, goalSort],
+  );
 
   const visibleGoals = showAllGoals ? displayResults : displayResults.slice(0, MAX_VISIBLE_GOALS);
 

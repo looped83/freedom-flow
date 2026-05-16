@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatEuro, parseGerman } from '../../utils/formatting';
 import { freedomPercent, missingForFreedom } from '../../utils/calculations';
 
@@ -13,9 +13,9 @@ const CIRCUMFERENCE = 2 * Math.PI * R;
 const heroId = 'freedom-hero-heading';
 
 export function FreedomHero({ monthly, total, onIncomeChange }: FreedomHeroProps) {
-  const pct = freedomPercent(monthly, total);
-  const missing = missingForFreedom(monthly, total);
-  const dashOffset = CIRCUMFERENCE * (1 - Math.min(pct, 100) / 100);
+  const pct = useMemo(() => freedomPercent(monthly, total), [monthly, total]);
+  const missing = useMemo(() => missingForFreedom(monthly, total), [monthly, total]);
+  const dashOffset = useMemo(() => CIRCUMFERENCE * (1 - Math.min(pct, 100) / 100), [pct]);
 
   const circleRef = useRef<SVGCircleElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);

@@ -41,7 +41,8 @@ export function useAppState() {
   const [state, dispatch] = useReducer(reducer, undefined, loadState);
 
   useEffect(() => {
-    saveState(state);
+    const id = setTimeout(() => saveState(state), 500);
+    return () => clearTimeout(id);
   }, [state]);
 
   const actions: AppActions = {
