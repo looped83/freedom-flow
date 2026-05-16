@@ -9,6 +9,7 @@ import type {
   Unlock,
 } from '../types';
 import { CATEGORY_ORDER, CURRENT_YEAR } from '../constants/defaultData';
+import { formatEuroCompact } from './formatting';
 
 export function annualDividends(portfolio: Portfolio): number {
   return portfolio.monthlyIncome * 12;
@@ -330,7 +331,7 @@ export function buildLifeUnlocks(
       id: `income-${threshold}`,
       type: 'income',
       title: `${threshold.toLocaleString('de-DE')} € / Monat`,
-      subtitle: achieved ? 'Erreicht!' : `Noch ${(threshold - monthly).toFixed(0)} € / Monat`,
+      subtitle: achieved ? 'Erreicht!' : `Noch ${formatEuroCompact(threshold - monthly)} / Monat`,
       emoji: incomeEmojis[i],
       achieved,
       progressPct,
@@ -351,7 +352,7 @@ export function buildLifeUnlocks(
       title: `${threshold} % finanziell frei`,
       subtitle: achieved
         ? 'Erreicht!'
-        : `Noch ${missingMonthly.toFixed(0)} € / Monat`,
+        : `Noch ${formatEuroCompact(missingMonthly)} / Monat`,
       emoji: freedomEmojis[i],
       achieved,
       progressPct,
@@ -419,7 +420,7 @@ export function buildLifeUnlocks(
       title: lifetimeLabels[i],
       subtitle: achieved
         ? 'Erreicht!'
-        : `Noch ${missingMonthly.toFixed(0)} € / Monat`,
+        : `Noch ${formatEuroCompact(missingMonthly)} / Monat`,
       emoji: lifetimeEmojis[i],
       achieved,
       progressPct,

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import type { Goal, GoalCategory } from '../../types';
 import { liveFormatAmount, parseGerman } from '../../utils/formatting';
+import { CategoryIcon } from './CategoryIcon';
 
 const CATEGORIES: GoalCategory[] = [
   'Wohnen', 'Nebenkosten', 'Mobilität',
@@ -9,37 +10,6 @@ const CATEGORIES: GoalCategory[] = [
   'Kleidung', 'Haustiere', 'Freizeit', 'Urlaub',
   'Kommunikation', 'Streaming', 'Bildung',
   'Versicherungen', 'Sonstiges',
-];
-
-const EMOJI_OPTIONS: { emoji: string; name: string }[] = [
-  { emoji: '🏠', name: 'Haus' },
-  { emoji: '⚡', name: 'Strom' },
-  { emoji: '🌐', name: 'Internet' },
-  { emoji: '📺', name: 'Fernseher' },
-  { emoji: '📱', name: 'Handy' },
-  { emoji: '🛡️', name: 'Schutzschild' },
-  { emoji: '🐕', name: 'Hund' },
-  { emoji: '☁️', name: 'Cloud' },
-  { emoji: '🎵', name: 'Musik' },
-  { emoji: '📊', name: 'Diagramm' },
-  { emoji: '🚴', name: 'Fahrrad' },
-  { emoji: '💪', name: 'Fitness' },
-  { emoji: '🛒', name: 'Einkaufswagen' },
-  { emoji: '🧴', name: 'Drogerie' },
-  { emoji: '🦴', name: 'Hundeknochen' },
-  { emoji: '🩺', name: 'Arzt' },
-  { emoji: '✂️', name: 'Friseur' },
-  { emoji: '✈️', name: 'Flugzeug' },
-  { emoji: '🎁', name: 'Geschenk' },
-  { emoji: '🛋️', name: 'Sofa' },
-  { emoji: '👕', name: 'Kleidung' },
-  { emoji: '🎮', name: 'Gaming' },
-  { emoji: '🦷', name: 'Zahnarzt' },
-  { emoji: '💡', name: 'Idee' },
-  { emoji: '🚗', name: 'Auto' },
-  { emoji: '🍔', name: 'Essen' },
-  { emoji: '🎬', name: 'Kino' },
-  { emoji: '📚', name: 'Bücher' },
 ];
 
 const fmt2 = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -59,6 +29,8 @@ export function GoalForm({ initial, onSave, onSaveAsDefault, onCancel }: GoalFor
   const [name, setName] = useState(initial?.name ?? '');
   const [amount, setAmount] = useState(initial ? fmt2.format(initial.monthlyAmount) : '');
   const [category, setCategory] = useState<GoalCategory>(initial?.category ?? 'Sonstiges');
+  const [saveAsDefault, setSaveAsDefault] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const amountRef = useRef<HTMLInputElement>(null);
 
   function handleAmountChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -67,8 +39,6 @@ export function GoalForm({ initial, onSave, onSaveAsDefault, onCancel }: GoalFor
     const raw = input.value;
     const formatted = liveFormatAmount(raw);
     setAmount(formatted);
-    // Restore cursor: count non-dot chars before cursor in old value,
-    // then position after the same count in the formatted string.
     const charsBeforeCursor = raw.slice(0, cursorPos).replace(/\./g, '').length;
     requestAnimationFrame(() => {
       if (!amountRef.current) return;
@@ -81,12 +51,6 @@ export function GoalForm({ initial, onSave, onSaveAsDefault, onCancel }: GoalFor
       amountRef.current.selectionEnd = i;
     });
   }
-  const [emoji, setEmoji] = useState(initial?.emoji ?? '🎯');
-  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
-  const [saveAsDefault, setSaveAsDefault] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const selectedName = EMOJI_OPTIONS.find((o) => o.emoji === emoji)?.name ?? 'Emoji';
 
   function validate() {
     const e: Record<string, string> = {};
@@ -105,7 +69,7 @@ export function GoalForm({ initial, onSave, onSaveAsDefault, onCancel }: GoalFor
       name: name.trim(),
       monthlyAmount: parseGerman(amount),
       category,
-      emoji,
+      emoji: initial?.emoji ?? '🎯',
     };
     onSave(saved);
     if (saveAsDefault && onSaveAsDefault) onSaveAsDefault(saved);
@@ -152,56 +116,30 @@ export function GoalForm({ initial, onSave, onSaveAsDefault, onCancel }: GoalFor
       </div>
 
       <div>
-        <label htmlFor="goal-category" className="block text-xs text-white/70 mb-1">Kategorie</label>
-        <select
-          id="goal-category"
-          value={category}
-          onChange={(e) => setCategory(e.target.value as GoalCategory)}
-          className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-accent text-sm"
+        <p className="text-xs text-white/70 mb-2">Symbol & Kategorie</p>
+        <div
+          className="grid grid-cols-3 gap-1.5 p-3 bg-surface-2 rounded-xl border border-white/10"
+          role="group"
+          aria-label="Kategorie auswählen"
         >
-          {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-      </div>
-
-      <div>
-        <p className="text-xs text-white/70 mb-2" id="emoji-picker-label">Symbol</p>
-        <button
-          type="button"
-          onClick={() => setEmojiPickerOpen((o) => !o)}
-          aria-label={`Symbol auswählen, aktuell: ${selectedName}`}
-          aria-expanded={emojiPickerOpen}
-          aria-controls="emoji-picker-panel"
-          className="flex items-center gap-2 text-sm bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white hover:border-accent/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent transition-colors"
-        >
-          <span aria-hidden="true">{emoji}</span>
-          <span>{selectedName}</span>
-          <span className="ml-auto text-white/55" aria-hidden="true">{emojiPickerOpen ? '▲' : '▼'}</span>
-        </button>
-
-        {emojiPickerOpen && (
-          <div
-            id="emoji-picker-panel"
-            role="group"
-            aria-label="Symbol auswählen"
-            className="flex flex-wrap gap-2 mt-2 p-3 bg-surface-2 rounded-xl border border-white/10"
-          >
-            {EMOJI_OPTIONS.map(({ emoji: e, name: n }) => (
-              <button
-                key={e}
-                type="button"
-                onClick={() => { setEmoji(e); setEmojiPickerOpen(false); }}
-                aria-pressed={emoji === e}
-                aria-label={n}
-                title={n}
-                className={`text-xl p-1.5 rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
-                  emoji === e ? 'bg-accent/20 ring-1 ring-accent' : 'hover:bg-white/10'
-                }`}
-              >
-                <span aria-hidden="true">{e}</span>
-              </button>
-            ))}
-          </div>
-        )}
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setCategory(cat)}
+              aria-pressed={category === cat}
+              aria-label={cat}
+              className={`flex flex-col items-center gap-1 p-2 rounded-lg text-center transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+                category === cat
+                  ? 'bg-accent/20 text-accent ring-1 ring-accent'
+                  : 'text-white/55 hover:bg-white/10 hover:text-white/80'
+              }`}
+            >
+              <CategoryIcon category={cat} className="w-5 h-5 flex-shrink-0" />
+              <span className="text-[10px] leading-tight">{cat}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {initial && onSaveAsDefault && (
