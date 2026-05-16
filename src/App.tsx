@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useCallback, useState } from 'react';
 import { useAppState } from './hooks/useAppState';
 import { Header } from './components/layout/Header';
 import { TabNav, type Tab } from './components/layout/TabNav';
@@ -27,21 +27,21 @@ export default function App() {
   const [focusGoalId, setFocusGoalId] = useState<string | null>(null);
   const { state, actions } = useAppState();
 
-  function handleGoalClick(id: string) {
+  const handleGoalClick = useCallback((id: string) => {
     setFocusGoalId(id);
     setTab('setup');
-  }
+  }, []);
 
-  function handleReset() {
+  const handleReset = useCallback(() => {
     if (confirm('Alle Daten zurücksetzen?')) {
       actions.reset();
       setTab('dashboard');
     }
-  }
+  }, [actions]);
 
-  function handleIncomeChange(v: number) {
+  const handleIncomeChange = useCallback((v: number) => {
     actions.setPortfolio({ ...state.portfolio, monthlyIncome: v });
-  }
+  }, [actions, state.portfolio]);
 
   return (
     <div className="min-h-screen bg-surface text-white pb-28 sm:pb-0">

@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useMemo } from 'react';
 import type { TimelineEntry, Goal, Portfolio } from '../../types';
 import { CategoryIcon } from '../goals/CategoryIcon';
 import { buildFreedomTimeline } from '../../utils/calculations';
@@ -111,12 +111,14 @@ function TimelineSeparator({ label }: { label: string }) {
 }
 
 export function FreedomTimeline({ portfolio, goals }: FreedomTimelineProps) {
-  const allEntries = buildFreedomTimeline(goals, portfolio);
+  const allEntries = useMemo(() => buildFreedomTimeline(goals, portfolio), [goals, portfolio]);
 
-  const beyondHorizonIds = new Set(allEntries.flatMap((e) => e.newGoals.map((g) => g.id)));
-  const beyondHorizonGoals = goals.filter((g) => !beyondHorizonIds.has(g.id));
+  const beyondHorizonGoals = useMemo(() => {
+    const ids = new Set(allEntries.flatMap((e) => e.newGoals.map((g) => g.id)));
+    return goals.filter((g) => !ids.has(g.id));
+  }, [allEntries, goals]);
 
-  const displayEntries = [...allEntries].reverse();
+  const displayEntries = useMemo(() => [...allEntries].reverse(), [allEntries]);
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-6">
