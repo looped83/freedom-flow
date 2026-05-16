@@ -98,7 +98,7 @@ export function GoalForm({ initial, onSave, onCancel }: GoalFormProps) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="z. B. Fitnessstudio"
-          className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/35 focus:outline-none focus:border-accent text-sm"
+          className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/55 focus:outline-none focus:border-accent text-sm"
           aria-describedby={errors.name ? 'goal-name-error' : undefined}
           aria-invalid={!!errors.name}
         />
@@ -120,7 +120,7 @@ export function GoalForm({ initial, onSave, onCancel }: GoalFormProps) {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           placeholder="z. B. 42,90"
-          className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/35 focus:outline-none focus:border-accent text-sm"
+          className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/55 focus:outline-none focus:border-accent text-sm"
           aria-describedby={errors.amount ? 'goal-amount-error' : undefined}
           aria-invalid={!!errors.amount}
         />
@@ -157,9 +157,9 @@ export function GoalForm({ initial, onSave, onCancel }: GoalFormProps) {
         <button
           type="button"
           onClick={() => setEmojiPickerOpen((o) => !o)}
+          aria-label={`Symbol auswählen, aktuell: ${selectedName}`}
           aria-expanded={emojiPickerOpen}
           aria-controls="emoji-picker-panel"
-          aria-describedby="emoji-picker-label"
           className="flex items-center gap-2 text-sm bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white hover:border-accent/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent transition-colors"
         >
           <span aria-hidden="true">{emoji}</span>

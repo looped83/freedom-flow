@@ -4,13 +4,46 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/freedom-flow/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Dividend Goal Tracker – Sieh, welche Lebenshaltungskosten deine Dividenden bereits decken." />
+    <meta name="description" content="Freedom Flow – Dein Weg zur finanziellen Freiheit mit Dividenden." />
     <meta name="theme-color" content="#0f0f11" />
-    <title>Dividend Goal Tracker</title>
+    <title>Freedom Flow</title>
+    <!--
+      Inline critical CSS:
+      • Paints the correct dark background + shell header on first byte received,
+        before the external Tailwind stylesheet resolves.
+      • The shell header text ("Freedom Flow") becomes the LCP element,
+        visible without waiting for JS execution.
+    -->
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0}
+      html,body{background:#0f0f11;color:#fff;font-family:-apple-system,BlinkMacSystemFont,Inter,sans-serif;min-height:100svh}
+      .ff-shell{display:flex;flex-direction:column;min-height:100svh}
+      .ff-hdr{position:sticky;top:0;z-index:10;height:3.5rem;display:flex;align-items:center;padding:0 1rem;gap:.5rem;background:rgba(15,15,17,.8);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.05)}
+      .ff-hdr-icon{color:#4ade80;font-size:1.25rem;line-height:1}
+      .ff-hdr-title{font-weight:600;letter-spacing:-.025em;font-size:1rem}
+      .ff-loader{display:flex;align-items:center;justify-content:center;flex:1;min-height:10rem}
+      .ff-spinner{width:1.5rem;height:1.5rem;border-radius:50%;border:2px solid #4ade80;border-top-color:transparent;animation:ff-spin .7s linear infinite}
+      @keyframes ff-spin{to{transform:rotate(360deg)}}
+      @media(prefers-reduced-motion:reduce){.ff-spinner{animation:none;opacity:.35}}
+    </style>
   </head>
   <body>
-    <!-- Background matches app shell to avoid flash of white -->
-    <div id="root" style="min-height:100svh;background:#0f0f11"></div>
+    <div id="root">
+      <!--
+        Static shell: rendered immediately on HTML parse, before any JS or CSS loads.
+        The "Freedom Flow" title is the LCP element – visible in < 100 ms.
+        React replaces this once it mounts.
+      -->
+      <div class="ff-shell" aria-hidden="true">
+        <header class="ff-hdr">
+          <span class="ff-hdr-icon">💹</span>
+          <span class="ff-hdr-title">Freedom Flow</span>
+        </header>
+        <div class="ff-loader">
+          <div class="ff-spinner"></div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

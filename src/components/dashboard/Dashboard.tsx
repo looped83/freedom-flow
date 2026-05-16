@@ -22,8 +22,8 @@ interface DashboardProps {
 const FILTER_CONFIG: { mode: FilterMode; label: string }[] = [
   { mode: 'amount',   label: 'Betrag'    },
   { mode: 'category', label: 'Kategorie' },
-  { mode: 'covered',  label: 'erreicht'  },
-  { mode: 'open',     label: 'offen'     },
+  { mode: 'covered',  label: 'Erreicht'  },
+  { mode: 'open',     label: 'Offen'     },
 ];
 
 function dirArrow(filter: DisplayFilter, mode: FilterMode): string {
@@ -188,7 +188,7 @@ export function Dashboard({ portfolio, goals, displayFilter, onFilterChange }: D
         <h2 id="all-goals-title" className="text-xs text-white/65 font-medium uppercase tracking-wider mb-2 px-1">
           {displayFilter.mode === 'covered' ? 'Erreichte Ziele' :
            displayFilter.mode === 'open'    ? 'Offene Ziele'    : 'Alle Ziele'}
-          <span className="ml-2 text-white/40 font-normal normal-case">
+          <span className="ml-2 text-white/60 font-normal normal-case">
             ({displayResults.length})
           </span>
         </h2>
