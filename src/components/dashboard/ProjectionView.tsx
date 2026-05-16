@@ -17,49 +17,48 @@ export function ProjectionView({ portfolio, goals }: ProjectionViewProps) {
     <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
       <div>
         <h1 className="text-lg font-bold text-white">Projektion</h1>
-        <p className="text-sm text-white/40">Dein Weg zur finanziellen Freiheit.</p>
+        <p className="text-sm text-white/65">Dein Weg zur finanziellen Freiheit.</p>
       </div>
 
-      {/* Freedom year banner */}
-      {freedom && (
+      {freedom != null && (
         <div className="bg-gradient-to-r from-accent/10 to-gold/10 border border-accent/20 rounded-2xl p-5">
-          <p className="text-xs text-white/50 uppercase tracking-wider mb-1">Finanzielle Freiheit</p>
+          <p className="text-xs text-white/65 uppercase tracking-wider mb-1">Finanzielle Freiheit</p>
           <p className="text-3xl font-bold text-accent">{freedom}</p>
-          <p className="text-sm text-white/60 mt-1">
-            In {freedom - CURRENT_YEAR} Jahren decken deine Dividenden alle {formatEuro(total)} monatlichen Kosten.
+          <p className="text-sm text-white/70 mt-1">
+            In {freedom - CURRENT_YEAR} Jahren decken deine Dividenden alle{' '}
+            {formatEuro(total)} monatlichen Kosten.
           </p>
-          <p className="text-xs text-accent/70 mt-2">
+          <p className="text-xs text-accent/80 mt-2">
             2026 ist dein Ausgangspunkt für finanzielle Freiheit. 🚀
           </p>
         </div>
       )}
 
-      {/* Projection table */}
       <div className="bg-surface-1 rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm" role="table" aria-label="Jahresprojektion">
+          <table className="w-full text-sm" aria-label="Jahresprojektion">
             <thead>
               <tr className="border-b border-white/10">
-                <th scope="col" className="text-left text-xs text-white/40 font-medium px-4 py-3">Jahr</th>
-                <th scope="col" className="text-right text-xs text-white/40 font-medium px-3 py-3">Portfolio</th>
-                <th scope="col" className="text-right text-xs text-white/40 font-medium px-3 py-3">Div. / Monat</th>
-                <th scope="col" className="text-right text-xs text-white/40 font-medium px-3 py-3">Deckung</th>
-                <th scope="col" className="text-right text-xs text-white/40 font-medium px-3 py-3">Freie Tage</th>
+                <th scope="col" className="text-left text-xs text-white/65 font-medium px-4 py-3">Jahr</th>
+                <th scope="col" className="text-right text-xs text-white/65 font-medium px-3 py-3">Portfolio</th>
+                <th scope="col" className="text-right text-xs text-white/65 font-medium px-3 py-3">Div. / Monat</th>
+                <th scope="col" className="text-right text-xs text-white/65 font-medium px-3 py-3">Deckung</th>
+                <th scope="col" className="text-right text-xs text-white/65 font-medium px-3 py-3">Freie Tage</th>
               </tr>
             </thead>
             <tbody>
               {projection.map((row, i) => {
-                const isFreedom = freedom !== null && row.year === freedom;
+                const isFreedom = freedom != null && row.year === freedom;
                 return (
                   <tr
                     key={row.year}
-                    className={`border-b border-white/5 transition-colors ${
-                      isFreedom ? 'bg-accent/10' : i % 2 === 0 ? '' : 'bg-white/2'
+                    className={`border-b border-white/5 ${
+                      isFreedom ? 'bg-accent/10' : i % 2 === 1 ? 'bg-white/[0.02]' : ''
                     }`}
                   >
                     <td className="px-4 py-3 font-medium text-white">
                       {row.year}
-                      {isFreedom && <span className="ml-2 text-accent text-xs">🎉</span>}
+                      {isFreedom && <span className="ml-2 text-accent text-xs" aria-label="Freiheitsjahr">🎉</span>}
                     </td>
                     <td className="px-3 py-3 text-right text-white/70 tabular-nums">
                       {formatEuroCompact(row.portfolioValue)}
@@ -74,7 +73,7 @@ export function ProjectionView({ portfolio, goals }: ProjectionViewProps) {
                         {formatPercent(row.coveragePercent)}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-right text-white/50 tabular-nums">
+                    <td className="px-3 py-3 text-right text-white/65 tabular-nums">
                       {row.freeDaysPerMonth.toFixed(1).replace('.', ',')}
                     </td>
                   </tr>
@@ -85,11 +84,8 @@ export function ProjectionView({ portfolio, goals }: ProjectionViewProps) {
         </div>
       </div>
 
-      {/* Motivational */}
       <div className="text-center py-4">
-        <p className="text-white/30 text-sm">
-          Dein Portfolio übernimmt Stück für Stück dein Leben. 💹
-        </p>
+        <p className="text-white/60 text-sm">Dein Portfolio übernimmt Stück für Stück dein Leben. 💹</p>
       </div>
     </main>
   );

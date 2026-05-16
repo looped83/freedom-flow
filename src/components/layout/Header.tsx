@@ -12,7 +12,7 @@ export function Header({ onReset }: HeaderProps) {
         </div>
         <button
           onClick={onReset}
-          className="text-xs text-white/40 hover:text-white/70 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded px-2 py-1"
+          className="text-xs text-white/60 hover:text-white/90 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded px-2 py-1"
           aria-label="Zurücksetzen auf Beispieldaten 2026"
         >
           Reset

@@ -24,7 +24,7 @@ export function TabNav({ active, onChange }: TabNavProps) {
             className={`flex items-center gap-1.5 px-3 py-3 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded-t ${
               active === tab.id
                 ? 'text-accent border-b-2 border-accent'
-                : 'text-white/50 hover:text-white/80 border-b-2 border-transparent'
+                : 'text-white/60 hover:text-white/90 border-b-2 border-transparent'
             }`}
           >
             <span aria-hidden="true">{tab.emoji}</span>
