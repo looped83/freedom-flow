@@ -3,12 +3,12 @@ import type { Portfolio } from '../../types';
 import { formatEuro, liveFormatAmount, parseGerman } from '../../utils/formatting';
 import { annualDividends, monthlyDividends } from '../../utils/calculations';
 
-const deDE = (decimals: number) =>
-  new Intl.NumberFormat('de-DE', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+const fmtInt = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+const fmtDec = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 function formatFieldValue(value: number, unit: string): string {
-  if (unit === '€') return deDE(0).format(value);
-  if (unit === '%') return deDE(1).format(value);
+  if (unit === '€') return fmtInt.format(value);
+  if (unit === '%') return fmtDec.format(value);
   return String(value);
 }
 

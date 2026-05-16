@@ -1,14 +1,12 @@
 import type {
-  DisplayFilter,
   Goal,
   GoalResult,
   GoalStatus,
   Portfolio,
-  ProjectionYear,
   TimelineEntry,
   Unlock,
 } from '../types';
-import { CATEGORY_ORDER, CURRENT_YEAR } from '../constants/defaultData';
+import { CURRENT_YEAR } from '../constants/defaultData';
 import { formatEuroCompact } from './formatting';
 
 export function annualDividends(portfolio: Portfolio): number {
@@ -128,70 +126,6 @@ export function computeGoalResults(
   return goals.map((g) => resultMap.get(g.id)).filter((r): r is GoalResult => r != null);
 }
 
-/**
- * Sort and optionally filter goal results for display purposes.
- * Does not affect coverage allocation.
- */
-export function applyDisplayFilter(results: GoalResult[], filter: DisplayFilter): GoalResult[] {
-  let out = [...results];
-
-  if (filter.mode === 'covered') {
-    out = out.filter((r) => r.status === 'covered');
-  } else if (filter.mode === 'open') {
-    out = out.filter((r) => r.status !== 'covered');
-  }
-
-  const sign = filter.dir === 'asc' ? 1 : -1;
-
-  if (filter.mode === 'category') {
-    out.sort((a, b) => {
-      const catDiff =
-        ((CATEGORY_ORDER[a.category] ?? 99) - (CATEGORY_ORDER[b.category] ?? 99)) * sign;
-      return catDiff !== 0 ? catDiff : (a.monthlyAmount - b.monthlyAmount) * sign;
-    });
-  } else {
-    out.sort((a, b) => (a.monthlyAmount - b.monthlyAmount) * sign);
-  }
-
-  return out;
-}
-
-export function buildProjection(portfolio: Portfolio, goals: Goal[]): ProjectionYear[] {
-  const total = totalMonthlyCosts(goals);
-  const results: ProjectionYear[] = [];
-  let pv = portfolio.value;
-  const baseMonthly = monthlyDividends(portfolio);
-
-  for (let y = 0; y <= portfolio.horizonYears; y++) {
-    const projMonthly = y === 0 ? baseMonthly : projectMonthlyDividendsAtYear(portfolio, y);
-    const covPct = coveragePercent(projMonthly, total);
-    const freeDays = freeDaysPerMonth(projMonthly, total);
-
-    const sorted = byAmountAsc(goals);
-    let rem = projMonthly;
-    let covGoals = 0;
-    for (const g of sorted) {
-      if (rem >= g.monthlyAmount) { covGoals++; rem -= g.monthlyAmount; }
-      else break;
-    }
-
-    if (y > 0) {
-      pv = (pv + portfolio.monthlySavings * 12) * (1 + portfolio.priceReturn / 100);
-    }
-
-    results.push({
-      year: CURRENT_YEAR + y,
-      portfolioValue: pv,
-      annualDividends: projMonthly * 12,
-      monthlyDividends: projMonthly,
-      coveragePercent: covPct,
-      coveredGoals: covGoals,
-      freeDaysPerMonth: freeDays,
-    });
-  }
-
-  return results;
-}
 
 export function freedomYear(portfolio: Portfolio, goals: Goal[]): number | null {
   const total = totalMonthlyCosts(goals);
