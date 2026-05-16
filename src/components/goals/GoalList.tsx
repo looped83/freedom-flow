@@ -47,10 +47,10 @@ export function GoalList({ goals, onAdd, onUpdate, onDelete, focusGoalId }: Goal
 
   useEffect(() => {
     if (!focusGoalId) return;
+    setEditingId(focusGoalId);
     const timer = setTimeout(() => {
-      setEditingId(focusGoalId);
-      liRefs.current.get(focusGoalId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 200);
+      liRefs.current.get(focusGoalId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 350);
     return () => clearTimeout(timer);
   }, [focusGoalId]);
 

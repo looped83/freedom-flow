@@ -3,7 +3,12 @@ import type { Goal, GoalCategory } from '../../types';
 import { liveFormatAmount, parseGerman } from '../../utils/formatting';
 
 const CATEGORIES: GoalCategory[] = [
-  'Wohnen', 'Kommunikation', 'Versicherungen', 'Ernährung', 'Gesundheit', 'Freizeit', 'Sonstiges',
+  'Wohnen', 'Nebenkosten', 'Mobilität',
+  'Ernährung', 'Restaurant',
+  'Gesundheit', 'Sport', 'Körperpflege',
+  'Kleidung', 'Haustiere', 'Freizeit', 'Urlaub',
+  'Kommunikation', 'Streaming', 'Bildung',
+  'Versicherungen', 'Sonstiges',
 ];
 
 const EMOJI_OPTIONS: { emoji: string; name: string }[] = [
