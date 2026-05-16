@@ -15,6 +15,12 @@ export function loadState(): AppState {
       parsed.portfolio.monthlyIncome =
         (parsed.portfolio.value * parsed.portfolio.dividendYield) / 100 / 12;
     }
+    // Migration: sync category of default goals so code-level changes take effect
+    const defaultById = new Map(DEFAULT_GOALS.map((g) => [g.id, g]));
+    parsed.goals = parsed.goals.map((g) => {
+      const def = defaultById.get(g.id);
+      return def ? { ...g, category: def.category } : g;
+    });
     return parsed;
   } catch {
     return getDefaultState();

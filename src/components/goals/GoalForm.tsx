@@ -7,7 +7,7 @@ const CATEGORIES: GoalCategory[] = [
   'Wohnen', 'Nebenkosten', 'Mobilität',
   'Ernährung', 'Restaurant',
   'Gesundheit', 'Medizin', 'Sport', 'Körperpflege',
-  'Kleidung', 'Haustiere', 'Kinder', 'Freizeit', 'Gaming', 'Geschenke', 'Urlaub',
+  'Kleidung', 'Haustiere', 'Freizeit', 'Gaming', 'Geschenke', 'Urlaub',
   'Kommunikation', 'Streaming', 'Bildung',
   'Versicherungen',
   'Sonstiges',
