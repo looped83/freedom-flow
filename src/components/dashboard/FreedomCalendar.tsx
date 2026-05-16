@@ -18,7 +18,7 @@ export function FreedomCalendar({ freeDaysPerMonth }: FreedomCalendarProps) {
     <section className="bg-surface-1 rounded-2xl p-5" aria-labelledby="freedom-cal-title">
       <div className="flex items-center justify-between mb-4">
         <h2 id="freedom-cal-title" className="text-sm font-semibold text-white">
-          Freedom Calendar
+          Freedom Kalender
         </h2>
         <div className="flex rounded-lg overflow-hidden border border-white/10" role="group" aria-label="Ansicht wählen">
           {(['month', 'year'] as const).map((v) => (
@@ -66,7 +66,6 @@ function MonthView({ filledCount, freeDaysPerMonth }: { filledCount: number; fre
           />
         ))}
       </div>
-      <p className="text-xs text-white/35 mt-3">1 Punkt = 1 Tag</p>
     </div>
   );
 }
@@ -92,7 +91,6 @@ function YearView({ filledCount, freeDaysPerYear }: { filledCount: number; freeD
           />
         ))}
       </div>
-      <p className="text-xs text-white/35 mt-3">1 Punkt = 1 Tag</p>
     </div>
   );
 }
