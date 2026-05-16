@@ -61,8 +61,8 @@ export function FreedomHero({ monthly, total, onIncomeChange }: FreedomHeroProps
   }
 
   return (
-    <section className="rounded-2xl p-5 bg-accent-muted border border-accent/20" aria-labelledby={heroId}>
-      <p className="text-xs font-medium text-white/70 uppercase tracking-wider mb-3">Freiheit</p>
+    <section className="rounded-2xl p-5 bg-surface-1 border border-accent/20" aria-labelledby={heroId}>
+      <p className="text-xs font-medium text-white/70 uppercase tracking-wider mb-3">Freedom Flow</p>
       <h2 id={heroId} className="sr-only">Finanzielle Freiheit</h2>
 
       <div className="flex flex-col items-center gap-4">

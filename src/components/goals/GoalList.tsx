@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Goal } from '../../types';
+import { CategoryIcon } from './CategoryIcon';
 import { totalMonthlyCosts } from '../../utils/calculations';
 import { formatEuro } from '../../utils/formatting';
 import { saveGoalDefault } from '../../utils/storage';
@@ -49,7 +50,7 @@ export function GoalList({ goals, onAdd, onUpdate, onDelete, focusGoalId }: Goal
     const timer = setTimeout(() => {
       setEditingId(focusGoalId);
       liRefs.current.get(focusGoalId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
+    }, 200);
     return () => clearTimeout(timer);
   }, [focusGoalId]);
 
@@ -192,7 +193,9 @@ export function GoalList({ goals, onAdd, onUpdate, onDelete, focusGoalId }: Goal
                     aria-label={`${goal.name} ${isEditing ? 'schließen' : 'bearbeiten'}`}
                     className="flex items-center gap-3 flex-1 min-w-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
                   >
-                    <span className="text-xl flex-shrink-0" aria-hidden="true">{goal.emoji}</span>
+                    <span className="flex-shrink-0 text-white/60">
+                      <CategoryIcon category={goal.category} />
+                    </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-white truncate">{goal.name}</p>
                       <p className="text-xs text-white/65 mt-0.5">{goal.category}</p>

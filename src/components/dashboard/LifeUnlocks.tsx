@@ -40,8 +40,6 @@ function chunks<T>(arr: T[], n: number): T[][] {
   return result;
 }
 
-const MAX_DOTS = 5;
-
 function AchievedCarousel({ achieved }: { achieved: Unlock[] }) {
   const [activeIdx, setActiveIdx] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -52,9 +50,6 @@ function AchievedCarousel({ achieved }: { achieved: Unlock[] }) {
     if (!el || el.offsetWidth === 0) return;
     setActiveIdx(Math.round(el.scrollLeft / el.offsetWidth));
   }
-
-  const visibleDotCount = Math.min(slides.length, MAX_DOTS);
-  const dotStart = Math.max(0, Math.min(activeIdx - Math.floor(MAX_DOTS / 2), slides.length - visibleDotCount));
 
   return (
     <div>
@@ -92,7 +87,7 @@ function AchievedCarousel({ achieved }: { achieved: Unlock[] }) {
 
       {slides.length > 1 && (
         <div className="flex justify-center gap-1.5 mt-2" aria-hidden="true">
-          {Array.from({ length: visibleDotCount }, (_, i) => i + dotStart).map((si) => (
+          {slides.map((_, si) => (
             <div
               key={si}
               className={`rounded-full transition-all duration-200 ${
