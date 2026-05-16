@@ -1,37 +1,16 @@
 import { useState } from 'react';
 import type { Portfolio } from '../../types';
-import { formatEuro } from '../../utils/formatting';
+import { formatEuro, parseGerman } from '../../utils/formatting';
 import { annualDividends, monthlyDividends } from '../../utils/calculations';
-
-// ─── number formatting helpers ────────────────────────────────────────────────
 
 const deDE = (decimals: number) =>
   new Intl.NumberFormat('de-DE', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
 function formatFieldValue(value: number, unit: string): string {
-  if (unit === '€')     return deDE(0).format(value);
-  if (unit === '%')     return deDE(1).format(value);
-  return String(value); // Jahre
+  if (unit === '€') return deDE(0).format(value);
+  if (unit === '%') return deDE(1).format(value);
+  return String(value);
 }
-
-/** Parse German-formatted number: "242.400" → 242400, "6,5" → 6.5 */
-function parseGerman(raw: string): number {
-  const s = raw.trim().replace(/\s/g, '');
-  // Both separators present: dots = thousands, comma = decimal
-  if (s.includes('.') && s.includes(',')) {
-    return parseFloat(s.replace(/\./g, '').replace(',', '.'));
-  }
-  // Only comma → decimal separator
-  if (s.includes(',')) return parseFloat(s.replace(',', '.'));
-  // Only dot: if exactly 3 digits follow → thousands separator, else decimal
-  if (s.includes('.')) {
-    const after = s.split('.')[1] ?? '';
-    if (after.length === 3) return parseFloat(s.replace('.', ''));
-  }
-  return parseFloat(s);
-}
-
-// ─── NumberField sub-component ─────────────────────────────────────────────────
 
 interface NumberFieldProps {
   fieldId: string;
@@ -51,7 +30,6 @@ function NumberField({ fieldId, label, value, unit, min, max, step, description,
 
   function handleFocus() {
     setFocused(true);
-    // Show plain number for editing (comma as decimal separator)
     setRaw(String(value).replace('.', ','));
   }
 
@@ -59,7 +37,6 @@ function NumberField({ fieldId, label, value, unit, min, max, step, description,
     setFocused(false);
     const parsed = parseGerman(input);
     if (!isNaN(parsed) && parsed >= min && parsed <= max) {
-      // Snap to step
       const snapped = Math.round(parsed / step) * step;
       onChange(parseFloat(snapped.toFixed(10)));
     }
@@ -83,7 +60,7 @@ function NumberField({ fieldId, label, value, unit, min, max, step, description,
             onBlur={(e) => commit(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter')  e.currentTarget.blur();
-              if (e.key === 'Escape') { setFocused(false); }
+              if (e.key === 'Escape') setFocused(false);
             }}
             aria-label={`${label} direkt eingeben`}
             aria-describedby={`${fieldId}-desc`}
@@ -92,7 +69,6 @@ function NumberField({ fieldId, label, value, unit, min, max, step, description,
           <span className="text-sm text-white/65 w-8 flex-shrink-0">{unit}</span>
         </div>
       </div>
-
       <input
         id={`${fieldId}-slider`}
         type="range"
@@ -110,8 +86,6 @@ function NumberField({ fieldId, label, value, unit, min, max, step, description,
   );
 }
 
-// ─── Field config ───────────────────────────────────────────────────────────
-
 interface FieldConfig {
   id: keyof Portfolio;
   label: string;
@@ -123,22 +97,21 @@ interface FieldConfig {
 }
 
 const FIELDS: FieldConfig[] = [
-  { id: 'value',         label: 'Portfolio-Wert',      unit: '€',     min: 0, max:  2_000_000, step: 100, description: 'Aktueller Gesamtwert deines Portfolios' },
-  { id: 'dividendYield', label: 'Dividendenrendite',   unit: '%',     min: 0, max:         20, step: 0.1, description: 'Durchschnittliche Dividendenrendite deines Portfolios' },
-  { id: 'monthlySavings',label: 'Monatliche Sparrate', unit: '€',     min: 0, max:      5_000, step:  50, description: 'Betrag, den du monatlich investierst' },
-  { id: 'dividendGrowth',label: 'Dividendenwachstum',  unit: '%',     min: 0, max:         15, step: 0.5, description: 'Erwartetes jährliches Wachstum der Dividenden' },
-  { id: 'priceReturn',   label: 'Kursrendite',         unit: '%',     min: 0, max:         50, step: 0.5, description: 'Erwartete jährliche Kursrendite' },
-  { id: 'horizonYears',  label: 'Anlagehorizont',      unit: 'Jahre', min: 1, max:         40, step:   1, description: 'Wie viele Jahre planst du zu investieren?' },
+  { id: 'value',         label: 'Portfolio-Wert',      unit: '€',     min: 0, max: 2_000_000, step: 100, description: 'Aktueller Gesamtwert deines Portfolios' },
+  { id: 'dividendYield', label: 'Dividendenrendite',   unit: '%',     min: 0, max:        20, step: 0.1, description: 'Durchschnittliche Dividendenrendite deines Portfolios' },
+  { id: 'monthlySavings',label: 'Monatliche Sparrate', unit: '€',     min: 0, max:     5_000, step:  50, description: 'Betrag, den du monatlich investierst' },
+  { id: 'dividendGrowth',label: 'Dividendenwachstum',  unit: '%',     min: 0, max:        15, step: 0.5, description: 'Erwartetes jährliches Wachstum der Dividenden' },
+  { id: 'priceReturn',   label: 'Kursrendite',         unit: '%',     min: 0, max:        50, step: 0.5, description: 'Erwartete jährliche Kursrendite' },
+  { id: 'horizonYears',  label: 'Anlagehorizont',      unit: 'Jahre', min: 1, max:        40, step:   1, description: 'Wie viele Jahre planst du zu investieren?' },
 ];
-
-// ─── Main component ─────────────────────────────────────────────────────────
 
 interface PortfolioFormProps {
   portfolio: Portfolio;
   onSave: (p: Portfolio) => void;
+  onReset: () => void;
 }
 
-export function PortfolioForm({ portfolio, onSave }: PortfolioFormProps) {
+export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps) {
   const [form, setForm] = useState<Portfolio>({ ...portfolio });
   const [saved, setSaved] = useState(false);
 
@@ -160,12 +133,9 @@ export function PortfolioForm({ portfolio, onSave }: PortfolioFormProps) {
     <main className="max-w-4xl mx-auto px-4 py-6">
       <div className="mb-5">
         <h1 className="text-lg font-bold text-white">Portfolio-Einstellungen</h1>
-        <p className="text-sm text-white/65 mt-1">
-          Schieberegler oder Zahl direkt eingeben.
-        </p>
+        <p className="text-sm text-white/65 mt-1">Schieberegler oder Zahl direkt eingeben.</p>
       </div>
 
-      {/* Live preview */}
       <div className="bg-surface-1 rounded-2xl p-5 mb-6 grid grid-cols-2 gap-4">
         <div>
           <p className="text-xs text-white/65 mb-1">Jährliche Dividenden</p>
@@ -200,6 +170,16 @@ export function PortfolioForm({ portfolio, onSave }: PortfolioFormProps) {
           {saved ? '✓ Gespeichert' : 'Änderungen speichern'}
         </button>
       </form>
+
+      <div className="mt-8 pt-6 border-t border-white/5">
+        <button
+          type="button"
+          onClick={onReset}
+          className="w-full text-sm text-white/45 hover:text-red-400 transition-colors py-2 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+        >
+          Alle Daten zurücksetzen
+        </button>
+      </div>
     </main>
   );
 }

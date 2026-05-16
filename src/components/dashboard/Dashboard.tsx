@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react';
 import type { DisplayFilter, FilterMode, Goal, Portfolio } from '../../types';
 import {
   applyDisplayFilter,
@@ -32,6 +33,17 @@ function dirArrow(filter: DisplayFilter, mode: FilterMode): string {
 }
 
 export function Dashboard({ portfolio, goals, displayFilter, onFilterChange }: DashboardProps) {
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [activeDot, setActiveDot] = useState(0);
+
+  function handleCarouselScroll() {
+    const el = carouselRef.current;
+    if (!el) return;
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    if (maxScroll <= 0) return;
+    setActiveDot(Math.min(2, Math.round((el.scrollLeft / maxScroll) * 2)));
+  }
+
   const monthly = monthlyDividends(portfolio);
   const total = totalMonthlyCosts(goals);
   const covPct = coveragePercent(monthly, total);
@@ -58,24 +70,37 @@ export function Dashboard({ portfolio, goals, displayFilter, onFilterChange }: D
     <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
 
       {/* 1. Hero metrics – carousel on mobile, grid on desktop */}
-      <div
-        role="group"
-        aria-label="Kennzahlen"
-        className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-pl-4 -mx-4 px-4 pb-1
-                   sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:mx-0 sm:px-0 sm:pb-0 sm:scroll-pl-0"
-      >
-        {[
-          { label: 'Monatliche Dividenden', value: formatEuro(monthly),    sub: 'Passives Einkommen',          accent: 'green' as const },
-          { label: 'Deckungsgrad',          value: formatPercent(covPct),  sub: `von ${formatEuro(total)} mtl.`, accent: 'gold'  as const },
-          { label: 'Noch fehlend',          value: formatEuro(missing),    sub: 'bis zur vollen Freiheit',     accent: 'blue'  as const },
-        ].map((m) => (
-          <div
-            key={m.label}
-            className="flex-none w-[82vw] snap-start sm:w-full sm:flex-auto"
-          >
-            <MetricCard {...m} />
-          </div>
-        ))}
+      <div>
+        <div
+          ref={carouselRef}
+          role="group"
+          aria-label="Kennzahlen"
+          onScroll={handleCarouselScroll}
+          className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-pl-4 -mx-4 px-4 pb-1
+                     sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:mx-0 sm:px-0 sm:pb-0 sm:scroll-pl-0"
+        >
+          {[
+            { label: 'Monatliche Dividenden', value: formatEuro(monthly),    sub: 'Passives Einkommen',            accent: 'green' as const },
+            { label: 'Deckungsgrad',          value: formatPercent(covPct),  sub: `von ${formatEuro(total)} mtl.`, accent: 'gold'  as const },
+            { label: 'Noch fehlend',          value: formatEuro(missing),    sub: 'bis zur vollen Freiheit',       accent: 'blue'  as const },
+          ].map((m) => (
+            <div key={m.label} className="flex-none w-[82vw] snap-start sm:w-full sm:flex-auto">
+              <MetricCard {...m} />
+            </div>
+          ))}
+        </div>
+
+        {/* Slide dots – mobile only */}
+        <div className="flex justify-center gap-2 mt-2 sm:hidden" aria-hidden="true">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className={`rounded-full transition-all duration-200 ${
+                activeDot === i ? 'w-4 h-1.5 bg-accent' : 'w-1.5 h-1.5 bg-white/20'
+              }`}
+            />
+          ))}
+        </div>
       </div>
 
       {/* 2. Overall progress */}

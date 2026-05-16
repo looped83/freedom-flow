@@ -7,7 +7,6 @@ interface TabNavProps {
   onChange: (tab: Tab) => void;
 }
 
-// Simple SVG icons for the bottom app nav
 const ICONS: Record<Tab, ReactNode> = {
   dashboard: (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden="true">
@@ -37,10 +36,10 @@ const ICONS: Record<Tab, ReactNode> = {
 
 // Portfolio intentionally last
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'dashboard',  label: 'Dashboard' },
-  { id: 'goals',      label: 'Ziele'     },
-  { id: 'projection', label: 'Projektion'},
-  { id: 'portfolio',  label: 'Portfolio' },
+  { id: 'dashboard',  label: 'Dashboard'  },
+  { id: 'goals',      label: 'Ziele'      },
+  { id: 'projection', label: 'Projektion' },
+  { id: 'portfolio',  label: 'Portfolio'  },
 ];
 
 export function TabNav({ active, onChange }: TabNavProps) {
@@ -51,7 +50,7 @@ export function TabNav({ active, onChange }: TabNavProps) {
                  sm:static sm:border-t-0 sm:border-b sm:z-auto"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      <div className="max-w-4xl mx-auto flex sm:px-2 sm:gap-1">
+      <div className="max-w-4xl mx-auto flex sm:px-4 sm:gap-0">
         {TABS.map((tab) => {
           const isActive = active === tab.id;
           return (
@@ -62,14 +61,14 @@ export function TabNav({ active, onChange }: TabNavProps) {
               className={`
                 flex-1 flex flex-col items-center justify-center py-2.5 gap-1 transition-colors
                 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent
-                sm:flex-none sm:flex-row sm:py-3 sm:px-3 sm:gap-1.5 sm:rounded-t
+                sm:flex-none sm:flex-row sm:py-3 sm:px-5 sm:gap-0
                 ${isActive
                   ? 'text-accent sm:border-b-2 sm:border-accent'
                   : 'text-white/50 hover:text-white/80 sm:border-b-2 sm:border-transparent'
                 }
               `}
             >
-              {ICONS[tab.id]}
+              <span className="sm:hidden">{ICONS[tab.id]}</span>
               <span className="text-[10px] font-medium sm:text-sm">{tab.label}</span>
             </button>
           );

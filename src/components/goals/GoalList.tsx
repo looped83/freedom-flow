@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import type { Goal } from '../../types';
 import { totalMonthlyCosts } from '../../utils/calculations';
 import { formatEuro } from '../../utils/formatting';
+import { saveGoalDefault } from '../../utils/storage';
 import { GoalForm } from './GoalForm';
 
 interface GoalListProps {
@@ -11,9 +12,34 @@ interface GoalListProps {
   onDelete: (id: string) => void;
 }
 
-// Always: expensive → cheap
 function sortDesc(goals: Goal[]): Goal[] {
   return [...goals].sort((a, b) => b.monthlyAmount - a.monthlyAmount);
+}
+
+function IconEdit() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    </svg>
+  );
+}
+
+function IconTrash() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
+      <polyline points="3 6 5 6 21 6"/>
+      <path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/>
+    </svg>
+  );
+}
+
+function IconX() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="w-3.5 h-3.5" aria-hidden="true">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  );
 }
 
 export function GoalList({ goals, onAdd, onUpdate, onDelete }: GoalListProps) {
@@ -28,21 +54,19 @@ export function GoalList({ goals, onAdd, onUpdate, onDelete }: GoalListProps) {
   const total = totalMonthlyCosts(goals);
 
   function startInlineEdit(goal: Goal) {
-    setEditingId(null); // close full form if open
+    setEditingId(null);
     setInlineNameId(goal.id);
     setInlineNameValue(goal.name);
   }
 
   function saveInlineName(goal: Goal) {
     const trimmed = inlineNameValue.trim();
-    if (trimmed && trimmed !== goal.name) {
-      onUpdate({ ...goal, name: trimmed });
-    }
+    if (trimmed && trimmed !== goal.name) onUpdate({ ...goal, name: trimmed });
     setInlineNameId(null);
   }
 
   function openFullEdit(goalId: string) {
-    setInlineNameId(null); // close inline edit if open
+    setInlineNameId(null);
     setEditingId(goalId);
   }
 
@@ -80,6 +104,7 @@ export function GoalList({ goals, onAdd, onUpdate, onDelete }: GoalListProps) {
                 <GoalForm
                   initial={goal}
                   onSave={(g) => { onUpdate(g); setEditingId(null); }}
+                  onSaveAsDefault={saveGoalDefault}
                   onCancel={() => setEditingId(null)}
                 />
               </div>
@@ -100,9 +125,7 @@ export function GoalList({ goals, onAdd, onUpdate, onDelete }: GoalListProps) {
                         value={inlineNameValue}
                         onChange={(e) => setInlineNameValue(e.target.value)}
                         onBlur={() => saveInlineName(goal)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Escape') setInlineNameId(null);
-                        }}
+                        onKeyDown={(e) => { if (e.key === 'Escape') setInlineNameId(null); }}
                         aria-label={`Name von ${goal.name} bearbeiten`}
                         className="w-full bg-transparent text-sm font-medium text-white border-b border-accent focus:outline-none"
                       />
@@ -128,9 +151,9 @@ export function GoalList({ goals, onAdd, onUpdate, onDelete }: GoalListProps) {
                   <button
                     onClick={() => openFullEdit(goal.id)}
                     aria-label={`${goal.name} bearbeiten`}
-                    className="p-1.5 text-white/60 hover:text-white/90 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
+                    className="p-1.5 text-white/50 hover:text-white/90 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
                   >
-                    <span aria-hidden="true">✏️</span>
+                    <IconEdit />
                   </button>
 
                   {confirmDelete === goal.id ? (
@@ -145,18 +168,18 @@ export function GoalList({ goals, onAdd, onUpdate, onDelete }: GoalListProps) {
                       <button
                         onClick={() => setConfirmDelete(null)}
                         aria-label="Löschen abbrechen"
-                        className="text-xs text-white/65 hover:text-white/90 px-2 py-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
+                        className="p-1.5 text-white/50 hover:text-white/90 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
                       >
-                        ✕
+                        <IconX />
                       </button>
                     </div>
                   ) : (
                     <button
                       onClick={() => setConfirmDelete(goal.id)}
                       aria-label={`${goal.name} löschen`}
-                      className="p-1.5 text-white/60 hover:text-red-400 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
+                      className="p-1.5 text-white/50 hover:text-red-400 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
                     >
-                      <span aria-hidden="true">🗑️</span>
+                      <IconTrash />
                     </button>
                   )}
                 </div>
