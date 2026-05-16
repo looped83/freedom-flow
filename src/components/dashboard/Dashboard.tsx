@@ -57,25 +57,7 @@ export function Dashboard({ portfolio, goals, displayFilter, onFilterChange }: D
   return (
     <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
 
-      {/* 1. Overall progress – top of page */}
-      <section className="bg-surface-1 rounded-2xl p-5" aria-labelledby="overall-progress-title">
-        <div className="flex justify-between items-center mb-3">
-          <h2 id="overall-progress-title" className="text-xs text-white/65 font-medium uppercase tracking-wider">
-            Gesamtfortschritt
-          </h2>
-          <span className="text-accent font-bold text-sm">{formatPercent(covPct)}</span>
-        </div>
-        <ProgressBar
-          percent={covPct}
-          label={`Gesamtdeckungsgrad: ${formatPercent(covPct)}`}
-          colorClass="bg-accent"
-        />
-        <p className="text-xs text-white/60 mt-2">
-          {coveredAll.length} von {goals.length} Zielen vollständig erreicht
-        </p>
-      </section>
-
-      {/* 2. Hero metrics – carousel on mobile, grid on desktop */}
+      {/* 1. Hero metrics – carousel on mobile, grid on desktop */}
       <div
         role="group"
         aria-label="Kennzahlen"
@@ -95,6 +77,24 @@ export function Dashboard({ portfolio, goals, displayFilter, onFilterChange }: D
           </div>
         ))}
       </div>
+
+      {/* 2. Overall progress */}
+      <section className="bg-surface-1 rounded-2xl p-5" aria-labelledby="overall-progress-title">
+        <div className="flex justify-between items-center mb-3">
+          <h2 id="overall-progress-title" className="text-xs text-white/65 font-medium uppercase tracking-wider">
+            Gesamtfortschritt
+          </h2>
+          <span className="text-accent font-bold text-sm">{formatPercent(covPct)}</span>
+        </div>
+        <ProgressBar
+          percent={covPct}
+          label={`Gesamtdeckungsgrad: ${formatPercent(covPct)}`}
+          colorClass="bg-accent"
+        />
+        <p className="text-xs text-white/60 mt-2">
+          {coveredAll.length} von {goals.length} Zielen vollständig erreicht
+        </p>
+      </section>
 
       {/* 3. Next milestone */}
       {nextGoal && (

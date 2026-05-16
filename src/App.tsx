@@ -44,7 +44,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-surface text-white">
+    <div className="min-h-screen bg-surface text-white pb-16 sm:pb-0">
       <Header onReset={handleReset} />
       <TabNav active={tab} onChange={setTab} />
 
