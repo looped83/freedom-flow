@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer } from 'react';
+import { useEffect, useMemo, useReducer } from 'react';
 import type { AppState, Goal, Milestone, Portfolio } from '../types';
 import { loadState, resetState, saveState } from '../utils/storage';
 
@@ -60,16 +60,19 @@ export function useAppState() {
     return () => clearTimeout(id);
   }, [state]);
 
-  const actions: AppActions = {
-    setPortfolio: useCallback((p: Portfolio) => dispatch({ type: 'SET_PORTFOLIO', payload: p }), []),
-    addGoal: useCallback((g: Goal) => dispatch({ type: 'ADD_GOAL', payload: g }), []),
-    updateGoal: useCallback((g: Goal) => dispatch({ type: 'UPDATE_GOAL', payload: g }), []),
-    deleteGoal: useCallback((id: string) => dispatch({ type: 'DELETE_GOAL', id }), []),
-    addMilestone: useCallback((m: Milestone) => dispatch({ type: 'ADD_MILESTONE', payload: m }), []),
-    updateMilestone: useCallback((m: Milestone) => dispatch({ type: 'UPDATE_MILESTONE', payload: m }), []),
-    deleteMilestone: useCallback((id: string) => dispatch({ type: 'DELETE_MILESTONE', id }), []),
-    reset: useCallback(() => dispatch({ type: 'RESET' }), []),
-  };
+  // `dispatch` is stable for the lifetime of the component, so the entire
+  // actions object can be built once. A stable reference unlocks React.memo
+  // on every child that takes individual actions as props.
+  const actions = useMemo<AppActions>(() => ({
+    setPortfolio:    (p)  => dispatch({ type: 'SET_PORTFOLIO',    payload: p  }),
+    addGoal:         (g)  => dispatch({ type: 'ADD_GOAL',         payload: g  }),
+    updateGoal:      (g)  => dispatch({ type: 'UPDATE_GOAL',      payload: g  }),
+    deleteGoal:      (id) => dispatch({ type: 'DELETE_GOAL',      id }),
+    addMilestone:    (m)  => dispatch({ type: 'ADD_MILESTONE',    payload: m  }),
+    updateMilestone: (m)  => dispatch({ type: 'UPDATE_MILESTONE', payload: m  }),
+    deleteMilestone: (id) => dispatch({ type: 'DELETE_MILESTONE', id }),
+    reset:           ()   => dispatch({ type: 'RESET' }),
+  }), []);
 
   return { state, actions };
 }
