@@ -75,30 +75,38 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onGoal
           <h2 id="next-goal-title" className="text-sm font-semibold text-white mb-3">
             Nächstes Ziel
           </h2>
-          <div className="flex items-center gap-3">
+          <button
+            onClick={() => onGoalClick?.(nextGoal.id)}
+            className="w-full bg-surface-2 rounded-xl px-4 py-3 flex items-center gap-3 text-left hover:bg-surface-3 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+            aria-label={`${nextGoal.name} in Setup öffnen`}
+          >
             <span className="flex-shrink-0 text-white/60">
-              <CategoryIcon category={nextGoal.category} className="w-7 h-7" />
+              <CategoryIcon category={nextGoal.category} />
             </span>
             <div className="flex-1 min-w-0">
-              <p className="text-white font-semibold">{nextGoal.name}</p>
-              <p className="text-xs text-white/55 mt-0.5">
-                {formatEuro(nextGoal.coveredAmount)} / {formatEuro(nextGoal.monthlyAmount)}
-                {nextGoal.achievedYear != null && ` · erreichbar ${nextGoal.achievedYear}`}
-              </p>
-              <div className="mt-2 flex items-center gap-2">
-                <div className="flex-1">
-                  <ProgressBar
-                    percent={nextGoal.coveragePercent}
-                    label={`Fortschritt ${nextGoal.name}: ${formatPercent(nextGoal.coveragePercent)}`}
-                    colorClass="bg-gold"
-                  />
-                </div>
-                <span className="text-gold font-bold text-xs flex-shrink-0">
-                  {formatPercent(nextGoal.coveragePercent)}
+              <div className="flex justify-between items-baseline mb-1 gap-2">
+                <span className="text-sm text-white font-medium truncate pr-2 min-w-0">{nextGoal.name}</span>
+                <span className="text-xs text-white/55 flex-shrink-0 tabular-nums">
+                  {formatEuro(nextGoal.coveredAmount)} / {formatEuro(nextGoal.monthlyAmount)}
                 </span>
               </div>
+              <ProgressBar
+                percent={nextGoal.coveragePercent}
+                label={`${nextGoal.name}: ${formatPercent(nextGoal.coveragePercent)} gedeckt`}
+                colorClass={nextGoal.status === 'partial' ? 'bg-gold' : 'bg-white/20'}
+              />
             </div>
-          </div>
+            <div className="flex-shrink-0 text-right min-w-[2.5rem]">
+              <span className={`text-xs font-bold ${
+                nextGoal.status === 'partial' ? 'text-gold' : 'text-white/45'
+              }`}>
+                {formatPercent(nextGoal.coveragePercent, 0)}
+              </span>
+              {nextGoal.achievedYear != null && (
+                <p className="text-xs text-white/40">{nextGoal.achievedYear}</p>
+              )}
+            </div>
+          </button>
           <p className="text-xs text-accent/70 mt-3 font-bold">
             Noch {formatEuro(nextGoal.monthlyAmount - nextGoal.coveredAmount)} bis zum nächsten Meilenstein.
           </p>
