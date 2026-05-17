@@ -1,4 +1,4 @@
-import type { Goal, Portfolio } from '../types';
+import type { Goal, Milestone, Portfolio } from '../types';
 
 // Monthly dividends: 808 € → annual 9,696 € → at 4% yield → portfolio ~242,400 €
 export const DEFAULT_PORTFOLIO: Portfolio = {
@@ -72,3 +72,10 @@ export const CATEGORY_ORDER: Record<string, number> = {
 };
 
 export const TOTAL_MONTHLY_COSTS = 2_450.19;
+
+export const DEFAULT_MILESTONES: Milestone[] = [
+  { id: 'ms-1', title: '1.000 € / Monat',     type: 'dividend', icon: 'rocket',   dividendTarget: 1_000 },
+  { id: 'ms-2', title: '1.500 € / Monat',     type: 'dividend', icon: 'mountain', dividendTarget: 1_500 },
+  { id: 'ms-3', title: 'Alle Fixkosten frei', type: 'dividend', icon: 'trophy',   dividendTarget: 2_450 },
+  { id: 'ms-4', title: 'Finanzielle Freiheit', type: 'date',    icon: 'crown',    dateTarget: `${CURRENT_YEAR + 10}-12-31` },
+];

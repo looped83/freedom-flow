@@ -1,5 +1,5 @@
 import type { AppState, Goal } from '../types';
-import { DEFAULT_GOALS, DEFAULT_PORTFOLIO } from '../constants/defaultData';
+import { DEFAULT_GOALS, DEFAULT_MILESTONES, DEFAULT_PORTFOLIO } from '../constants/defaultData';
 
 const STORAGE_KEY   = 'dividend-goal-tracker-v1';
 const DEFAULTS_KEY  = 'dividend-goal-tracker-defaults-v1';
@@ -28,6 +28,10 @@ export function loadState(): AppState {
     const storedIds = new Set(parsed.goals.map((g) => g.id));
     const missing = DEFAULT_GOALS.filter((g) => !storedIds.has(g.id));
     if (missing.length > 0) parsed.goals = [...parsed.goals, ...missing];
+    // Migration: initialise milestones list for older saves
+    if (!Array.isArray((parsed as Partial<AppState>).milestones)) {
+      parsed.milestones = DEFAULT_MILESTONES.map((m) => ({ ...m }));
+    }
     return parsed;
   } catch {
     return getDefaultState();
@@ -65,6 +69,7 @@ export function getDefaultState(): AppState {
   return {
     portfolio: { ...DEFAULT_PORTFOLIO },
     goals: loadDefaultGoals(),
+    milestones: DEFAULT_MILESTONES.map((m) => ({ ...m })),
   };
 }
 

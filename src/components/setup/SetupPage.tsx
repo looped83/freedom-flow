@@ -1,17 +1,22 @@
 import { useState } from 'react';
-import type { Goal, Portfolio } from '../../types';
+import type { Goal, Milestone, Portfolio } from '../../types';
 import { GoalList } from '../goals/GoalList';
+import { MilestoneList } from '../milestones/MilestoneList';
 import { PortfolioForm } from '../portfolio/PortfolioForm';
 import { PageHeader } from '../layout/PageHeader';
 
-type SetupTab = 'goals' | 'portfolio';
+type SetupTab = 'goals' | 'milestones' | 'portfolio';
 
 interface SetupPageProps {
   goals: Goal[];
+  milestones: Milestone[];
   portfolio: Portfolio;
   onAdd: (g: Goal) => void;
   onUpdate: (g: Goal) => void;
   onDelete: (id: string) => void;
+  onAddMilestone: (m: Milestone) => void;
+  onUpdateMilestone: (m: Milestone) => void;
+  onDeleteMilestone: (id: string) => void;
   onSavePortfolio: (p: Portfolio) => void;
   onReset: () => void;
   focusGoalId?: string | null;
@@ -24,7 +29,20 @@ const SETUP_ICON = (
   </svg>
 );
 
-export function SetupPage({ goals, portfolio, onAdd, onUpdate, onDelete, onSavePortfolio, onReset, focusGoalId }: SetupPageProps) {
+export function SetupPage({
+  goals,
+  milestones,
+  portfolio,
+  onAdd,
+  onUpdate,
+  onDelete,
+  onAddMilestone,
+  onUpdateMilestone,
+  onDeleteMilestone,
+  onSavePortfolio,
+  onReset,
+  focusGoalId,
+}: SetupPageProps) {
   const [active, setActive] = useState<SetupTab>('goals');
 
   return (
@@ -37,8 +55,9 @@ export function SetupPage({ goals, portfolio, onAdd, onUpdate, onDelete, onSaveP
           aria-label="Setup-Bereiche"
         >
           {([
-            { id: 'goals',     label: 'Ausgaben'  },
-            { id: 'portfolio', label: 'Portfolio'  },
+            { id: 'goals',      label: 'Ausgaben'      },
+            { id: 'milestones', label: 'Meilensteine'  },
+            { id: 'portfolio',  label: 'Portfolio'     },
           ] as { id: SetupTab; label: string }[]).map((t) => (
             <button
               key={t.id}
@@ -58,9 +77,19 @@ export function SetupPage({ goals, portfolio, onAdd, onUpdate, onDelete, onSaveP
       </div>
 
       <div role="tabpanel">
-        {active === 'goals' ? (
+        {active === 'goals' && (
           <GoalList goals={goals} portfolio={portfolio} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} focusGoalId={focusGoalId} />
-        ) : (
+        )}
+        {active === 'milestones' && (
+          <MilestoneList
+            milestones={milestones}
+            portfolio={portfolio}
+            onAdd={onAddMilestone}
+            onUpdate={onUpdateMilestone}
+            onDelete={onDeleteMilestone}
+          />
+        )}
+        {active === 'portfolio' && (
           <PortfolioForm portfolio={portfolio} onSave={onSavePortfolio} onReset={onReset} />
         )}
       </div>
