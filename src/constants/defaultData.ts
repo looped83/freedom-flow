@@ -13,6 +13,12 @@ export const DEFAULT_PORTFOLIO: Portfolio = {
 
 export const CURRENT_YEAR = new Date().getFullYear();
 
+/** Auto-managed goal that absorbs Hero-edited overshoot. Created on demand. */
+export const BONUS_GOAL_ID = 'bonus';
+
+/** Auto-managed milestone whose dividendTarget tracks the sum of all goals. */
+export const AUTO_EXPENSES_MS_ID = 'ms-all-expenses';
+
 let _id = 1;
 const id = () => String(_id++);
 
@@ -59,9 +65,9 @@ export const DEFAULT_MILESTONES: Milestone[] = [
   { id: 'ms-14', title: '1.500 € / Monat',            type: 'dividend', icon: 'mountain', dividendTarget: 1_500 },
   { id: 'ms-25', title: '1.750 € / Monat',            type: 'dividend', icon: 'gem',      dividendTarget: 1_750 },
   { id: 'ms-15', title: '2.000 € / Monat',            type: 'dividend', icon: 'flag',     dividendTarget: 2_000 },
-  { id: 'ms-26', title: '2.250 € / Monat',            type: 'dividend', icon: 'target',   dividendTarget: 2_250 },
-  { id: 'ms-16', title: 'Alle Fixkosten frei',        type: 'dividend', icon: 'trophy',   dividendTarget: 2_450 },
-  { id: 'ms-27', title: '2.500 € / Monat',            type: 'dividend', icon: 'mountain', dividendTarget: 2_500 },
+  { id: 'ms-26', title: '2.250 € / Monat',                 type: 'dividend', icon: 'target',   dividendTarget: 2_250 },
+  { id: AUTO_EXPENSES_MS_ID, title: 'Alle Ausgaben / Monat', type: 'dividend', icon: 'trophy',   dividendTarget: 2_450 },
+  { id: 'ms-27', title: '2.500 € / Monat',                 type: 'dividend', icon: 'mountain', dividendTarget: 2_500 },
   { id: 'ms-28', title: '2.750 € / Monat',            type: 'dividend', icon: 'gem',      dividendTarget: 2_750 },
   { id: 'ms-29', title: '3.000 € / Monat',            type: 'dividend', icon: 'mountain', dividendTarget: 3_000 },
   { id: 'ms-30', title: '3.250 € / Monat',            type: 'dividend', icon: 'gem',      dividendTarget: 3_250 },

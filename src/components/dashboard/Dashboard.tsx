@@ -22,6 +22,7 @@ interface DashboardProps {
   goals: Goal[];
   milestones: Milestone[];
   onIncomeChange: (v: number) => void;
+  onTotalChange: (v: number) => void;
   onGoalClick?: (id: string) => void;
 }
 
@@ -31,7 +32,7 @@ const DASHBOARD_ICON = (
   </svg>
 );
 
-export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onGoalClick }: DashboardProps) {
+export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTotalChange, onGoalClick }: DashboardProps) {
   const [showAllGoals, setShowAllGoals] = useState(false);
 
   const monthly = portfolio.monthlyIncome;
@@ -72,7 +73,13 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onGoal
       <PageHeader icon={DASHBOARD_ICON} title="Dashboard" />
 
       {/* FreedomHero – ring, stats, inline income edit */}
-      <FreedomHero monthly={monthly} projectedMonthly={projectedMonthly} total={total} onIncomeChange={onIncomeChange} />
+      <FreedomHero
+        monthly={monthly}
+        projectedMonthly={projectedMonthly}
+        total={total}
+        onIncomeChange={onIncomeChange}
+        onTotalChange={onTotalChange}
+      />
 
       {/* Nächstes Ziel */}
       {nextGoal && (

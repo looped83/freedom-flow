@@ -1,19 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { formatEuro, parseGerman } from '../../utils/formatting';
+import { formatEuro } from '../../utils/formatting';
 import { freedomPercent, missingForFreedom } from '../../utils/calculations';
+import { useInlineNumberEdit } from '../../hooks/useInlineNumberEdit';
 
 interface FreedomHeroProps {
   monthly: number;
   projectedMonthly: number;
   total: number;
   onIncomeChange: (v: number) => void;
+  onTotalChange: (v: number) => void;
 }
 
 const R = 80;
 const CIRCUMFERENCE = 2 * Math.PI * R;
 const heroId = 'freedom-hero-heading';
 
-export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange }: FreedomHeroProps) {
+export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange, onTotalChange }: FreedomHeroProps) {
   const pct = useMemo(() => freedomPercent(monthly, total), [monthly, total]);
   const projPct = useMemo(() => freedomPercent(projectedMonthly, total), [projectedMonthly, total]);
   const missing = useMemo(() => missingForFreedom(monthly, total), [monthly, total]);
@@ -21,14 +23,14 @@ export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange }
   const projDashOffset = useMemo(() => CIRCUMFERENCE * (1 - Math.min(projPct, 100) / 100), [projPct]);
 
   const circleRef = useRef<SVGCircleElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [editing, setEditing] = useState(false);
-  const [raw, setRaw] = useState('');
   const [showProjected, setShowProjected] = useState(false);
   const [reducedMotion] = useState(() =>
     typeof window !== 'undefined' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   );
+
+  const income  = useInlineNumberEdit(monthly, onIncomeChange);
+  const expense = useInlineNumberEdit(total,   onTotalChange);
 
   useEffect(() => {
     const el = circleRef.current;
@@ -46,23 +48,6 @@ export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange }
       });
     });
   }, [dashOffset, reducedMotion]);
-
-  function startEdit() {
-    setRaw(String(Math.round(monthly)));
-    setEditing(true);
-    requestAnimationFrame(() => inputRef.current?.select());
-  }
-
-  function commit(value: string) {
-    const parsed = parseGerman(value);
-    if (!isNaN(parsed) && parsed >= 0) onIncomeChange(parsed);
-    setEditing(false);
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') e.currentTarget.blur();
-    else if (e.key === 'Escape') setEditing(false);
-  }
 
   return (
     <section className="rounded-2xl p-5 bg-accent-muted border border-accent/20" aria-labelledby={heroId}>
@@ -134,23 +119,23 @@ export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange }
           {/* Dividenden – tappable to edit */}
           <div className="text-center">
             <p className="text-xs text-white/55 mb-1">Dividenden</p>
-            {editing ? (
+            {income.editing ? (
               <input
-                ref={inputRef}
+                ref={income.inputRef}
                 type="text"
                 inputMode="decimal"
-                value={raw}
+                value={income.raw}
                 autoFocus
-                onChange={(e) => setRaw(e.target.value)}
-                onBlur={(e) => commit(e.target.value)}
-                onKeyDown={handleKeyDown}
+                onChange={(e) => income.setRaw(e.target.value)}
+                onBlur={(e) => income.commit(e.target.value)}
+                onKeyDown={income.handleKeyDown}
                 aria-label="Monatliche Dividenden eingeben"
                 style={{ fontSize: '16px' }}
                 className="font-bold text-accent text-center bg-transparent border-b border-accent focus:outline-none w-full tabular-nums"
               />
             ) : (
               <button
-                onClick={startEdit}
+                onClick={income.startEdit}
                 aria-label={`Dividenden: ${formatEuro(monthly)}, tippen zum Bearbeiten`}
                 className="text-accent font-bold text-sm tabular-nums underline decoration-dotted underline-offset-2 hover:opacity-75 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
               >
@@ -159,9 +144,32 @@ export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange }
             )}
           </div>
 
+          {/* Ausgaben / Monat – tappable to edit; overshoot creates a Bonus goal */}
           <div className="text-center">
             <p className="text-xs text-white/55 mb-1">Ausgaben / Monat</p>
-            <p className="text-white font-bold text-sm tabular-nums">{formatEuro(total)}</p>
+            {expense.editing ? (
+              <input
+                ref={expense.inputRef}
+                type="text"
+                inputMode="decimal"
+                value={expense.raw}
+                autoFocus
+                onChange={(e) => expense.setRaw(e.target.value)}
+                onBlur={(e) => expense.commit(e.target.value)}
+                onKeyDown={expense.handleKeyDown}
+                aria-label="Monatliche Ausgaben eingeben"
+                style={{ fontSize: '16px' }}
+                className="font-bold text-white text-center bg-transparent border-b border-white/40 focus:outline-none w-full tabular-nums"
+              />
+            ) : (
+              <button
+                onClick={expense.startEdit}
+                aria-label={`Ausgaben pro Monat: ${formatEuro(total)}, tippen zum Bearbeiten`}
+                className="text-white font-bold text-sm tabular-nums underline decoration-dotted underline-offset-2 hover:opacity-75 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
+              >
+                {formatEuro(total)}
+              </button>
+            )}
           </div>
 
           <div className="text-center">

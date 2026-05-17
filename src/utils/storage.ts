@@ -1,5 +1,5 @@
 import type { AppState, Goal } from '../types';
-import { DEFAULT_GOALS, DEFAULT_MILESTONES, DEFAULT_PORTFOLIO } from '../constants/defaultData';
+import { AUTO_EXPENSES_MS_ID, DEFAULT_GOALS, DEFAULT_MILESTONES, DEFAULT_PORTFOLIO } from '../constants/defaultData';
 
 const STORAGE_KEY   = 'dividend-goal-tracker-v1';
 const DEFAULTS_KEY  = 'dividend-goal-tracker-defaults-v1';
@@ -33,10 +33,12 @@ export function loadState(): AppState {
       parsed.milestones = DEFAULT_MILESTONES.map((m) => ({ ...m }));
     } else {
       // Drop former default milestones that have since been removed
-      // (themed/category targets, date targets, 2×/3×/5×/10.000).
+      // (themed/category targets, date targets, the static "Alle Fixkosten frei"
+      // landmark — now replaced by the auto-managed AUTO_EXPENSES_MS_ID — and
+      // the 2×/3×/5×/10.000 multiples).
       const REMOVED_DEFAULT_MS_IDS = new Set([
         'ms-4', 'ms-5', 'ms-6', 'ms-7', 'ms-8', 'ms-9', 'ms-10', 'ms-11', 'ms-12',
-        'ms-17',
+        'ms-16', 'ms-17',
         'ms-18', 'ms-19', 'ms-20', 'ms-21', 'ms-22',
       ]);
       parsed.milestones = parsed.milestones.filter((m) => !REMOVED_DEFAULT_MS_IDS.has(m.id));
@@ -44,6 +46,14 @@ export function loadState(): AppState {
       const missingMs = DEFAULT_MILESTONES.filter((m) => !storedMsIds.has(m.id));
       if (missingMs.length > 0) parsed.milestones = [...parsed.milestones, ...missingMs];
     }
+    // Migration: keep the auto-managed expenses milestone in sync with the
+    // actual goal sum (in case persisted state drifted).
+    const totalNow = parsed.goals.reduce((s, g) => s + g.monthlyAmount, 0);
+    parsed.milestones = parsed.milestones.map((m) =>
+      m.id === AUTO_EXPENSES_MS_ID && m.type === 'dividend' && m.dividendTarget !== totalNow
+        ? { ...m, dividendTarget: totalNow }
+        : m,
+    );
     return parsed;
   } catch {
     return getDefaultState();
