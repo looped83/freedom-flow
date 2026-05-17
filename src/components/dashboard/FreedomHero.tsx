@@ -24,6 +24,7 @@ export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange }
   const inputRef = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState(false);
   const [raw, setRaw] = useState('');
+  const [showProjected, setShowProjected] = useState(false);
 
   const reducedMotion =
     typeof window !== 'undefined' &&
@@ -79,7 +80,7 @@ export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange }
         >
           {/* Track */}
           <circle cx="100" cy="100" r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="14" />
-          {/* Projected year-end arc (transparent) */}
+          {/* Projected year-end arc (transparent) – click to show projected % */}
           {projPct > pct && (
             <circle
               cx="100" cy="100" r={R}
@@ -88,9 +89,11 @@ export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange }
               strokeDasharray={CIRCUMFERENCE}
               strokeDashoffset={projDashOffset}
               transform="rotate(-90 100 100)"
+              style={{ cursor: 'pointer' }}
+              onClick={() => setShowProjected(true)}
             />
           )}
-          {/* Current arc */}
+          {/* Current arc – click to revert to current % */}
           <circle
             ref={circleRef}
             cx="100" cy="100" r={R}
@@ -99,14 +102,16 @@ export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange }
             strokeDasharray={CIRCUMFERENCE}
             strokeDashoffset={CIRCUMFERENCE}
             transform="rotate(-90 100 100)"
+            style={{ cursor: showProjected ? 'pointer' : 'default' }}
+            onClick={() => setShowProjected(false)}
           />
           <text x="100" y="93" textAnchor="middle" dominantBaseline="middle"
             fill="white" fontSize="28" fontWeight="700" fontFamily="inherit">
-            {pct.toFixed(1)} %
+            {(showProjected ? projPct : pct).toFixed(1)} %
           </text>
           <text x="100" y="117" textAnchor="middle" dominantBaseline="middle"
             fill="rgba(255,255,255,0.6)" fontSize="12" fontFamily="inherit">
-            finanziell frei
+            {showProjected ? 'Prognose' : 'finanziell frei'}
           </text>
         </svg>
 
@@ -141,7 +146,7 @@ export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange }
           </div>
 
           <div className="text-center">
-            <p className="text-xs text-white/55 mb-1">Monatliche Ausgaben</p>
+            <p className="text-xs text-white/55 mb-1">Ausgaben / Monat</p>
             <p className="text-white font-bold text-sm tabular-nums">{formatEuro(total)}</p>
           </div>
 

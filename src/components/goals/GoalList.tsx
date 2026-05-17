@@ -132,7 +132,8 @@ export function GoalList({ goals, onAdd, onUpdate, onDelete, focusGoalId }: Goal
     <main className="max-w-4xl mx-auto px-4 py-6">
       <div className="mb-5 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-lg font-bold text-white">Ausgaben</h1>
+          <p className="text-xs text-white/55 mb-0.5">Ausgaben / Monat</p>
+          <h1 className="text-xl font-bold text-white tabular-nums">{formatEuro(total)}</h1>
         </div>
         <button
           onClick={() => { setAdding(true); setEditingId(null); }}
@@ -253,11 +254,6 @@ export function GoalList({ goals, onAdd, onUpdate, onDelete, focusGoalId }: Goal
         })}
       </ul>
 
-      {/* Total at bottom */}
-      <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
-        <span className="text-sm text-white/65">Gesamtausgaben / Monat</span>
-        <span className="text-base font-bold text-white tabular-nums">{formatEuro(total)}</span>
-      </div>
     </main>
   );
 }

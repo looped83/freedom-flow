@@ -44,16 +44,17 @@ export const DEFAULT_GOALS: Goal[] = [
   { id: id(), name: 'Kleidung',              monthlyAmount: 100.00, category: 'Kleidung',      emoji: '👕' },
   { id: id(), name: 'Gaming',               monthlyAmount:  50.00, category: 'Gaming',        emoji: '🎮' },
   { id: id(), name: 'Zahnarzt',             monthlyAmount:  50.00, category: 'Gesundheit',    emoji: '🦷' },
+  { id: id(), name: 'Auto',                monthlyAmount: 297.00, category: 'Auto',           emoji: '🚗' },
 ];
 
 export const CATEGORY_ORDER: Record<string, number> = {
   Wohnen: 0,
   Nebenkosten: 1,
   Mobilität: 2,
-  Ernährung: 3,
-  Restaurant: 4,
-  Gesundheit: 5,
-  Medizin: 6,
+  Auto: 3,
+  Ernährung: 4,
+  Restaurant: 5,
+  Gesundheit: 6,
   Sport: 7,
   Körperpflege: 8,
   Kleidung: 9,
@@ -70,5 +71,4 @@ export const CATEGORY_ORDER: Record<string, number> = {
   Sonstiges: 20,
 };
 
-// Sum of all default monthly costs (unchanged: Friseur 40 € = 2 × 20 €)
-export const TOTAL_MONTHLY_COSTS = 2_153.19;
+export const TOTAL_MONTHLY_COSTS = 2_450.19;
