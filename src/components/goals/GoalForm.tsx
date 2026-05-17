@@ -4,9 +4,9 @@ import { liveFormatAmount, parseGerman } from '../../utils/formatting';
 import { CategoryIcon } from './CategoryIcon';
 
 const CATEGORIES: GoalCategory[] = [
-  'Wohnen', 'Nebenkosten', 'Mobilität',
+  'Wohnen', 'Nebenkosten', 'Mobilität', 'Auto',
   'Ernährung', 'Restaurant',
-  'Gesundheit', 'Medizin', 'Sport', 'Körperpflege',
+  'Gesundheit', 'Sport', 'Körperpflege',
   'Kleidung', 'Elektronik', 'Haustiere', 'Freizeit', 'Gaming', 'Geschenke', 'Urlaub',
   'Kommunikation', 'Streaming', 'Bildung',
   'Versicherungen',

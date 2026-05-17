@@ -19,7 +19,10 @@ export function loadState(): AppState {
     const defaultById = new Map(DEFAULT_GOALS.map((g) => [g.id, g]));
     parsed.goals = parsed.goals.map((g) => {
       const def = defaultById.get(g.id);
-      return def ? { ...g, category: def.category } : g;
+      const base = def ? { ...g, category: def.category } : g;
+      // Migration: removed categories → remap to nearest replacement
+      if ((base.category as string) === 'Medizin') return { ...base, category: 'Gesundheit' } as Goal;
+      return base;
     });
     return parsed;
   } catch {
