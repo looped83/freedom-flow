@@ -1,6 +1,7 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Milestone, MilestoneResult, Portfolio } from '../../types';
 import { ProgressBar } from './ProgressBar';
+import { AchievedCarousel } from './AchievedCarousel';
 import { MilestoneIcon } from '../milestones/MilestoneIcon';
 import { computeMilestoneResults, formatDaysRemaining, formatMilestoneDate } from '../../utils/milestones';
 import { formatEuro } from '../../utils/formatting';
@@ -47,75 +48,6 @@ function MilestoneCard({ result }: { result: MilestoneResult }) {
           colorClass={barColor(result.progressPercent)}
         />
       </div>
-    </div>
-  );
-}
-
-function chunks<T>(arr: T[], n: number): T[][] {
-  const result: T[][] = [];
-  for (let i = 0; i < arr.length; i += n) result.push(arr.slice(i, i + n));
-  return result;
-}
-
-function AchievedCarousel({ achieved }: { achieved: MilestoneResult[] }) {
-  const [activeIdx, setActiveIdx] = useState(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const slides = chunks(achieved, 2);
-
-  function handleScroll() {
-    const el = scrollRef.current;
-    if (!el || el.offsetWidth === 0) return;
-    setActiveIdx(Math.round(el.scrollLeft / el.offsetWidth));
-  }
-
-  return (
-    <div>
-      <h3 className="text-sm font-semibold text-white mb-2 px-1">Erreichte Meilensteine</h3>
-      <div
-        ref={scrollRef}
-        onScroll={handleScroll}
-        className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory"
-        role="list"
-        aria-label="Erreichte Meilensteine"
-      >
-        {slides.map((pair, slideIdx) => (
-          <div
-            key={slideIdx}
-            className="flex-shrink-0 w-full snap-center grid grid-cols-2 gap-3 px-0.5 py-0.5"
-            aria-hidden={slideIdx !== activeIdx}
-          >
-            {pair.map((m) => (
-              <div
-                key={m.id}
-                role="listitem"
-                aria-label={m.title}
-                className="bg-surface-2 rounded-2xl p-3 flex flex-col items-center gap-1.5 text-center"
-              >
-                <span className="text-accent">
-                  <MilestoneIcon icon={m.icon} className="w-7 h-7" />
-                </span>
-                <p className="text-white/80 font-medium text-xs leading-tight">{m.title}</p>
-                <span className="text-[10px] text-accent font-semibold bg-accent/10 px-2 py-0.5 rounded-full">
-                  ✓ Erreicht
-                </span>
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-
-      {slides.length > 1 && (
-        <div className="flex justify-center gap-1.5 mt-2" aria-hidden="true">
-          {slides.map((_, si) => (
-            <div
-              key={si}
-              className={`rounded-full transition-all duration-200 ${
-                si === activeIdx ? 'w-4 h-1.5 bg-accent' : 'w-1.5 h-1.5 bg-white/20'
-              }`}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -197,7 +129,14 @@ export function LifeUnlocks({ milestones, portfolio }: LifeUnlocksProps) {
         <p className="text-sm text-white/55 px-1">Alle Meilensteine erreicht! 🎉</p>
       )}
 
-      {achieved.length > 0 && <AchievedCarousel achieved={achieved} />}
+      <AchievedCarousel
+        heading="Erreichte Meilensteine"
+        items={achieved.map((m) => ({
+          id: m.id,
+          title: m.title,
+          icon: <MilestoneIcon icon={m.icon} className="w-7 h-7" />,
+        }))}
+      />
     </section>
   );
 }
