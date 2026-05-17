@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { Goal, Milestone, Portfolio } from '../../types';
+import type { Goal, GoalResult, Milestone, Portfolio } from '../../types';
 import {
   computeGoalResults,
   freeDaysPerMonth,
@@ -45,19 +45,25 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onGoal
     [goals, monthly, portfolio],
   );
 
-  const nextGoal = useMemo(
-    () => [...allResults].sort((a, b) => a.monthlyAmount - b.monthlyAmount).find((g) => g.status !== 'covered'),
-    [allResults],
-  );
+  const nextGoal = useMemo(() => {
+    let best: GoalResult | null = null;
+    for (const g of allResults) {
+      if (g.status === 'covered') continue;
+      if (!best || g.monthlyAmount < best.monthlyAmount) best = g;
+    }
+    return best;
+  }, [allResults]);
 
-  const openGoals = useMemo(
-    () => allResults.filter((g) => g.status !== 'covered').sort((a, b) => b.monthlyAmount - a.monthlyAmount),
-    [allResults],
-  );
-  const achievedGoals = useMemo(
-    () => allResults.filter((g) => g.status === 'covered').sort((a, b) => b.monthlyAmount - a.monthlyAmount),
-    [allResults],
-  );
+  const { openGoals, achievedGoals } = useMemo(() => {
+    const open: GoalResult[] = [];
+    const done: GoalResult[] = [];
+    for (const g of allResults) {
+      (g.status === 'covered' ? done : open).push(g);
+    }
+    open.sort((a, b) => b.monthlyAmount - a.monthlyAmount);
+    done.sort((a, b) => b.monthlyAmount - a.monthlyAmount);
+    return { openGoals: open, achievedGoals: done };
+  }, [allResults]);
 
   const visibleGoals = showAllGoals ? openGoals : openGoals.slice(0, MAX_VISIBLE_GOALS);
 

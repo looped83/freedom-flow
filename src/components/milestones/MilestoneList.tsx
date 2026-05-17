@@ -91,31 +91,32 @@ export function MilestoneList({ milestones, portfolio, onAdd, onUpdate, onDelete
 
   const allResults = useMemo(() => computeMilestoneResults(milestones, portfolio), [milestones, portfolio]);
 
-  const displayResults = useMemo(() => {
-    let results = [...allResults];
-    if (filter === 'achieved') results = results.filter((r) => r.status === 'achieved');
-    else if (filter === 'open') results = results.filter((r) => r.status !== 'achieved');
+  const achievedCount = useMemo(
+    () => allResults.reduce((n, r) => (r.status === 'achieved' ? n + 1 : n), 0),
+    [allResults],
+  );
 
-    if (sort.type === 'alpha') {
-      results.sort((a, b) => a.title.localeCompare(b.title, 'de'));
-      if (sort.dir === 'desc') results.reverse();
-    } else if (sort.type === 'target') {
-      results.sort((a, b) => sortKey(a) - sortKey(b));
-      if (sort.dir === 'desc') results.reverse();
-    } else {
-      // status: open (closest to achieving) first, then achieved; tiebreak by sortKey asc
-      results.sort((a, b) => {
-        if (a.status !== b.status) return a.status === 'open' ? -1 : 1;
-        if (a.status === 'open') return b.progressPercent - a.progressPercent;
-        return sortKey(a) - sortKey(b);
-      });
-      if (sort.dir === 'desc') results.reverse();
-    }
-    return results;
+  const displayResults = useMemo(() => {
+    const filtered =
+      filter === 'achieved' ? allResults.filter((r) => r.status === 'achieved')
+      : filter === 'open'   ? allResults.filter((r) => r.status !== 'achieved')
+      : allResults.slice();
+
+    const compare =
+      sort.type === 'alpha'  ? (a: MilestoneResult, b: MilestoneResult) => a.title.localeCompare(b.title, 'de')
+      : sort.type === 'target' ? (a: MilestoneResult, b: MilestoneResult) => sortKey(a) - sortKey(b)
+      : (a: MilestoneResult, b: MilestoneResult) => {
+          if (a.status !== b.status) return a.status === 'open' ? -1 : 1;
+          if (a.status === 'open') return b.progressPercent - a.progressPercent;
+          return sortKey(a) - sortKey(b);
+        };
+
+    filtered.sort(compare);
+    if (sort.dir === 'desc') filtered.reverse();
+    return filtered;
   }, [allResults, filter, sort]);
 
   const totalCount = milestones.length;
-  const achievedCount = allResults.filter((r) => r.status === 'achieved').length;
 
   function handleSortChange(type: SortType) {
     setSort((prev) => {

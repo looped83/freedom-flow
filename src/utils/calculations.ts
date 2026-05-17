@@ -7,6 +7,9 @@ import type {
 } from '../types';
 import { CURRENT_YEAR } from '../constants/defaultData';
 
+const MAX_FUTURE_YEARS = 50;
+const MAX_PAST_YEARS = 50;
+
 export function annualDividends(portfolio: Portfolio): number {
   return portfolio.monthlyIncome * 12;
 }
@@ -16,12 +19,9 @@ export function monthlyDividends(portfolio: Portfolio): number {
 }
 
 export function totalMonthlyCosts(goals: Goal[]): number {
-  return goals.reduce((sum, g) => sum + g.monthlyAmount, 0);
-}
-
-export function coveragePercent(monthly: number, total: number): number {
-  if (total <= 0) return 0;
-  return Math.min((monthly / total) * 100, 100);
+  let sum = 0;
+  for (const g of goals) sum += g.monthlyAmount;
+  return sum;
 }
 
 export function freeDaysPerMonth(monthly: number, total: number): number {
@@ -44,142 +44,144 @@ function goalStatus(pct: number): GoalStatus {
   return 'open';
 }
 
-// Internal: sort goals ascending by amount (cheap → expensive).
-// Coverage always allocates in this order so the most goals get fully covered.
+/** Sort goals ascending by amount (cheap → expensive). Coverage allocates in
+ *  this order so the most goals possible are fully covered. */
 function byAmountAsc(goals: Goal[]): Goal[] {
   return [...goals].sort((a, b) => a.monthlyAmount - b.monthlyAmount);
 }
 
-// Compound projection: dividends grow at dividendGrowth % per year,
-// new savings contribute at the current dividend yield.
+/** Compound projection: existing dividends grow at `dividendGrowth` %/year;
+ *  ongoing savings contribute at the current `dividendYield`. */
 export function projectMonthlyDividendsAtYear(portfolio: Portfolio, years: number): number {
   const g = portfolio.dividendGrowth / 100;
-  const baseMonthly = portfolio.monthlyIncome;
-  const annualSavingsDividends = portfolio.monthlySavings * 12 * (portfolio.dividendYield / 100);
-
-  const existingFV = baseMonthly * Math.pow(1 + g, years);
+  const monthlySavingsDividends = portfolio.monthlySavings * (portfolio.dividendYield / 100);
+  const existingFV = portfolio.monthlyIncome * Math.pow(1 + g, years);
   const savingsFV =
     g > 0
-      ? (annualSavingsDividends / 12) * ((Math.pow(1 + g, years) - 1) / g)
-      : (annualSavingsDividends / 12) * years;
-
+      ? monthlySavingsDividends * ((Math.pow(1 + g, years) - 1) / g)
+      : monthlySavingsDividends * years;
   return existingFV + savingsFV;
 }
 
 /**
  * Compute coverage for each goal.
- * Allocation is always ascending by amount (cheapest covered first).
- * Results are returned in the original `goals` array order
- * so the caller can apply any display filter independently.
+ *
+ * Allocation always proceeds ascending by amount (cheapest first). For each
+ * year 0..MAX_FUTURE_YEARS we replay the allocation against the projected
+ * monthly income and record the first year a goal becomes fully covered.
+ *
+ * Complexity: O(N log N + Y · N) where Y = MAX_FUTURE_YEARS.
+ * Results come back in the caller's `goals` order.
  */
 export function computeGoalResults(
   goals: Goal[],
   monthly: number,
   portfolio: Portfolio,
 ): GoalResult[] {
-  const allocationOrder = byAmountAsc(goals);
-  let remaining = monthly;
+  if (goals.length === 0) return [];
 
-  const resultMap = new Map<string, GoalResult>();
+  const sorted = byAmountAsc(goals);
+  const coveredAmount = new Map<string, number>();
+  const coveragePct = new Map<string, number>();
+  const achievedYear = new Map<string, number>();
 
-  for (const goal of allocationOrder) {
-    const covered = Math.min(remaining, goal.monthlyAmount);
-    remaining = Math.max(0, remaining - goal.monthlyAmount);
+  // Year 0 — actual coverage and percentages.
+  let rem = monthly;
+  for (const goal of sorted) {
+    const covered = Math.min(rem, goal.monthlyAmount);
+    rem = Math.max(0, rem - goal.monthlyAmount);
     const pct = goal.monthlyAmount > 0 ? (covered / goal.monthlyAmount) * 100 : 0;
+    coveredAmount.set(goal.id, covered);
+    coveragePct.set(goal.id, pct);
+    if (pct >= 100) achievedYear.set(goal.id, CURRENT_YEAR);
+  }
 
-    let achievedYear: number | null = null;
-    if (pct >= 100) {
-      achievedYear = CURRENT_YEAR;
-    } else {
-      for (let y = 1; y <= 50; y++) {
-        const projMonthly = projectMonthlyDividendsAtYear(portfolio, y);
-        const projOrder = byAmountAsc(goals);
-        let rem = projMonthly;
-        for (const g of projOrder) {
-          const c = Math.min(rem, g.monthlyAmount);
-          rem = Math.max(0, rem - g.monthlyAmount);
-          if (g.id === goal.id && c >= g.monthlyAmount) {
-            achievedYear = CURRENT_YEAR + y;
-            break;
-          }
-        }
-        if (achievedYear !== null) break;
+  // Future years — find the first year each still-uncovered goal is fully met.
+  if (achievedYear.size < sorted.length) {
+    for (let y = 1; y <= MAX_FUTURE_YEARS; y++) {
+      let proj = projectMonthlyDividendsAtYear(portfolio, y);
+      let outstanding = false;
+      for (const goal of sorted) {
+        const fits = proj >= goal.monthlyAmount;
+        proj = Math.max(0, proj - goal.monthlyAmount);
+        if (fits && !achievedYear.has(goal.id)) achievedYear.set(goal.id, CURRENT_YEAR + y);
+        if (!achievedYear.has(goal.id)) outstanding = true;
       }
+      if (!outstanding) break;
     }
+  }
 
-    resultMap.set(goal.id, {
-      ...goal,
+  return goals.map((g) => {
+    const covered = coveredAmount.get(g.id) ?? 0;
+    const pct = coveragePct.get(g.id) ?? 0;
+    return {
+      ...g,
       status: goalStatus(pct),
       coveredAmount: covered,
       coveragePercent: pct,
-      achievedYear,
-    });
-  }
-
-  // Preserve original order; filter out any orphan ids (safety)
-  return goals.map((g) => resultMap.get(g.id)).filter((r): r is GoalResult => r != null);
-}
-
-
-export function freedomYear(portfolio: Portfolio, goals: Goal[]): number | null {
-  const total = totalMonthlyCosts(goals);
-  for (let y = 0; y <= 50; y++) {
-    const proj = y === 0 ? monthlyDividends(portfolio) : projectMonthlyDividendsAtYear(portfolio, y);
-    if (proj >= total) return CURRENT_YEAR + y;
-  }
-  return null;
+      achievedYear: achievedYear.get(g.id) ?? null,
+    };
+  });
 }
 
 /**
- * Build year-by-year goal unlock timeline including retrospective past entries.
- * Returns chronological entries (past → current → future).
+ * Build the year-by-year goal unlock timeline (past → current → future).
  * The display layer reverses this for "future at top" rendering.
  */
 export function buildFreedomTimeline(goals: Goal[], portfolio: Portfolio): TimelineEntry[] {
-  const sortedGoals = byAmountAsc(goals);
-  const g = portfolio.dividendGrowth / 100;
+  if (goals.length === 0) return [];
 
-  function getUnlockedIds(monthly: number): Set<string> {
+  const sortedGoals = byAmountAsc(goals);
+  const totalGoals = sortedGoals.length;
+  const g = portfolio.dividendGrowth / 100;
+  const monthlySavingsDividends = portfolio.monthlySavings * (portfolio.dividendYield / 100);
+
+  function unlockedIds(monthly: number): Set<string> {
     const unlocked = new Set<string>();
     let rem = monthly;
     for (const goal of sortedGoals) {
-      if (rem >= goal.monthlyAmount) {
-        unlocked.add(goal.id);
-        rem -= goal.monthlyAmount;
-      } else {
-        break;
-      }
+      if (rem < goal.monthlyAmount) break;
+      unlocked.add(goal.id);
+      rem -= goal.monthlyAmount;
     }
     return unlocked;
   }
 
-  // Estimate income Y years in the past by reversing the full compound model
-  // (accounts for both dividend growth AND savings contributions)
+  /** Reverse the compound model to estimate monthly income `yearsAgo` years back. */
   function pastMonthly(yearsAgo: number): number {
-    const growth = Math.pow(1 + g, yearsAgo);
-    const S = portfolio.monthlySavings * (portfolio.dividendYield / 100); // monthly dividend from savings
     if (g > 0) {
-      return Math.max(0, (portfolio.monthlyIncome - S * (growth - 1) / g) / growth);
+      const growth = Math.pow(1 + g, yearsAgo);
+      return Math.max(0, (portfolio.monthlyIncome - monthlySavingsDividends * (growth - 1) / g) / growth);
     }
-    return Math.max(0, portfolio.monthlyIncome - S * yearsAgo);
+    return Math.max(0, portfolio.monthlyIncome - monthlySavingsDividends * yearsAgo);
   }
 
-  // --- Retrospective: go back until income falls below the cheapest goal ---
-  const pastEntries: TimelineEntry[] = [];
-  const cheapestGoalAmount = sortedGoals.length > 0 ? sortedGoals[0].monthlyAmount : 0;
-  const MAX_PAST = 50;
-  // Find how far back we need to go: stop when income would be below cheapest goal
-  let effectivePast = MAX_PAST;
-  for (let y = 1; y <= MAX_PAST; y++) {
-    if (pastMonthly(y) < cheapestGoalAmount) { effectivePast = y - 1; break; }
+  function newGoalsBetween(yearUnlocked: Set<string>, prevUnlocked: Set<string>): Goal[] {
+    if (yearUnlocked.size === prevUnlocked.size) return [];
+    const newOnes: Goal[] = [];
+    for (const goal of sortedGoals) {
+      if (yearUnlocked.has(goal.id) && !prevUnlocked.has(goal.id)) newOnes.push(goal);
+    }
+    return newOnes;
   }
+
+  // --- Retrospective: walk back until income is below the cheapest goal. ---
+  const cheapest = sortedGoals[0].monthlyAmount;
+  let effectivePast = 0;
+  for (let y = 1; y <= MAX_PAST_YEARS; y++) {
+    if (pastMonthly(y) < cheapest) break;
+    effectivePast = y;
+  }
+
+  const pastEntries: TimelineEntry[] = [];
+  // Start from the OLDEST past year (largest y) walking forward.
+  // Seed `prevUnlocked` with the year before that (effectivePast + 1).
+  let prevUnlocked = unlockedIds(pastMonthly(effectivePast + 1));
   for (let y = effectivePast; y >= 1; y--) {
     const monthly = pastMonthly(y);
-    const prevMonthly = pastMonthly(y + 1);
-    const yearUnlocked = getUnlockedIds(monthly);
-    const prevUnlocked = getUnlockedIds(prevMonthly);
-    const newGoals = sortedGoals.filter((goal) => yearUnlocked.has(goal.id) && !prevUnlocked.has(goal.id));
-    const isFreedomY = yearUnlocked.size === goals.length;
+    const yearUnlocked = unlockedIds(monthly);
+    const newGoals = newGoalsBetween(yearUnlocked, prevUnlocked);
+    const isFreedomY = yearUnlocked.size === totalGoals;
     if (newGoals.length > 0 || isFreedomY) {
       pastEntries.push({
         year: CURRENT_YEAR - y,
@@ -190,33 +192,37 @@ export function buildFreedomTimeline(goals: Goal[], portfolio: Portfolio): Timel
         isPastYear: true,
       });
     }
+    prevUnlocked = yearUnlocked;
   }
 
-  // --- Current year ---
-  const year0Monthly = portfolio.monthlyIncome;
-  const year0Unlocked = getUnlockedIds(year0Monthly);
-  // For current year: show goals newly covered vs one step back in past
-  const prevUnlockedForYear0 = getUnlockedIds(pastMonthly(1));
-  const year0New = sortedGoals.filter((goal) => year0Unlocked.has(goal.id) && !prevUnlockedForYear0.has(goal.id));
-  const isFreedomYear0 = year0Unlocked.size === goals.length;
-
+  // --- Current year: compare against the most recent past year. ---
+  const year0Unlocked = unlockedIds(portfolio.monthlyIncome);
+  const year0New = newGoalsBetween(year0Unlocked, prevUnlocked);
+  const isFreedomYear0 = year0Unlocked.size === totalGoals;
   const currentEntry: TimelineEntry | null =
     year0New.length > 0 || isFreedomYear0
-      ? { year: CURRENT_YEAR, projectedMonthly: year0Monthly, newGoals: year0New, isCurrentYear: true, isFreedomYear: isFreedomYear0, isPastYear: false }
+      ? {
+          year: CURRENT_YEAR,
+          projectedMonthly: portfolio.monthlyIncome,
+          newGoals: year0New,
+          isCurrentYear: true,
+          isFreedomYear: isFreedomYear0,
+          isPastYear: false,
+        }
       : null;
 
-  if (isFreedomYear0) return [...pastEntries, ...(currentEntry ? [currentEntry] : [])];
+  if (isFreedomYear0) {
+    return currentEntry ? [...pastEntries, currentEntry] : pastEntries;
+  }
 
-  // Track what's covered now to find future NEW unlocks
-  const alreadyUnlocked = new Set<string>(year0Unlocked);
-
-  // --- Future years ---
+  // --- Future years. ---
   const futureEntries: TimelineEntry[] = [];
+  let runningUnlocked = year0Unlocked;
   for (let y = 1; y <= portfolio.horizonYears; y++) {
     const projMonthly = projectMonthlyDividendsAtYear(portfolio, y);
-    const yearUnlocked = getUnlockedIds(projMonthly);
-    const yearNew = sortedGoals.filter((goal) => yearUnlocked.has(goal.id) && !alreadyUnlocked.has(goal.id));
-    const isFreedomY = yearUnlocked.size === goals.length;
+    const yearUnlocked = unlockedIds(projMonthly);
+    const yearNew = newGoalsBetween(yearUnlocked, runningUnlocked);
+    const isFreedomY = yearUnlocked.size === totalGoals;
 
     if (yearNew.length > 0 || isFreedomY) {
       futureEntries.push({
@@ -229,9 +235,13 @@ export function buildFreedomTimeline(goals: Goal[], portfolio: Portfolio): Timel
       });
     }
 
-    yearNew.forEach((goal) => alreadyUnlocked.add(goal.id));
+    runningUnlocked = yearUnlocked;
     if (isFreedomY) break;
   }
 
-  return [...pastEntries, ...(currentEntry ? [currentEntry] : []), ...futureEntries];
+  return [
+    ...pastEntries,
+    ...(currentEntry ? [currentEntry] : []),
+    ...futureEntries,
+  ];
 }
