@@ -17,11 +17,17 @@ function startOfToday(): Date {
   return d;
 }
 
+/** Cent-precise ≥ check so 3.500,00 vs 3.499,9999 doesn't flip the achievement
+ *  status to "open" because of accumulated floating-point drift. */
+function meetsTarget(current: number, target: number): boolean {
+  return Math.round(current * 100) >= Math.round(target * 100);
+}
+
 export function computeMilestoneResult(milestone: Milestone, portfolio: Portfolio): MilestoneResult {
   if (milestone.type === 'dividend') {
     const target = milestone.dividendTarget ?? 0;
     const current = portfolio.monthlyIncome;
-    const achieved = target > 0 && current >= target;
+    const achieved = target > 0 && meetsTarget(current, target);
     const progress = target > 0 ? Math.min(100, (current / target) * 100) : 0;
     return {
       ...milestone,
@@ -100,10 +106,10 @@ export function milestoneAchievedYear(milestone: Milestone, portfolio: Portfolio
   if (milestone.type === 'dividend') {
     const target = milestone.dividendTarget ?? 0;
     if (target <= 0) return null;
-    if (portfolio.monthlyIncome >= target) {
+    if (meetsTarget(portfolio.monthlyIncome, target)) {
       // Already achieved — find when it was first reached by reversing growth.
       for (let y = 1; y <= MAX_LOOKBACK_YEARS; y++) {
-        if (projectMonthlyDividendsYearsAgo(portfolio, y) < target) {
+        if (!meetsTarget(projectMonthlyDividendsYearsAgo(portfolio, y), target)) {
           return CURRENT_YEAR - (y - 1);
         }
       }
@@ -111,7 +117,7 @@ export function milestoneAchievedYear(milestone: Milestone, portfolio: Portfolio
       return CURRENT_YEAR - MAX_LOOKBACK_YEARS;
     }
     for (let y = 1; y <= MAX_LOOKAHEAD_YEARS; y++) {
-      if (projectMonthlyDividendsAtYear(portfolio, y) >= target) return CURRENT_YEAR + y;
+      if (meetsTarget(projectMonthlyDividendsAtYear(portfolio, y), target)) return CURRENT_YEAR + y;
     }
     return null;
   }
