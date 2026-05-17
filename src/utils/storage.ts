@@ -28,9 +28,13 @@ export function loadState(): AppState {
     const storedIds = new Set(parsed.goals.map((g) => g.id));
     const missing = DEFAULT_GOALS.filter((g) => !storedIds.has(g.id));
     if (missing.length > 0) parsed.goals = [...parsed.goals, ...missing];
-    // Migration: initialise milestones list for older saves
+    // Migration: initialise / extend milestones list
     if (!Array.isArray((parsed as Partial<AppState>).milestones)) {
       parsed.milestones = DEFAULT_MILESTONES.map((m) => ({ ...m }));
+    } else {
+      const storedMsIds = new Set(parsed.milestones.map((m) => m.id));
+      const missingMs = DEFAULT_MILESTONES.filter((m) => !storedMsIds.has(m.id));
+      if (missingMs.length > 0) parsed.milestones = [...parsed.milestones, ...missingMs];
     }
     return parsed;
   } catch {

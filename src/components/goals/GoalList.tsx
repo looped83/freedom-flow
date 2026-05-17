@@ -262,7 +262,7 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
                     aria-label={`${goal.name} ${isEditing ? 'schließen' : 'bearbeiten'}`}
                     className="flex items-center gap-3 flex-1 min-w-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
                   >
-                    <span className="flex-shrink-0 text-white/60">
+                    <span className={`flex-shrink-0 ${goal.status === 'covered' ? 'text-accent' : 'text-white/60'}`}>
                       <CategoryIcon category={goal.category} />
                     </span>
                     <div className="flex-1 min-w-0">

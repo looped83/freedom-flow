@@ -73,9 +73,39 @@ export const CATEGORY_ORDER: Record<string, number> = {
 
 export const TOTAL_MONTHLY_COSTS = 2_450.19;
 
+// Default milestones — thematically aligned with DEFAULT_GOALS so newcomers get
+// a motivating roadmap from the first euro of dividends all the way through
+// multiples of their cost of living.
 export const DEFAULT_MILESTONES: Milestone[] = [
-  { id: 'ms-1', title: '1.000 € / Monat',     type: 'dividend', icon: 'rocket',   dividendTarget: 1_000 },
-  { id: 'ms-2', title: '1.500 € / Monat',     type: 'dividend', icon: 'mountain', dividendTarget: 1_500 },
-  { id: 'ms-3', title: 'Alle Fixkosten frei', type: 'dividend', icon: 'trophy',   dividendTarget: 2_450 },
-  { id: 'ms-4', title: 'Finanzielle Freiheit', type: 'date',    icon: 'crown',    dateTarget: `${CURRENT_YEAR + 10}-12-31` },
+  // ── Erste Etappen ────────────────────────────────────────────────────────
+  { id: 'ms-1',  title: 'Erste 100 € / Monat',        type: 'dividend', icon: 'star',     dividendTarget:   100 },
+  { id: 'ms-2',  title: '250 € / Monat',              type: 'dividend', icon: 'rocket',   dividendTarget:   250 },
+  { id: 'ms-3',  title: '500 € / Monat',              type: 'dividend', icon: 'flag',     dividendTarget:   500 },
+
+  // ── Themen-Meilensteine (orientiert an typischen Ausgaben) ───────────────
+  { id: 'ms-4',  title: 'Streaming & Abos frei',      type: 'dividend', icon: 'gem',      dividendTarget:    15 },
+  { id: 'ms-5',  title: 'Handy & Internet frei',      type: 'dividend', icon: 'medal',    dividendTarget:    65 },
+  { id: 'ms-6',  title: 'Versicherungen frei',        type: 'dividend', icon: 'target',   dividendTarget:    45 },
+  { id: 'ms-7',  title: 'Sport frei',                 type: 'dividend', icon: 'medal',    dividendTarget:    85 },
+  { id: 'ms-8',  title: 'Hund Paul frei',             type: 'dividend', icon: 'heart',    dividendTarget:   185 },
+  { id: 'ms-9',  title: 'Auto frei',                  type: 'dividend', icon: 'car',      dividendTarget:   300 },
+  { id: 'ms-10', title: 'Lebensmittel frei',          type: 'dividend', icon: 'gift',     dividendTarget:   400 },
+  { id: 'ms-11', title: 'Urlaubskasse frei',          type: 'dividend', icon: 'palm',     dividendTarget:   150 },
+  { id: 'ms-12', title: 'Wohnung frei',               type: 'dividend', icon: 'home',     dividendTarget:   610 },
+
+  // ── Große Stufen ─────────────────────────────────────────────────────────
+  { id: 'ms-13', title: '1.000 € / Monat',            type: 'dividend', icon: 'mountain', dividendTarget: 1_000 },
+  { id: 'ms-14', title: '1.500 € / Monat',            type: 'dividend', icon: 'mountain', dividendTarget: 1_500 },
+  { id: 'ms-15', title: '2.000 € / Monat',            type: 'dividend', icon: 'flag',     dividendTarget: 2_000 },
+  { id: 'ms-16', title: 'Alle Fixkosten frei',        type: 'dividend', icon: 'trophy',   dividendTarget: 2_450 },
+
+  // ── Über das Notwendige hinaus ───────────────────────────────────────────
+  { id: 'ms-17', title: '2× Fixkosten – Luxus-Level', type: 'dividend', icon: 'rocket',   dividendTarget: 4_900 },
+  { id: 'ms-18', title: '3× Fixkosten',               type: 'dividend', icon: 'crown',    dividendTarget: 7_350 },
+  { id: 'ms-19', title: '5× Fixkosten',               type: 'dividend', icon: 'gem',      dividendTarget:12_250 },
+  { id: 'ms-20', title: '10.000 € / Monat',           type: 'dividend', icon: 'gem',      dividendTarget:10_000 },
+
+  // ── Zeitziele ────────────────────────────────────────────────────────────
+  { id: 'ms-21', title: 'Jahresende-Check',           type: 'date',     icon: 'calendar', dateTarget: `${CURRENT_YEAR}-12-31` },
+  { id: 'ms-22', title: 'Finanzielle Freiheit',       type: 'date',     icon: 'crown',    dateTarget: `${CURRENT_YEAR + 10}-12-31` },
 ];

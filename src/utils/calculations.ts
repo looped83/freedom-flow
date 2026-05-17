@@ -4,10 +4,8 @@ import type {
   GoalStatus,
   Portfolio,
   TimelineEntry,
-  Unlock,
 } from '../types';
 import { CURRENT_YEAR } from '../constants/defaultData';
-import { formatEuroCompact } from './formatting';
 
 export function annualDividends(portfolio: Portfolio): number {
   return portfolio.monthlyIncome * 12;
@@ -39,10 +37,6 @@ export function freedomPercent(monthly: number, total: number): number {
 export function missingForFreedom(monthly: number, total: number): number {
   return Math.max(0, total - monthly);
 }
-
-export const INCOME_THRESHOLDS = [100, 250, 500, 1_000, 1_500, 2_000];
-export const FREEDOM_THRESHOLDS = [10, 25, 50, 75, 100];
-export const FREE_DAYS_THRESHOLDS = [7, 30, 90, 180, 365]; // days/year
 
 function goalStatus(pct: number): GoalStatus {
   if (pct >= 100) return 'covered';
@@ -240,133 +234,4 @@ export function buildFreedomTimeline(goals: Goal[], portfolio: Portfolio): Timel
   }
 
   return [...pastEntries, ...(currentEntry ? [currentEntry] : []), ...futureEntries];
-}
-
-/**
- * Build a list of life unlock cards/badges for the LifeUnlocks component.
- */
-export function buildLifeUnlocks(
-  goalResults: GoalResult[],
-  monthly: number,
-  total: number,
-  freeDaysPerMonthVal: number,
-): Unlock[] {
-  const unlocks: Unlock[] = [];
-  const fPct = freedomPercent(monthly, total);
-  const freeDaysPerYear = freeDaysPerMonthVal * 12;
-
-  // --- Income unlocks ---
-  const incomeEmojis = ['🌱', '🌿', '🌳', '🏔️', '🌋', '💎'];
-  INCOME_THRESHOLDS.forEach((threshold, i) => {
-    const achieved = monthly >= threshold;
-    const progressPct = Math.min(100, (monthly / threshold) * 100);
-    const missingMonthly = Math.max(0, threshold - monthly);
-    unlocks.push({
-      id: `income-${threshold}`,
-      type: 'income',
-      title: `${threshold.toLocaleString('de-DE')} € / Monat`,
-      subtitle: achieved ? 'Erreicht!' : `Noch ${formatEuroCompact(threshold - monthly)} / Monat`,
-      emoji: incomeEmojis[i],
-      achieved,
-      progressPct,
-      missingMonthly,
-    });
-  });
-
-  // --- Freedom percent unlocks ---
-  const freedomEmojis = ['✨', '🔓', '🚀', '⭐', '🏆'];
-  FREEDOM_THRESHOLDS.forEach((threshold, i) => {
-    const achieved = fPct >= threshold;
-    const progressPct = Math.min(100, (fPct / threshold) * 100);
-    const needed = (threshold / 100) * total;
-    const missingMonthly = Math.max(0, needed - monthly);
-    unlocks.push({
-      id: `freedom-${threshold}`,
-      type: 'freedom',
-      title: `${threshold} % finanziell frei`,
-      subtitle: achieved
-        ? 'Erreicht!'
-        : `Noch ${formatEuroCompact(missingMonthly)} / Monat`,
-      emoji: freedomEmojis[i],
-      achieved,
-      progressPct,
-      missingMonthly,
-    });
-  });
-
-  // --- Goal unlocks ---
-  // Show covered goals as achieved, next uncovered goal as upcoming
-  const coveredGoals = goalResults.filter((g) => g.status === 'covered');
-  const uncoveredGoals = goalResults
-    .filter((g) => g.status !== 'covered')
-    .sort((a, b) => a.monthlyAmount - b.monthlyAmount);
-
-  coveredGoals.forEach((g) => {
-    unlocks.push({
-      id: `goal-${g.id}`,
-      type: 'goal',
-      title: g.name,
-      subtitle: `${g.monthlyAmount.toFixed(2).replace('.', ',')} € / Monat`,
-      emoji: g.emoji,
-      achieved: true,
-      progressPct: 100,
-      missingMonthly: 0,
-      iconCategory: g.category,
-    });
-  });
-
-  // Only include the NEXT uncovered goal
-  if (uncoveredGoals.length > 0) {
-    const ng = uncoveredGoals[0];
-    const progressPct = Math.min(100, (ng.coveredAmount / ng.monthlyAmount) * 100);
-    const missingMonthly = Math.max(0, ng.monthlyAmount - ng.coveredAmount);
-    unlocks.push({
-      id: `goal-${ng.id}`,
-      type: 'goal',
-      title: ng.name,
-      subtitle: `${ng.coveredAmount.toFixed(2).replace('.', ',')} / ${ng.monthlyAmount.toFixed(2).replace('.', ',')} € / Monat`,
-      emoji: ng.emoji,
-      achieved: false,
-      progressPct,
-      missingMonthly,
-      iconCategory: ng.category,
-    });
-  }
-
-  // --- Lifetime / free days unlocks ---
-  const lifetimeLabels = [
-    '1 freie Woche / Jahr',
-    '1 freier Monat / Jahr',
-    '3 freie Monate / Jahr',
-    '6 freie Monate / Jahr',
-    '1 vollständig freies Jahr',
-  ];
-  const lifetimeEmojis = ['🗓️', '🌙', '📅', '🌊', '🕊️'];
-
-  FREE_DAYS_THRESHOLDS.forEach((threshold, i) => {
-    const achieved = freeDaysPerYear >= threshold;
-    const progressPct = Math.min(100, (freeDaysPerYear / threshold) * 100);
-    const neededMonthly = total > 0 ? (threshold / 365) * total : 0;
-    const missingMonthly = Math.max(0, neededMonthly - monthly);
-    unlocks.push({
-      id: `lifetime-${threshold}`,
-      type: 'lifetime',
-      title: lifetimeLabels[i],
-      subtitle: achieved
-        ? 'Erreicht!'
-        : `Noch ${formatEuroCompact(missingMonthly)} / Monat`,
-      emoji: lifetimeEmojis[i],
-      achieved,
-      progressPct,
-      missingMonthly,
-    });
-  });
-
-  // Sort: achieved first (by threshold asc = by index), then non-achieved by progressPct desc
-  const achieved = unlocks.filter((u) => u.achieved);
-  const notAchieved = unlocks
-    .filter((u) => !u.achieved)
-    .sort((a, b) => b.progressPct - a.progressPct);
-
-  return [...achieved, ...notAchieved];
 }

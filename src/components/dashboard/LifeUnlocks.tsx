@@ -1,10 +1,13 @@
-import { useRef, useState } from 'react';
-import type { GoalCategory, Unlock, UnlockType } from '../../types';
+import { useMemo, useRef, useState } from 'react';
+import type { Milestone, MilestoneResult, Portfolio } from '../../types';
 import { ProgressBar } from './ProgressBar';
-import { CategoryIcon } from '../goals/CategoryIcon';
+import { MilestoneIcon } from '../milestones/MilestoneIcon';
+import { computeMilestoneResults, formatDaysRemaining, formatMilestoneDate } from '../../utils/milestones';
+import { formatEuro } from '../../utils/formatting';
 
 interface LifeUnlocksProps {
-  unlocks: Unlock[];
+  milestones: Milestone[];
+  portfolio: Portfolio;
 }
 
 function barColor(progressPct: number): string {
@@ -13,66 +16,35 @@ function barColor(progressPct: number): string {
   return 'bg-white/30';
 }
 
-function UnlockIcon({ type, iconCategory, className = 'w-5 h-5' }: { type: UnlockType; iconCategory?: GoalCategory; className?: string }) {
-  if (type === 'goal' && iconCategory) {
-    return <CategoryIcon category={iconCategory} className={className} />;
+function subtitle(r: MilestoneResult): string {
+  if (r.status === 'achieved') return 'Erreicht!';
+  if (r.type === 'dividend') return `Noch ${formatEuro(r.missingMonthly)} / Monat`;
+  if (r.dateTarget) {
+    const datePart = formatMilestoneDate(r.dateTarget);
+    if (r.daysRemaining == null) return datePart;
+    return `${datePart} · ${formatDaysRemaining(r.daysRemaining)}`;
   }
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
-      {type === 'income' && (
-        <>
-          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
-          <polyline points="16 7 22 7 22 13"/>
-        </>
-      )}
-      {type === 'freedom' && (
-        <>
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-          <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
-        </>
-      )}
-      {type === 'lifetime' && (
-        <>
-          <circle cx="12" cy="12" r="4"/>
-          <line x1="12" y1="2" x2="12" y2="4"/>
-          <line x1="12" y1="20" x2="12" y2="22"/>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-          <line x1="2" y1="12" x2="4" y2="12"/>
-          <line x1="20" y1="12" x2="22" y2="12"/>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-        </>
-      )}
-      {type === 'goal' && (
-        <>
-          <circle cx="12" cy="12" r="10"/>
-          <circle cx="12" cy="12" r="6"/>
-          <circle cx="12" cy="12" r="2"/>
-        </>
-      )}
-    </svg>
-  );
+  return '';
 }
 
-function UnlockCard({ unlock }: { unlock: Unlock }) {
+function MilestoneCard({ result }: { result: MilestoneResult }) {
   return (
     <div className="bg-surface-2 rounded-2xl p-4 flex gap-3 items-start">
       <span className="flex-shrink-0 mt-0.5 text-white/60">
-        <UnlockIcon type={unlock.type} iconCategory={unlock.iconCategory} />
+        <MilestoneIcon icon={result.icon} />
       </span>
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline justify-between gap-2 mb-0.5">
-          <p className="text-white font-semibold text-sm leading-tight">{unlock.title}</p>
+          <p className="text-white font-semibold text-sm leading-tight truncate">{result.title}</p>
           <span className="text-xs text-gold font-bold flex-shrink-0 tabular-nums">
-            {unlock.progressPct.toFixed(0)} %
+            {result.progressPercent.toFixed(0)} %
           </span>
         </div>
-        <p className="text-xs text-white/50 mb-2">{unlock.subtitle}</p>
+        <p className="text-xs text-white/50 mb-2 truncate">{subtitle(result)}</p>
         <ProgressBar
-          percent={unlock.progressPct}
-          label={`${unlock.title}: ${unlock.progressPct.toFixed(0)} % erreicht`}
-          colorClass={barColor(unlock.progressPct)}
+          percent={result.progressPercent}
+          label={`${result.title}: ${result.progressPercent.toFixed(0)} % erreicht`}
+          colorClass={barColor(result.progressPercent)}
         />
       </div>
     </div>
@@ -85,7 +57,7 @@ function chunks<T>(arr: T[], n: number): T[][] {
   return result;
 }
 
-function AchievedCarousel({ achieved }: { achieved: Unlock[] }) {
+function AchievedCarousel({ achieved }: { achieved: MilestoneResult[] }) {
   const [activeIdx, setActiveIdx] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const slides = chunks(achieved, 2);
@@ -112,17 +84,17 @@ function AchievedCarousel({ achieved }: { achieved: Unlock[] }) {
             className="flex-shrink-0 w-full snap-center grid grid-cols-2 gap-3 px-0.5 py-0.5"
             aria-hidden={slideIdx !== activeIdx}
           >
-            {pair.map((unlock) => (
+            {pair.map((m) => (
               <div
-                key={unlock.id}
+                key={m.id}
                 role="listitem"
-                aria-label={unlock.title}
+                aria-label={m.title}
                 className="bg-surface-2 rounded-2xl p-3 flex flex-col items-center gap-1.5 text-center"
               >
-                <span className="text-white/60">
-                  <UnlockIcon type={unlock.type} iconCategory={unlock.iconCategory} className="w-7 h-7" />
+                <span className="text-accent">
+                  <MilestoneIcon icon={m.icon} className="w-7 h-7" />
                 </span>
-                <p className="text-white/80 font-medium text-xs leading-tight">{unlock.title}</p>
+                <p className="text-white/80 font-medium text-xs leading-tight">{m.title}</p>
                 <span className="text-[10px] text-accent font-semibold bg-accent/10 px-2 py-0.5 rounded-full">
                   ✓ Erreicht
                 </span>
@@ -148,17 +120,58 @@ function AchievedCarousel({ achieved }: { achieved: Unlock[] }) {
   );
 }
 
-export function LifeUnlocks({ unlocks }: LifeUnlocksProps) {
+function sortKey(r: MilestoneResult): number {
+  if (r.type === 'dividend') return r.dividendTarget ?? 0;
+  if (r.dateTarget) {
+    const t = new Date(r.dateTarget).getTime();
+    return isNaN(t) ? 0 : t / 1000;
+  }
+  return 0;
+}
+
+export function LifeUnlocks({ milestones, portfolio }: LifeUnlocksProps) {
   const [showAll, setShowAll] = useState(false);
 
-  const achieved = unlocks.filter((u) => u.achieved);
-  const notAchieved = unlocks.filter((u) => !u.achieved);
+  const results = useMemo(() => computeMilestoneResults(milestones, portfolio), [milestones, portfolio]);
+
+  const achieved = useMemo(
+    () => results.filter((r) => r.status === 'achieved').sort((a, b) => sortKey(a) - sortKey(b)),
+    [results],
+  );
+  const notAchieved = useMemo(
+    () => results
+      .filter((r) => r.status !== 'achieved')
+      .sort((a, b) => {
+        // closest to completion first; then by target value
+        if (a.progressPercent !== b.progressPercent) return b.progressPercent - a.progressPercent;
+        return sortKey(a) - sortKey(b);
+      }),
+    [results],
+  );
   const visibleCards = showAll ? notAchieved : notAchieved.slice(0, 3);
+
+  if (milestones.length === 0) {
+    return (
+      <section aria-label="Meilensteine" className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-sm font-semibold text-white">Meilensteine</h2>
+        </div>
+        <p className="text-sm text-white/55 px-1">
+          Noch keine Meilensteine. Lege deine ersten in Setup → Meilensteine an.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section aria-label="Meilensteine" className="space-y-3">
       <div className="flex items-center justify-between px-1">
-        <h2 className="text-sm font-semibold text-white">Meilensteine</h2>
+        <h2 className="text-sm font-semibold text-white">
+          Meilensteine
+          <span className="text-white/40 font-normal ml-1.5">
+            ({achieved.length}/{milestones.length})
+          </span>
+        </h2>
         {notAchieved.length > 3 && (
           <button
             onClick={() => setShowAll((v) => !v)}
@@ -176,8 +189,8 @@ export function LifeUnlocks({ unlocks }: LifeUnlocksProps) {
 
       {visibleCards.length > 0 ? (
         <div className="space-y-2">
-          {visibleCards.map((unlock) => (
-            <UnlockCard key={unlock.id} unlock={unlock} />
+          {visibleCards.map((r) => (
+            <MilestoneCard key={r.id} result={r} />
           ))}
         </div>
       ) : (

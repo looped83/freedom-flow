@@ -1,4 +1,6 @@
 import type { Milestone, MilestoneResult, Portfolio } from '../types';
+import { CURRENT_YEAR } from '../constants/defaultData';
+import { projectMonthlyDividendsAtYear } from './calculations';
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -67,4 +69,27 @@ export function formatDaysRemaining(days: number): string {
   if (days > 0) return days === 1 ? 'noch 1 Tag' : `noch ${days} Tage`;
   const abs = Math.abs(days);
   return abs === 1 ? 'vor 1 Tag' : `vor ${abs} Tagen`;
+}
+
+const MAX_LOOKAHEAD_YEARS = 50;
+
+/**
+ * Calendar year in which a milestone is (or was) reached, or null if not within
+ * `MAX_LOOKAHEAD_YEARS` from today.
+ *  - dividend milestones: first year where projected monthly income meets the target
+ *  - date milestones:     the calendar year of the target date
+ */
+export function milestoneAchievedYear(milestone: Milestone, portfolio: Portfolio): number | null {
+  if (milestone.type === 'dividend') {
+    const target = milestone.dividendTarget ?? 0;
+    if (target <= 0) return null;
+    if (portfolio.monthlyIncome >= target) return CURRENT_YEAR;
+    for (let y = 1; y <= MAX_LOOKAHEAD_YEARS; y++) {
+      if (projectMonthlyDividendsAtYear(portfolio, y) >= target) return CURRENT_YEAR + y;
+    }
+    return null;
+  }
+  if (!milestone.dateTarget) return null;
+  const d = parseIsoDate(milestone.dateTarget);
+  return d ? d.getFullYear() : null;
 }
