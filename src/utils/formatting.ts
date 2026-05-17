@@ -12,8 +12,14 @@ const euroFormatterCompact = new Intl.NumberFormat('de-DE', {
   maximumFractionDigits: 0,
 });
 
+const decimalFormatter = new Intl.NumberFormat('de-DE', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 export const formatEuro = (value: number): string => euroFormatter.format(value);
 export const formatEuroCompact = (value: number): string => euroFormatterCompact.format(value);
+export const formatDecimal = (value: number): string => decimalFormatter.format(value);
 
 export const formatPercent = (value: number, decimals = 1): string =>
   `${value.toFixed(decimals).replace('.', ',')} %`;
@@ -22,6 +28,11 @@ export const formatDays = (days: number): string => {
   const rounded = Math.round(days * 10) / 10;
   return `${rounded.toFixed(1).replace('.', ',')}`;
 };
+
+/** Generate a short unique id, locally scoped to the user's session. */
+export function newId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
 
 /** Add German thousand-separator dots to the integer part while preserving the decimal comma. */
 export function liveFormatAmount(raw: string): string {

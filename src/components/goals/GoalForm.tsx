@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import type { Goal, GoalCategory } from '../../types';
-import { liveFormatAmount, parseGerman } from '../../utils/formatting';
+import { newId, parseGerman } from '../../utils/formatting';
+import { useAmountInput } from '../../hooks/useAmountInput';
 import { CategoryIcon } from './CategoryIcon';
 
 const CATEGORIES: GoalCategory[] = [
@@ -13,8 +14,6 @@ const CATEGORIES: GoalCategory[] = [
   'Sonstiges',
 ];
 
-const fmt2 = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
 interface GoalFormProps {
   initial?: Goal;
   onSave: (goal: Goal) => void;
@@ -22,41 +21,17 @@ interface GoalFormProps {
   onCancel: () => void;
 }
 
-function newId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-}
-
 export function GoalForm({ initial, onSave, onSaveAsDefault, onCancel }: GoalFormProps) {
   const [name, setName] = useState(initial?.name ?? '');
-  const [amount, setAmount] = useState(initial ? fmt2.format(initial.monthlyAmount) : '');
+  const amount = useAmountInput(initial?.monthlyAmount);
   const [category, setCategory] = useState<GoalCategory>(initial?.category ?? 'Sonstiges');
   const [saveAsDefault, setSaveAsDefault] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const amountRef = useRef<HTMLInputElement>(null);
-
-  function handleAmountChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const input = e.target;
-    const cursorPos = input.selectionStart ?? input.value.length;
-    const raw = input.value;
-    const formatted = liveFormatAmount(raw);
-    setAmount(formatted);
-    const charsBeforeCursor = raw.slice(0, cursorPos).replace(/\./g, '').length;
-    requestAnimationFrame(() => {
-      if (!amountRef.current) return;
-      let i = 0;
-      let count = 0;
-      for (; i < formatted.length && count < charsBeforeCursor; i++) {
-        if (formatted[i] !== '.') count++;
-      }
-      amountRef.current.selectionStart = i;
-      amountRef.current.selectionEnd = i;
-    });
-  }
 
   function validate() {
     const e: Record<string, string> = {};
     if (!name.trim()) e.name = 'Name ist erforderlich.';
-    const amt = parseGerman(amount);
+    const amt = parseGerman(amount.value);
     if (isNaN(amt) || amt <= 0) e.amount = 'Bitte einen gültigen Betrag > 0 eingeben.';
     return e;
   }
@@ -68,9 +43,8 @@ export function GoalForm({ initial, onSave, onSaveAsDefault, onCancel }: GoalFor
     const saved: Goal = {
       id: initial?.id ?? newId(),
       name: name.trim(),
-      monthlyAmount: parseGerman(amount),
+      monthlyAmount: parseGerman(amount.value),
       category,
-      emoji: initial?.emoji ?? '🎯',
     };
     onSave(saved);
     if (saveAsDefault && onSaveAsDefault) onSaveAsDefault(saved);
@@ -100,12 +74,12 @@ export function GoalForm({ initial, onSave, onSaveAsDefault, onCancel }: GoalFor
           Monatlicher Betrag (€)
         </label>
         <input
-          ref={amountRef}
+          ref={amount.ref}
           id="goal-amount"
           type="text"
           inputMode="decimal"
-          value={amount}
-          onChange={handleAmountChange}
+          value={amount.value}
+          onChange={amount.onChange}
           placeholder="z. B. 42,90"
           className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/55 focus:outline-none focus:border-accent text-sm"
           aria-describedby={errors.amount ? 'goal-amount-error' : undefined}

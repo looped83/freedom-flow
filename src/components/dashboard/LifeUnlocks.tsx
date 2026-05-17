@@ -3,7 +3,7 @@ import type { Milestone, MilestoneResult, Portfolio } from '../../types';
 import { ProgressBar } from './ProgressBar';
 import { AchievedCarousel } from './AchievedCarousel';
 import { MilestoneIcon } from '../milestones/MilestoneIcon';
-import { computeMilestoneResults, formatDaysRemaining, formatMilestoneDate } from '../../utils/milestones';
+import { computeMilestoneResults, formatDaysRemaining, formatMilestoneDate, milestoneSortKey } from '../../utils/milestones';
 import { formatEuro } from '../../utils/formatting';
 
 interface LifeUnlocksProps {
@@ -52,22 +52,13 @@ function MilestoneCard({ result }: { result: MilestoneResult }) {
   );
 }
 
-function sortKey(r: MilestoneResult): number {
-  if (r.type === 'dividend') return r.dividendTarget ?? 0;
-  if (r.dateTarget) {
-    const t = new Date(r.dateTarget).getTime();
-    return isNaN(t) ? 0 : t / 1000;
-  }
-  return 0;
-}
-
 export function LifeUnlocks({ milestones, portfolio }: LifeUnlocksProps) {
   const [showAll, setShowAll] = useState(false);
 
   const results = useMemo(() => computeMilestoneResults(milestones, portfolio), [milestones, portfolio]);
 
   const achieved = useMemo(
-    () => results.filter((r) => r.status === 'achieved').sort((a, b) => sortKey(a) - sortKey(b)),
+    () => results.filter((r) => r.status === 'achieved').sort((a, b) => milestoneSortKey(a) - milestoneSortKey(b)),
     [results],
   );
   const notAchieved = useMemo(
@@ -76,7 +67,7 @@ export function LifeUnlocks({ milestones, portfolio }: LifeUnlocksProps) {
       .sort((a, b) => {
         // closest to completion first; then by target value
         if (a.progressPercent !== b.progressPercent) return b.progressPercent - a.progressPercent;
-        return sortKey(a) - sortKey(b);
+        return milestoneSortKey(a) - milestoneSortKey(b);
       }),
     [results],
   );

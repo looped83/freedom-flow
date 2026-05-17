@@ -57,6 +57,17 @@ export function computeMilestoneResults(milestones: Milestone[], portfolio: Port
   return milestones.map((m) => computeMilestoneResult(m, portfolio));
 }
 
+/** Numeric key for sorting milestones by their target (€ amount or date as
+ *  seconds since epoch). Returns 0 for malformed entries. */
+export function milestoneSortKey(r: Milestone | MilestoneResult): number {
+  if (r.type === 'dividend') return r.dividendTarget ?? 0;
+  if (r.dateTarget) {
+    const t = new Date(r.dateTarget).getTime();
+    return isNaN(t) ? 0 : t / 1000;
+  }
+  return 0;
+}
+
 const dateFormatter = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
 export function formatMilestoneDate(iso: string): string {

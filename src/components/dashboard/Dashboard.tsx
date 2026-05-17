@@ -3,7 +3,6 @@ import type { Goal, GoalResult, Milestone, Portfolio } from '../../types';
 import {
   computeGoalResults,
   freeDaysPerMonth,
-  monthlyDividends,
   projectMonthlyDividendsAtYear,
   totalMonthlyCosts,
 } from '../../utils/calculations';
@@ -35,7 +34,7 @@ const DASHBOARD_ICON = (
 export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onGoalClick }: DashboardProps) {
   const [showAllGoals, setShowAllGoals] = useState(false);
 
-  const monthly = useMemo(() => monthlyDividends(portfolio), [portfolio]);
+  const monthly = portfolio.monthlyIncome;
   const projectedMonthly = useMemo(() => projectMonthlyDividendsAtYear(portfolio, 1), [portfolio]);
   const total   = useMemo(() => totalMonthlyCosts(goals), [goals]);
   const freeDays = useMemo(() => freeDaysPerMonth(monthly, total), [monthly, total]);
