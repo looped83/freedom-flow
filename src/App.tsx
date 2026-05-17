@@ -54,6 +54,7 @@ export default function App() {
           goals={state.goals}
           milestones={state.milestones}
           onIncomeChange={handleIncomeChange}
+          onTotalChange={actions.setTotalExpenses}
           onGoalClick={handleGoalClick}
         />
       )}
