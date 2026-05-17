@@ -25,10 +25,10 @@ export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange }
   const [editing, setEditing] = useState(false);
   const [raw, setRaw] = useState('');
   const [showProjected, setShowProjected] = useState(false);
-
-  const reducedMotion =
+  const [reducedMotion] = useState(() =>
     typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
 
   useEffect(() => {
     const el = circleRef.current;

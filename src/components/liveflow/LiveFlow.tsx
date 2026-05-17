@@ -93,8 +93,15 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 10_000);
-    return () => clearInterval(id);
+    function tick() {
+      if (!document.hidden) setNow(new Date());
+    }
+    const id = setInterval(tick, 10_000);
+    document.addEventListener('visibilitychange', tick);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', tick);
+    };
   }, []);
 
   const earnedToday   = calculateEarnedTodaySoFar(monthly, now);

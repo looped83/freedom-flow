@@ -69,14 +69,21 @@ export function calculateEarnedThisMonthSoFar(monthlyDividends: number, now: Dat
  *   ≥ 1      → 2 decimals  (e.g. 26,56 €)
  *   0.01–1   → 3 decimals  (e.g. 0,137 €)
  *   < 0.01   → 4 decimals  (e.g. 0,0184 €)
+ *
+ * Formatters are constructed once at module load — creating an
+ * `Intl.NumberFormat` is expensive, so reuse matters in the LiveFlow tick.
  */
-export function formatCurrencyForSmallAmounts(value: number): string {
-  const v = sanitize(Number.isFinite(value) ? value : 0);
-  const decimals = v >= 1 ? 2 : v >= 0.01 ? 3 : 4;
-  return new Intl.NumberFormat('de-DE', {
+const eurFmt = [2, 3, 4].map((d) =>
+  new Intl.NumberFormat('de-DE', {
     style: 'currency',
     currency: 'EUR',
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(v);
+    minimumFractionDigits: d,
+    maximumFractionDigits: d,
+  }),
+);
+
+export function formatCurrencyForSmallAmounts(value: number): string {
+  const v = sanitize(Number.isFinite(value) ? value : 0);
+  const idx = v >= 1 ? 0 : v >= 0.01 ? 1 : 2;
+  return eurFmt[idx].format(v);
 }
