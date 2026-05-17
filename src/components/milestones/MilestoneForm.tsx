@@ -1,18 +1,13 @@
-import { useRef, useState } from 'react';
-import type { Milestone, MilestoneIcon as MilestoneIconName, MilestoneType } from '../../types';
-import { liveFormatAmount, parseGerman } from '../../utils/formatting';
+import { useState } from 'react';
+import type { Milestone, MilestoneIconName, MilestoneType } from '../../types';
+import { newId, parseGerman } from '../../utils/formatting';
+import { useAmountInput } from '../../hooks/useAmountInput';
 import { ICON_LABELS, MILESTONE_ICONS, MilestoneIcon } from './MilestoneIcon';
-
-const fmt2 = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 interface MilestoneFormProps {
   initial?: Milestone;
   onSave: (m: Milestone) => void;
   onCancel: () => void;
-}
-
-function newId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
 function todayIso(): string {
@@ -26,45 +21,21 @@ function todayIso(): string {
 export function MilestoneForm({ initial, onSave, onCancel }: MilestoneFormProps) {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [type, setType] = useState<MilestoneType>(initial?.type ?? 'dividend');
-  const [dividendTarget, setDividendTarget] = useState(
-    initial?.type === 'dividend' && initial.dividendTarget != null
-      ? fmt2.format(initial.dividendTarget)
-      : '',
-  );
+  const amount = useAmountInput(initial?.type === 'dividend' ? initial.dividendTarget : undefined);
   const [dateTarget, setDateTarget] = useState(
     initial?.type === 'date' ? initial.dateTarget ?? '' : '',
   );
   const [icon, setIcon] = useState<MilestoneIconName>(initial?.icon ?? 'trophy');
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const amountRef = useRef<HTMLInputElement>(null);
-
-  function handleAmountChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const input = e.target;
-    const cursorPos = input.selectionStart ?? input.value.length;
-    const raw = input.value;
-    const formatted = liveFormatAmount(raw);
-    setDividendTarget(formatted);
-    const charsBeforeCursor = raw.slice(0, cursorPos).replace(/\./g, '').length;
-    requestAnimationFrame(() => {
-      if (!amountRef.current) return;
-      let i = 0;
-      let count = 0;
-      for (; i < formatted.length && count < charsBeforeCursor; i++) {
-        if (formatted[i] !== '.') count++;
-      }
-      amountRef.current.selectionStart = i;
-      amountRef.current.selectionEnd = i;
-    });
-  }
 
   function validate() {
     const e: Record<string, string> = {};
     if (!title.trim()) e.title = 'Titel ist erforderlich.';
     if (type === 'dividend') {
-      const amt = parseGerman(dividendTarget);
+      const amt = parseGerman(amount.value);
       if (isNaN(amt) || amt <= 0) e.dividendTarget = 'Bitte einen gültigen Betrag > 0 eingeben.';
-    } else {
-      if (!dateTarget) e.dateTarget = 'Bitte ein Datum auswählen.';
+    } else if (!dateTarget) {
+      e.dateTarget = 'Bitte ein Datum auswählen.';
     }
     return e;
   }
@@ -73,22 +44,10 @@ export function MilestoneForm({ initial, onSave, onCancel }: MilestoneFormProps)
     ev.preventDefault();
     const e = validate();
     if (Object.keys(e).length > 0) { setErrors(e); return; }
-    const saved: Milestone =
-      type === 'dividend'
-        ? {
-            id: initial?.id ?? newId(),
-            title: title.trim(),
-            type: 'dividend',
-            icon,
-            dividendTarget: parseGerman(dividendTarget),
-          }
-        : {
-            id: initial?.id ?? newId(),
-            title: title.trim(),
-            type: 'date',
-            icon,
-            dateTarget,
-          };
+    const base = { id: initial?.id ?? newId(), title: title.trim(), icon };
+    const saved: Milestone = type === 'dividend'
+      ? { ...base, type: 'dividend', dividendTarget: parseGerman(amount.value) }
+      : { ...base, type: 'date', dateTarget };
     onSave(saved);
   }
 
@@ -143,12 +102,12 @@ export function MilestoneForm({ initial, onSave, onCancel }: MilestoneFormProps)
             Monatliche Dividenden (€)
           </label>
           <input
-            ref={amountRef}
+            ref={amount.ref}
             id="milestone-amount"
             type="text"
             inputMode="decimal"
-            value={dividendTarget}
-            onChange={handleAmountChange}
+            value={amount.value}
+            onChange={amount.onChange}
             placeholder="z. B. 1.500,00"
             className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/55 focus:outline-none focus:border-accent text-sm"
             aria-describedby={errors.dividendTarget ? 'milestone-amount-error' : undefined}

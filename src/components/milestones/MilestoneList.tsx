@@ -1,7 +1,9 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Milestone, MilestoneResult, Portfolio } from '../../types';
 import { formatEuro } from '../../utils/formatting';
-import { computeMilestoneResults, formatDaysRemaining, formatMilestoneDate } from '../../utils/milestones';
+import { computeMilestoneResults, formatDaysRemaining, formatMilestoneDate, milestoneSortKey } from '../../utils/milestones';
+import { useSwipeToDelete } from '../../hooks/useSwipeToDelete';
+import { IconChevron, IconCheck, IconClose, IconTrash } from '../ui/Icons';
 import { MilestoneIcon } from './MilestoneIcon';
 import { MilestoneForm } from './MilestoneForm';
 
@@ -14,35 +16,6 @@ interface MilestoneListProps {
   onAdd: (m: Milestone) => void;
   onUpdate: (m: Milestone) => void;
   onDelete: (id: string) => void;
-}
-
-const SWIPE_DELETE_PX = 160;
-
-function IconTrash() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
-      <polyline points="3 6 5 6 21 6"/>
-      <path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/>
-    </svg>
-  );
-}
-
-function IconChevron({ open }: { open: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-      className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} aria-hidden="true">
-      <polyline points="6 9 12 15 18 9"/>
-    </svg>
-  );
-}
-
-function sortKey(r: MilestoneResult): number {
-  if (r.type === 'dividend') return r.dividendTarget ?? 0;
-  if (r.dateTarget) {
-    const t = new Date(r.dateTarget).getTime();
-    return isNaN(t) ? 0 : t / 1000;
-  }
-  return 0;
 }
 
 function MilestoneSubtitle({ result }: { result: MilestoneResult }) {
@@ -80,14 +53,7 @@ export function MilestoneList({ milestones, portfolio, onAdd, onUpdate, onDelete
   const [filter, setFilter] = useState<MilestoneFilter>('all');
   const [sort, setSort] = useState<{ type: SortType; dir: 'asc' | 'desc' }>({ type: 'status', dir: 'asc' });
 
-  const touchRef = useRef<{
-    id: string;
-    startX: number;
-    startY: number;
-    determined: boolean;
-    isHorizontal: boolean;
-  } | null>(null);
-  const [swipeOffset, setSwipeOffset] = useState<{ id: string; px: number } | null>(null);
+  const swipe = useSwipeToDelete(onDelete, { isLocked: (id) => editingId === id });
 
   const allResults = useMemo(() => computeMilestoneResults(milestones, portfolio), [milestones, portfolio]);
 
@@ -104,11 +70,11 @@ export function MilestoneList({ milestones, portfolio, onAdd, onUpdate, onDelete
 
     const compare =
       sort.type === 'alpha'  ? (a: MilestoneResult, b: MilestoneResult) => a.title.localeCompare(b.title, 'de')
-      : sort.type === 'target' ? (a: MilestoneResult, b: MilestoneResult) => sortKey(a) - sortKey(b)
+      : sort.type === 'target' ? (a: MilestoneResult, b: MilestoneResult) => milestoneSortKey(a) - milestoneSortKey(b)
       : (a: MilestoneResult, b: MilestoneResult) => {
           if (a.status !== b.status) return a.status === 'open' ? -1 : 1;
           if (a.status === 'open') return b.progressPercent - a.progressPercent;
-          return sortKey(a) - sortKey(b);
+          return milestoneSortKey(a) - milestoneSortKey(b);
         };
 
     filtered.sort(compare);
@@ -126,52 +92,9 @@ export function MilestoneList({ milestones, portfolio, onAdd, onUpdate, onDelete
   }
 
   function toggleEdit(id: string) {
-    if (swipeOffset) return;
+    if (swipe.isSwiping) return;
     setEditingId((prev) => (prev === id ? null : id));
     setConfirmDelete(null);
-  }
-
-  function onTouchStart(e: React.TouchEvent, id: string) {
-    if (editingId === id) return;
-    const t = e.touches[0];
-    touchRef.current = { id, startX: t.clientX, startY: t.clientY, determined: false, isHorizontal: false };
-  }
-
-  function onTouchMove(e: React.TouchEvent, id: string) {
-    const ref = touchRef.current;
-    if (!ref || ref.id !== id) return;
-    const t = e.touches[0];
-    const dx = t.clientX - ref.startX;
-    const dy = t.clientY - ref.startY;
-    if (!ref.determined && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
-      ref.isHorizontal = Math.abs(dx) > Math.abs(dy);
-      ref.determined = true;
-    }
-    if (!ref.isHorizontal) return;
-    const px = Math.min(0, dx);
-    setSwipeOffset({ id, px });
-  }
-
-  function onTouchEnd(id: string) {
-    if (!touchRef.current || touchRef.current.id !== id) return;
-    const wasHorizontal = touchRef.current.isHorizontal;
-    touchRef.current = null;
-    const px = swipeOffset?.id === id ? swipeOffset.px : 0;
-    setSwipeOffset(null);
-    if (wasHorizontal && px <= -SWIPE_DELETE_PX) onDelete(id);
-  }
-
-  function getCardStyle(id: string): React.CSSProperties {
-    const px = swipeOffset?.id === id ? swipeOffset.px : 0;
-    return {
-      transform: `translateX(${px}px)`,
-      transition: swipeOffset?.id === id ? 'none' : 'transform 0.22s ease-out',
-    };
-  }
-
-  function getDeleteBgOpacity(id: string): number {
-    const px = swipeOffset?.id === id ? Math.abs(swipeOffset.px) : 0;
-    return Math.min(1, px / SWIPE_DELETE_PX);
   }
 
   return (
@@ -268,7 +191,7 @@ export function MilestoneList({ milestones, portfolio, onAdd, onUpdate, onDelete
         {displayResults.map((m) => {
           const isEditing = editingId === m.id;
           const isConfirmDelete = confirmDelete === m.id;
-          const opacity = getDeleteBgOpacity(m.id);
+          const opacity = swipe.deleteBgOpacity(m.id);
           const achieved = m.status === 'achieved';
 
           return (
@@ -286,10 +209,8 @@ export function MilestoneList({ milestones, portfolio, onAdd, onUpdate, onDelete
 
               <div
                 className="bg-surface-1 rounded-xl relative"
-                style={getCardStyle(m.id)}
-                onTouchStart={(e) => onTouchStart(e, m.id)}
-                onTouchMove={(e) => onTouchMove(e, m.id)}
-                onTouchEnd={() => onTouchEnd(m.id)}
+                style={swipe.cardStyle(m.id)}
+                {...swipe.bind(m.id)}
               >
                 <div className={`flex items-center gap-3 px-4 py-3 ${isEditing ? 'border-b border-white/5' : ''}`}>
                   <button
@@ -307,9 +228,7 @@ export function MilestoneList({ milestones, portfolio, onAdd, onUpdate, onDelete
                           <>
                             <span className="sr-only">, erreicht</span>
                             <span className="text-accent" aria-hidden="true">
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" aria-hidden="true">
-                                <polyline points="20 6 9 17 4 12"/>
-                              </svg>
+                              <IconCheck />
                             </span>
                           </>
                         )}
@@ -339,9 +258,7 @@ export function MilestoneList({ milestones, portfolio, onAdd, onUpdate, onDelete
                         aria-label="Abbrechen"
                         className="p-1.5 text-white/50 hover:text-white/90 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
                       >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="w-3.5 h-3.5" aria-hidden="true">
-                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                        </svg>
+                        <IconClose />
                       </button>
                     </div>
                   ) : (

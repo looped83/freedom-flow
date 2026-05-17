@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import type { Portfolio } from '../../types';
 import { formatEuro, liveFormatAmount, parseGerman } from '../../utils/formatting';
-import { annualDividends, monthlyDividends } from '../../utils/calculations';
 
 const fmtInt = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 const fmtDec = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -127,8 +126,8 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
     setTimeout(() => setSaved(false), 2000);
   }
 
-  const monthly = monthlyDividends(form);
-  const annual = annualDividends(form);
+  const monthly = form.monthlyIncome;
+  const annual = monthly * 12;
 
   return (
     <section className="max-w-4xl mx-auto px-4 py-6" aria-labelledby="portfolio-form-heading">

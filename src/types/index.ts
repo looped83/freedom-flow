@@ -28,7 +28,6 @@ export interface Goal {
   name: string;
   monthlyAmount: number;
   category: GoalCategory;
-  emoji: string;
 }
 
 export interface Portfolio {
@@ -57,7 +56,7 @@ export interface GoalResult extends Goal {
   achievedYear: number | null;
 }
 
-export type MilestoneIcon =
+export type MilestoneIconName =
   | 'trophy'
   | 'star'
   | 'flag'
@@ -80,7 +79,7 @@ export interface Milestone {
   id: string;
   title: string;
   type: MilestoneType;
-  icon: MilestoneIcon;
+  icon: MilestoneIconName;
   /** Required when type === 'dividend' — target monthly dividends in € */
   dividendTarget?: number;
   /** Required when type === 'date' — ISO yyyy-mm-dd */

@@ -1,4 +1,4 @@
-import type { MilestoneIcon as MilestoneIconName } from '../../types';
+import type { MilestoneIconName } from '../../types';
 
 const PATHS: Record<MilestoneIconName, React.ReactNode> = {
   trophy: (

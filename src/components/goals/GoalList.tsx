@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Goal, Portfolio } from '../../types';
 import { CategoryIcon } from './CategoryIcon';
-import { computeGoalResults, monthlyDividends, totalMonthlyCosts } from '../../utils/calculations';
+import { computeGoalResults, totalMonthlyCosts } from '../../utils/calculations';
 import { formatEuro } from '../../utils/formatting';
 import { saveGoalDefault } from '../../utils/storage';
+import { useSwipeToDelete } from '../../hooks/useSwipeToDelete';
+import { IconChevron, IconCheck, IconClose, IconTrash } from '../ui/Icons';
 import { GoalForm } from './GoalForm';
 
 type GoalFilter = 'all' | 'covered' | 'open';
@@ -16,26 +18,6 @@ interface GoalListProps {
   onUpdate: (g: Goal) => void;
   onDelete: (id: string) => void;
   focusGoalId?: string | null;
-}
-
-const SWIPE_DELETE_PX = 160;
-
-function IconTrash() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
-      <polyline points="3 6 5 6 21 6"/>
-      <path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/>
-    </svg>
-  );
-}
-
-function IconChevron({ open }: { open: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-      className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} aria-hidden="true">
-      <polyline points="6 9 12 15 18 9"/>
-    </svg>
-  );
 }
 
 export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoalId }: GoalListProps) {
@@ -56,17 +38,9 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
     return () => clearTimeout(timer);
   }, [focusGoalId]);
 
-  // Swipe state – only one item can be actively swiped at a time
-  const touchRef = useRef<{
-    id: string;
-    startX: number;
-    startY: number;
-    determined: boolean;
-    isHorizontal: boolean;
-  } | null>(null);
-  const [swipeOffset, setSwipeOffset] = useState<{ id: string; px: number } | null>(null);
+  const swipe = useSwipeToDelete(onDelete, { isLocked: (id) => editingId === id });
 
-  const monthly = useMemo(() => monthlyDividends(portfolio), [portfolio]);
+  const monthly = portfolio.monthlyIncome;
   const total = useMemo(() => totalMonthlyCosts(goals), [goals]);
   const allResults = useMemo(() => computeGoalResults(goals, monthly, portfolio), [goals, monthly, portfolio]);
   const displayResults = useMemo(() => {
@@ -92,64 +66,10 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
 
   function toggleEdit(id: string) {
     // Ignore if we just finished a swipe gesture
-    if (swipeOffset) return;
+    if (swipe.isSwiping) return;
     setEditingId((prev) => (prev === id ? null : id));
     setConfirmDelete(null);
   }
-
-  // ── swipe handlers ──────────────────────────────────────────────────────────
-
-  function onTouchStart(e: React.TouchEvent, id: string) {
-    if (editingId === id) return; // don't swipe while form is open
-    const t = e.touches[0];
-    touchRef.current = { id, startX: t.clientX, startY: t.clientY, determined: false, isHorizontal: false };
-  }
-
-  function onTouchMove(e: React.TouchEvent, id: string) {
-    const ref = touchRef.current;
-    if (!ref || ref.id !== id) return;
-    const t = e.touches[0];
-    const dx = t.clientX - ref.startX;
-    const dy = t.clientY - ref.startY;
-
-    if (!ref.determined && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
-      ref.isHorizontal = Math.abs(dx) > Math.abs(dy);
-      ref.determined = true;
-    }
-    if (!ref.isHorizontal) return;
-
-    const px = Math.min(0, dx); // only left
-    setSwipeOffset({ id, px });
-  }
-
-  function onTouchEnd(id: string) {
-    if (!touchRef.current || touchRef.current.id !== id) return;
-    const wasHorizontal = touchRef.current.isHorizontal;
-    touchRef.current = null;
-
-    const px = swipeOffset?.id === id ? swipeOffset.px : 0;
-    setSwipeOffset(null);
-
-    if (wasHorizontal && px <= -SWIPE_DELETE_PX) {
-      onDelete(id);
-    }
-    // else: snap back (swipeOffset cleared above)
-  }
-
-  function getCardStyle(id: string): React.CSSProperties {
-    const px = swipeOffset?.id === id ? swipeOffset.px : 0;
-    return {
-      transform: `translateX(${px}px)`,
-      transition: swipeOffset?.id === id ? 'none' : 'transform 0.22s ease-out',
-    };
-  }
-
-  function getDeleteBgOpacity(id: string): number {
-    const px = swipeOffset?.id === id ? Math.abs(swipeOffset.px) : 0;
-    return Math.min(1, px / SWIPE_DELETE_PX);
-  }
-
-  // ────────────────────────────────────────────────────────────────────────────
 
   return (
     <section className="max-w-4xl mx-auto px-4 py-6" aria-labelledby="goals-heading">
@@ -227,7 +147,7 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
         {displayResults.map((goal) => {
           const isEditing = editingId === goal.id;
           const isConfirmDelete = confirmDelete === goal.id;
-          const opacity = getDeleteBgOpacity(goal.id);
+          const opacity = swipe.deleteBgOpacity(goal.id);
 
           return (
             <li
@@ -248,10 +168,8 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
               {/* Sliding card */}
               <div
                 className="bg-surface-1 rounded-xl relative"
-                style={getCardStyle(goal.id)}
-                onTouchStart={(e) => onTouchStart(e, goal.id)}
-                onTouchMove={(e) => onTouchMove(e, goal.id)}
-                onTouchEnd={() => onTouchEnd(goal.id)}
+                style={swipe.cardStyle(goal.id)}
+                {...swipe.bind(goal.id)}
               >
                 {/* ── Card header – tap to expand / collapse ── */}
                 <div className={`flex items-center gap-3 px-4 py-3 ${isEditing ? 'border-b border-white/5' : ''}`}>
@@ -271,9 +189,7 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
                           <>
                             <span className="sr-only">, erreicht</span>
                             <span className="text-accent flex-shrink-0" aria-hidden="true">
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" aria-hidden="true">
-                                <polyline points="20 6 9 17 4 12"/>
-                              </svg>
+                              <IconCheck />
                             </span>
                           </>
                         )}
@@ -302,9 +218,7 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
                         aria-label="Abbrechen"
                         className="p-1.5 text-white/50 hover:text-white/90 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
                       >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="w-3.5 h-3.5" aria-hidden="true">
-                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                        </svg>
+                        <IconClose />
                       </button>
                     </div>
                   ) : (

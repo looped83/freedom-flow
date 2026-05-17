@@ -3,7 +3,7 @@ import type { TimelineEntry, Goal, Milestone, MilestoneResult, Portfolio } from 
 import { CategoryIcon } from '../goals/CategoryIcon';
 import { MilestoneIcon } from '../milestones/MilestoneIcon';
 import { buildFreedomTimeline, projectMonthlyDividendsAtYear } from '../../utils/calculations';
-import { computeMilestoneResult, formatMilestoneDate, milestoneAchievedYear } from '../../utils/milestones';
+import { computeMilestoneResult, formatMilestoneDate, milestoneAchievedYear, milestoneSortKey } from '../../utils/milestones';
 import { CURRENT_YEAR } from '../../constants/defaultData';
 import { formatEuro } from '../../utils/formatting';
 import { PageHeader } from '../layout/PageHeader';
@@ -163,11 +163,7 @@ export function FreedomTimeline({ portfolio, goals, milestones }: FreedomTimelin
     }
     // Sort each year's milestones for stable display
     for (const list of map.values()) {
-      list.sort((a, b) => {
-        if (a.type !== b.type) return a.type === 'dividend' ? -1 : 1;
-        if (a.type === 'dividend') return (a.dividendTarget ?? 0) - (b.dividendTarget ?? 0);
-        return (a.dateTarget ?? '').localeCompare(b.dateTarget ?? '');
-      });
+      list.sort((a, b) => milestoneSortKey(a) - milestoneSortKey(b));
     }
     return { map, beyond };
   }, [milestones, portfolio]);

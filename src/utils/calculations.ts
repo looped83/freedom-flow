@@ -10,14 +10,6 @@ import { CURRENT_YEAR } from '../constants/defaultData';
 const MAX_FUTURE_YEARS = 50;
 const MAX_PAST_YEARS = 50;
 
-export function annualDividends(portfolio: Portfolio): number {
-  return portfolio.monthlyIncome * 12;
-}
-
-export function monthlyDividends(portfolio: Portfolio): number {
-  return portfolio.monthlyIncome;
-}
-
 export function totalMonthlyCosts(goals: Goal[]): number {
   let sum = 0;
   for (const g of goals) sum += g.monthlyAmount;
