@@ -12,7 +12,8 @@
 
 import type { Portfolio } from '../types';
 
-const DIVVY_DIARY_BASE = 'https://divvydiary.com/api';
+// Korrekte API-Subdomain – nicht zu verwechseln mit divvydiary.com (Website)
+const DIVVY_DIARY_BASE = 'https://api.divvydiary.com';
 
 // ---------------------------------------------------------------------------
 // DivvyDiary API response shapes
@@ -81,21 +82,37 @@ export async function importFromDivvyDiary(
   // --- Netzwerkanfrage -------------------------------------------------------
   let response: Response;
   try {
-    // TODO: Endpunkt-Pfad ggf. an DivvyDiary API-Docs anpassen
-    response = await fetch(`${DIVVY_DIARY_BASE}/v1/portfolio`, {
+    // Endpunkt: TODO – gegen offizielle DivvyDiary API-Docs (api.divvydiary.com/documentation)
+    // verifizieren. Bekannt ist /symbols/{isin}; ein Portfolio-Endpunkt könnte
+    // /portfolio, /user/portfolio o. ä. heißen.
+    response = await fetch(`${DIVVY_DIARY_BASE}/portfolio`, {
       method: 'GET',
       headers: {
-        // API-Key wird hier einmalig verwendet und danach verworfen
-        Authorization: `Token ${trimmedKey}`,
+        // Auth-Format per API-Doku: Bearer – API-Key nur hier verwendet, nicht gespeichert
+        Authorization: `Bearer ${trimmedKey}`,
         Accept: 'application/json',
       },
     });
-  } catch {
-    // Kein API-Key in Fehlermeldungen ausgeben
+  } catch (err) {
+    // fetch() wirft (statt eine Response zurückzugeben) typischerweise bei:
+    //   1. CORS-Blockierung durch den Browser (TypeError "Failed to fetch" o. ä.)
+    //   2. Echtem Netzwerkausfall (kein DNS, kein Internet)
+    // Beide Fälle landen hier – der API-Key taucht in keiner Meldung auf.
+    const isBrowserBlock =
+      err instanceof TypeError &&
+      typeof err.message === 'string' &&
+      (err.message.toLowerCase().includes('fetch') ||
+        err.message.toLowerCase().includes('network') ||
+        err.message.toLowerCase().includes('load'));
+
     return {
       success: false,
       error: 'NETWORK_ERROR',
-      message: 'Netzwerkfehler – bitte Internetverbindung prüfen.',
+      message: isBrowserBlock
+        ? 'Die Anfrage wurde blockiert – wahrscheinlich eine CORS-Einschränkung der ' +
+          'DivvyDiary API. Die API ist für serverseitige Nutzung ausgelegt; direkter ' +
+          'Browser-Zugriff kann gesperrt sein. Details in der Browser-Konsole (F12 → Console).'
+        : 'Netzwerkfehler – bitte Internetverbindung prüfen.',
     };
   }
 
