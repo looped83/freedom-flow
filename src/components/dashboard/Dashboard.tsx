@@ -5,6 +5,7 @@ import {
   computeGoalResults,
   freeDaysPerMonth,
   monthlyDividends,
+  projectMonthlyDividendsAtYear,
   totalMonthlyCosts,
 } from '../../utils/calculations';
 import { formatEuro, formatPercent } from '../../utils/formatting';
@@ -60,6 +61,7 @@ export function Dashboard({ portfolio, goals, onIncomeChange, onGoalClick }: Das
   const [goalSort, setGoalSort] = useState<GoalSort>({ type: 'amount', dir: 'desc' });
 
   const monthly = useMemo(() => monthlyDividends(portfolio), [portfolio]);
+  const projectedMonthly = useMemo(() => projectMonthlyDividendsAtYear(portfolio, 1), [portfolio]);
   const total   = useMemo(() => totalMonthlyCosts(goals), [goals]);
   const freeDays = useMemo(() => freeDaysPerMonth(monthly, total), [monthly, total]);
 
@@ -86,9 +88,9 @@ export function Dashboard({ portfolio, goals, onIncomeChange, onGoalClick }: Das
   const visibleGoals = showAllGoals ? displayResults : displayResults.slice(0, MAX_VISIBLE_GOALS);
 
   const goalsTitle =
-    goalFilter === 'covered' ? 'Erreichte Ziele'
-    : goalFilter === 'open'  ? 'Offene Ziele'
-    : 'Alle Ziele';
+    goalFilter === 'covered' ? 'Erreichte Ausgaben'
+    : goalFilter === 'open'  ? 'Offene Ausgaben'
+    : 'Monatliche Ausgaben';
 
   function handleSortChange(type: SortType) {
     setGoalSort((prev) => {
@@ -103,7 +105,7 @@ export function Dashboard({ portfolio, goals, onIncomeChange, onGoalClick }: Das
       <PageHeader icon={DASHBOARD_ICON} title="Dashboard" />
 
       {/* FreedomHero – ring, stats, inline income edit */}
-      <FreedomHero monthly={monthly} total={total} onIncomeChange={onIncomeChange} />
+      <FreedomHero monthly={monthly} projectedMonthly={projectedMonthly} total={total} onIncomeChange={onIncomeChange} />
 
       {/* Nächstes Ziel */}
       {nextGoal && (

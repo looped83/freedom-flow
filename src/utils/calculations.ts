@@ -58,7 +58,7 @@ function byAmountAsc(goals: Goal[]): Goal[] {
 
 // Compound projection: dividends grow at dividendGrowth % per year,
 // new savings contribute at the current dividend yield.
-function projectMonthlyDividendsAtYear(portfolio: Portfolio, years: number): number {
+export function projectMonthlyDividendsAtYear(portfolio: Portfolio, years: number): number {
   const g = portfolio.dividendGrowth / 100;
   const baseMonthly = portfolio.monthlyIncome;
   const annualSavingsDividends = portfolio.monthlySavings * 12 * (portfolio.dividendYield / 100);
