@@ -37,6 +37,7 @@ export interface DivvyDiaryPortfolioResponse {
 
 export type DivvyDiaryImportErrorCode =
   | 'INVALID_KEY'
+  | 'CORS_BLOCKED'
   | 'NETWORK_ERROR'
   | 'EMPTY_RESPONSE'
   | 'MAPPING_ERROR';
@@ -94,24 +95,19 @@ export async function importFromDivvyDiary(
       },
     });
   } catch (err) {
-    // fetch() wirft (statt eine Response zurückzugeben) typischerweise bei:
-    //   1. CORS-Blockierung durch den Browser (TypeError "Failed to fetch" o. ä.)
-    //   2. Echtem Netzwerkausfall (kein DNS, kein Internet)
-    // Beide Fälle landen hier – der API-Key taucht in keiner Meldung auf.
-    const isBrowserBlock =
-      err instanceof TypeError &&
-      typeof err.message === 'string' &&
-      (err.message.toLowerCase().includes('fetch') ||
-        err.message.toLowerCase().includes('network') ||
-        err.message.toLowerCase().includes('load'));
-
+    // fetch() wirft einen TypeError wenn:
+    //   1. Der Browser die Anfrage wegen fehlender CORS-Header blockiert
+    //      ("Failed to fetch", "NetworkError when attempting to fetch resource", "Load failed")
+    //   2. Kein Netzwerk vorhanden ist
+    // In beiden Fällen enthält die Meldung keinen API-Key.
+    const isTypeError = err instanceof TypeError;
     return {
       success: false,
-      error: 'NETWORK_ERROR',
-      message: isBrowserBlock
-        ? 'Die Anfrage wurde blockiert – wahrscheinlich eine CORS-Einschränkung der ' +
-          'DivvyDiary API. Die API ist für serverseitige Nutzung ausgelegt; direkter ' +
-          'Browser-Zugriff kann gesperrt sein. Details in der Browser-Konsole (F12 → Console).'
+      // CORS_BLOCKED wird als eigenständiger Fehlertyp zurückgegeben,
+      // damit die UI eine hilfreiche Anleitung statt nur einen Fehlertext zeigen kann.
+      error: isTypeError ? 'CORS_BLOCKED' : 'NETWORK_ERROR',
+      message: isTypeError
+        ? 'CORS_BLOCKED'
         : 'Netzwerkfehler – bitte Internetverbindung prüfen.',
     };
   }

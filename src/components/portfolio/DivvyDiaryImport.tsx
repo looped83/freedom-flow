@@ -7,9 +7,8 @@ interface DivvyDiaryImportProps {
   onImport: (p: Portfolio) => void;
 }
 
-type ImportStatus = 'idle' | 'loading' | 'success' | 'error';
+type ImportStatus = 'idle' | 'loading' | 'success' | 'error' | 'cors_blocked';
 
-// Inline-SVG für das DivvyDiary-ähnliche Import-Icon
 const IMPORT_ICON = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -17,6 +16,33 @@ const IMPORT_ICON = (
     <line x1="12" y1="15" x2="12" y2="3"/>
   </svg>
 );
+
+const INFO_ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0 mt-0.5" aria-hidden="true">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="12" y1="8" x2="12" y2="12"/>
+    <line x1="12" y1="16" x2="12.01" y2="16"/>
+  </svg>
+);
+
+// Mapping: welches DivvyDiary-Feld → wo in der App + wo in DivvyDiary zu finden
+const CORS_FIELD_GUIDE = [
+  {
+    divvyDiaryLabel: 'Gesamtwert',
+    appLabel: 'Portfolio-Wert',
+    hint: 'Dashboard → "Depotübersicht" → Gesamtwert',
+  },
+  {
+    divvyDiaryLabel: 'Dividenden / Monat',
+    appLabel: 'Monatliche Dividenden',
+    hint: 'Dashboard → "Dividenden" → Monatlich',
+  },
+  {
+    divvyDiaryLabel: 'Dividendenrendite',
+    appLabel: 'Dividendenrendite (%)',
+    hint: 'Dashboard → "Performance" → Yield on Cost / Rendite',
+  },
+];
 
 export function DivvyDiaryImport({ currentPortfolio, onImport }: DivvyDiaryImportProps) {
   // Der API-Key lebt ausschließlich in diesem lokalen State.
@@ -36,23 +62,23 @@ export function DivvyDiaryImport({ currentPortfolio, onImport }: DivvyDiaryImpor
     const result = await importFromDivvyDiary(apiKey);
 
     if (!result.success) {
-      setStatus('error');
-      setErrorMessage(result.message);
-      inputRef.current?.focus();
+      if (result.error === 'CORS_BLOCKED') {
+        setStatus('cors_blocked');
+        // Key nach CORS-Fehler im State behalten, damit der Nutzer
+        // nicht erneut tippen muss wenn er es später nochmal versucht.
+      } else {
+        setStatus('error');
+        setErrorMessage(result.message);
+        inputRef.current?.focus();
+      }
       return;
     }
 
-    // Importierte Felder mit aktuellem Portfolio zusammenführen.
-    // Nur Felder, die DivvyDiary geliefert hat, werden überschrieben.
     onImport({ ...currentPortfolio, ...result.portfolio });
-
-    // Merken, welche Felder aktualisiert wurden (für Erfolgsmeldung)
     setImportedFields(
       Object.keys(result.portfolio).map((k) => FIELD_LABELS[k as keyof Portfolio] ?? k),
     );
-
     setStatus('success');
-    // Key sofort aus dem Speicher löschen
     setApiKey('');
     setTimeout(() => {
       setStatus('idle');
@@ -75,6 +101,58 @@ export function DivvyDiaryImport({ currentPortfolio, onImport }: DivvyDiaryImpor
       <p className="text-xs text-white/45 mb-4 leading-relaxed">
         Der API-Key wird nur lokal zur Laufzeit verwendet und nicht gespeichert.
       </p>
+
+      {/* CORS-Erklärung – wird angezeigt wenn der Browser den Aufruf blockiert */}
+      {status === 'cors_blocked' && (
+        <div
+          role="alert"
+          className="mb-4 bg-gold/5 border border-gold/25 rounded-xl p-4 space-y-3"
+        >
+          <div className="flex items-start gap-2 text-gold">
+            {INFO_ICON}
+            <p className="text-xs font-semibold leading-relaxed">
+              Direkter Browser-Zugriff blockiert (CORS)
+            </p>
+          </div>
+          <p className="text-xs text-white/65 leading-relaxed">
+            DivvyDiarys API erlaubt keine direkten Anfragen aus dem Browser – das ist
+            eine serverseitige Einschränkung der API, kein Problem mit deinem Key.
+          </p>
+          <p className="text-xs text-white/65 leading-relaxed">
+            <span className="text-white/80 font-medium">Workaround:</span> Öffne dein{' '}
+            <a
+              href="https://divvydiary.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-accent underline underline-offset-2 hover:text-white transition-colors"
+            >
+              DivvyDiary-Dashboard
+            </a>{' '}
+            und trage die Werte manuell über die Schieberegler unten ein:
+          </p>
+          <ul className="space-y-2">
+            {CORS_FIELD_GUIDE.map((f) => (
+              <li key={f.appLabel} className="flex gap-2 text-xs">
+                <span className="text-white/30 flex-shrink-0">→</span>
+                <span>
+                  <span className="text-white/80 font-medium">{f.appLabel}</span>
+                  <span className="text-white/40"> · {f.hint}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <button
+            type="button"
+            onClick={() => {
+              setStatus('idle');
+              setErrorMessage('');
+            }}
+            className="text-xs text-white/40 hover:text-white/70 transition-colors underline underline-offset-2"
+          >
+            Erneut versuchen
+          </button>
+        </div>
+      )}
 
       <form
         onSubmit={handleImport}
@@ -100,7 +178,7 @@ export function DivvyDiaryImport({ currentPortfolio, onImport }: DivvyDiaryImpor
             value={apiKey}
             onChange={(e) => {
               setApiKey(e.target.value);
-              if (status === 'error') {
+              if (status === 'error' || status === 'cors_blocked') {
                 setStatus('idle');
                 setErrorMessage('');
               }
@@ -112,7 +190,7 @@ export function DivvyDiaryImport({ currentPortfolio, onImport }: DivvyDiaryImpor
           />
         </div>
 
-        {/* Fehlermeldung */}
+        {/* Allgemeiner Fehler */}
         {status === 'error' && (
           <p
             role="alert"
@@ -132,30 +210,31 @@ export function DivvyDiaryImport({ currentPortfolio, onImport }: DivvyDiaryImpor
           </p>
         )}
 
-        {/* Import-Button */}
-        <button
-          type="submit"
-          disabled={!apiKey.trim() || status === 'loading' || status === 'success'}
-          className="w-full flex items-center justify-center gap-2 bg-surface-2 border border-white/10 text-white/80 font-medium py-2.5 rounded-xl hover:bg-surface-3 hover:border-white/20 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent text-sm"
-        >
-          {status === 'loading' ? (
-            <>
-              <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin flex-shrink-0" />
-              Importiere …
-            </>
-          ) : (
-            <>
-              {IMPORT_ICON}
-              Import starten
-            </>
-          )}
-        </button>
+        {/* Import-Button – ausgeblendet wenn CORS-Anleitung sichtbar */}
+        {status !== 'cors_blocked' && (
+          <button
+            type="submit"
+            disabled={!apiKey.trim() || status === 'loading' || status === 'success'}
+            className="w-full flex items-center justify-center gap-2 bg-surface-2 border border-white/10 text-white/80 font-medium py-2.5 rounded-xl hover:bg-surface-3 hover:border-white/20 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent text-sm"
+          >
+            {status === 'loading' ? (
+              <>
+                <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin flex-shrink-0" />
+                Importiere …
+              </>
+            ) : (
+              <>
+                {IMPORT_ICON}
+                Import starten
+              </>
+            )}
+          </button>
+        )}
       </form>
     </section>
   );
 }
 
-// Lesbare Bezeichnungen für importierte Felder (für Erfolgsmeldung)
 const FIELD_LABELS: Partial<Record<keyof Portfolio, string>> = {
   value: 'Portfolio-Wert',
   monthlyIncome: 'Monatliche Dividenden',
