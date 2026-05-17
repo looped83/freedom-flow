@@ -27,6 +27,13 @@ export default function App() {
   const [focusGoalId, setFocusGoalId] = useState<string | null>(null);
   const { state, actions } = useAppState();
 
+  // Tapping a tab — whether it's a new one or the active one — always
+  // returns the user to the top of the page. Same convention as iOS.
+  const handleTabChange = useCallback((next: Tab) => {
+    setTab(next);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
   const handleGoalClick = useCallback((id: string) => {
     setFocusGoalId(id);
     setTab('setup');
@@ -35,7 +42,6 @@ export default function App() {
   const handleReset = useCallback(() => {
     if (confirm('Alle Daten zurücksetzen?')) {
       actions.reset();
-      setTab('dashboard');
     }
   }, [actions]);
 
@@ -46,7 +52,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-surface text-white pb-28 sm:pb-0">
       <Header />
-      <TabNav active={tab} onChange={setTab} />
+      <TabNav active={tab} onChange={handleTabChange} />
 
       {tab === 'dashboard' && (
         <Dashboard
