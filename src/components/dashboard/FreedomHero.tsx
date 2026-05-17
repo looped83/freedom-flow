@@ -173,7 +173,7 @@ export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange, 
           </div>
 
           <div className="text-center">
-            <p className="text-xs text-white/55 mb-1">Fehlend</p>
+            <p className="text-xs text-white/55 mb-1">Offen</p>
             <p className="text-white/65 font-bold text-sm tabular-nums">{formatEuro(missing)}</p>
           </div>
         </div>
