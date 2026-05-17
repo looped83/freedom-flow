@@ -38,11 +38,10 @@ const PATHS: Record<GoalCategory, IconPath> = {
   ),
   Auto: (
     <>
-      <circle cx="12" cy="12" r="9"/>
-      <circle cx="12" cy="12" r="3"/>
-      <line x1="12" y1="9" x2="12" y2="3"/>
-      <line x1="14.6" y1="13.5" x2="19.8" y2="16.5"/>
-      <line x1="9.4" y1="13.5" x2="4.2" y2="16.5"/>
+      <path d="M5 11l2-5h10l2 5"/>
+      <rect x="1" y="11" width="22" height="6" rx="2"/>
+      <circle cx="7" cy="17" r="2"/>
+      <circle cx="17" cy="17" r="2"/>
     </>
   ),
   Gesundheit: (
