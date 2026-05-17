@@ -75,7 +75,8 @@ function GoalDot({ achieved }: { achieved: boolean }) {
 }
 
 function EntryCard({ entry, isHero, milestones }: { entry: TimelineEntry; isHero?: boolean; milestones: MilestoneResult[] }) {
-  const hasGoals = entry.newGoals.length > 0;
+  const sortedGoals = [...entry.newGoals].sort((a, b) => b.monthlyAmount - a.monthlyAmount);
+  const hasGoals = sortedGoals.length > 0;
   const achieved = entry.isPastYear;
 
   return (
@@ -99,9 +100,11 @@ function EntryCard({ entry, isHero, milestones }: { entry: TimelineEntry; isHero
           </span>
         </div>
 
+        {milestones.length > 0 && <MilestoneTile milestones={milestones} />}
+
         {hasGoals ? (
-          <ul className="space-y-1.5" role="list">
-            {entry.newGoals.map((goal) => (
+          <ul className={`space-y-1.5 ${milestones.length > 0 ? 'mt-2' : ''}`} role="list">
+            {sortedGoals.map((goal) => (
               <li key={goal.id} className="flex items-center gap-2 text-sm">
                 <GoalDot achieved={achieved} />
                 <span className="flex-shrink-0 text-white/60">
@@ -119,8 +122,6 @@ function EntryCard({ entry, isHero, milestones }: { entry: TimelineEntry; isHero
         ) : entry.isFreedomYear ? (
           <p className="text-sm text-white/50">Alle Ziele vollständig gedeckt.</p>
         ) : null}
-
-        {milestones.length > 0 && <MilestoneTile milestones={milestones} />}
       </div>
     </li>
   );

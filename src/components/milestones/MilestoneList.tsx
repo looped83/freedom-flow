@@ -92,7 +92,7 @@ export function MilestoneList({ milestones, portfolio, onAdd, onUpdate, onDelete
   }
 
   function toggleEdit(id: string) {
-    if (swipe.isSwiping) return;
+    if (swipe.isSwipingRef.current) return;
     setEditingId((prev) => (prev === id ? null : id));
     setConfirmDelete(null);
   }
@@ -191,7 +191,6 @@ export function MilestoneList({ milestones, portfolio, onAdd, onUpdate, onDelete
         {displayResults.map((m) => {
           const isEditing = editingId === m.id;
           const isConfirmDelete = confirmDelete === m.id;
-          const opacity = swipe.deleteBgOpacity(m.id);
           const achieved = m.status === 'achieved';
 
           return (
@@ -202,14 +201,15 @@ export function MilestoneList({ milestones, portfolio, onAdd, onUpdate, onDelete
               <div
                 aria-hidden="true"
                 className="absolute inset-0 flex items-center justify-end pr-5 bg-red-500 rounded-xl"
-                style={{ opacity }}
+                style={{ opacity: 0 }}
+                ref={(el) => swipe.setBgEl(m.id, el)}
               >
                 <IconTrash />
               </div>
 
               <div
                 className="bg-surface-1 rounded-xl relative"
-                style={swipe.cardStyle(m.id)}
+                ref={(el) => swipe.setCardEl(m.id, el)}
                 {...swipe.bind(m.id)}
               >
                 <div className={`flex items-center gap-3 px-4 py-3 ${isEditing ? 'border-b border-white/5' : ''}`}>
