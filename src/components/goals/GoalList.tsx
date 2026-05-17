@@ -66,8 +66,7 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
   }
 
   function toggleEdit(id: string) {
-    // Ignore if we just finished a swipe gesture
-    if (swipe.isSwiping) return;
+    if (swipe.isSwipingRef.current) return;
     setEditingId((prev) => (prev === id ? null : id));
     setConfirmDelete(null);
   }
@@ -148,7 +147,6 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
         {displayResults.map((goal) => {
           const isEditing = editingId === goal.id;
           const isConfirmDelete = confirmDelete === goal.id;
-          const opacity = swipe.deleteBgOpacity(goal.id);
 
           return (
             <li
@@ -161,7 +159,8 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
               <div
                 aria-hidden="true"
                 className="absolute inset-0 flex items-center justify-end pr-5 bg-red-500 rounded-xl"
-                style={{ opacity }}
+                style={{ opacity: 0 }}
+                ref={(el) => swipe.setBgEl(goal.id, el)}
               >
                 <IconTrash />
               </div>
@@ -169,7 +168,7 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
               {/* Sliding card */}
               <div
                 className="bg-surface-1 rounded-xl relative"
-                style={swipe.cardStyle(goal.id)}
+                ref={(el) => swipe.setCardEl(goal.id, el)}
                 {...swipe.bind(goal.id)}
               >
                 {/* ── Card header – tap to expand / collapse ── */}

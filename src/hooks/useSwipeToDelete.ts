@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 
 interface SwipeOptions {
   /** Distance in pixels the card must be dragged left before delete fires. */
@@ -18,6 +18,11 @@ interface SwipeHandlers {
  * Manages "swipe a list card to the left to delete" interaction for a vertical
  * list of items. Determines axis from the first 5 px of movement and only
  * commits horizontal drags. Vertical scroll is left untouched.
+ *
+ * Uses direct DOM mutation during the active drag instead of React state so
+ * touchmove at 60 fps never schedules a React re-render of the full list.
+ * Callers attach setCardEl / setBgEl as callback refs; isSwipingRef lets
+ * click handlers guard against accidental taps after a swipe.
  */
 export function useSwipeToDelete(onDelete: (id: string) => void, { threshold = 160, isLocked }: SwipeOptions = {}) {
   const touchRef = useRef<{
@@ -26,16 +31,34 @@ export function useSwipeToDelete(onDelete: (id: string) => void, { threshold = 1
     startY: number;
     determined: boolean;
     isHorizontal: boolean;
+    currentPx: number;
   } | null>(null);
-  const [offset, setOffset] = useState<{ id: string; px: number } | null>(null);
+
+  const isSwipingRef = useRef(false);
+  const cardEls = useRef(new Map<string, HTMLElement>());
+  const bgEls   = useRef(new Map<string, HTMLElement>());
+
+  function setCardEl(id: string, el: HTMLElement | null) {
+    if (el) cardEls.current.set(id, el);
+    else cardEls.current.delete(id);
+  }
+
+  function setBgEl(id: string, el: HTMLElement | null) {
+    if (el) bgEls.current.set(id, el);
+    else bgEls.current.delete(id);
+  }
 
   function bind(id: string): SwipeHandlers {
     return {
       onTouchStart: (e) => {
         if (isLocked?.(id)) return;
         const t = e.touches[0];
-        touchRef.current = { id, startX: t.clientX, startY: t.clientY, determined: false, isHorizontal: false };
+        touchRef.current = {
+          id, startX: t.clientX, startY: t.clientY,
+          determined: false, isHorizontal: false, currentPx: 0,
+        };
       },
+
       onTouchMove: (e) => {
         const ref = touchRef.current;
         if (!ref || ref.id !== id) return;
@@ -47,31 +70,50 @@ export function useSwipeToDelete(onDelete: (id: string) => void, { threshold = 1
           ref.determined = true;
         }
         if (!ref.isHorizontal) return;
-        setOffset({ id, px: Math.min(0, dx) });
+
+        const px = Math.min(0, dx);
+        ref.currentPx = px;
+        isSwipingRef.current = true;
+
+        const cardEl = cardEls.current.get(id);
+        const bgEl   = bgEls.current.get(id);
+        if (cardEl) {
+          cardEl.style.transition = 'none';
+          cardEl.style.transform  = `translateX(${px}px)`;
+        }
+        if (bgEl) bgEl.style.opacity = String(Math.min(1, Math.abs(px) / threshold));
       },
+
       onTouchEnd: () => {
         if (!touchRef.current || touchRef.current.id !== id) return;
-        const wasHorizontal = touchRef.current.isHorizontal;
+        const { isHorizontal, currentPx } = touchRef.current;
         touchRef.current = null;
-        const px = offset?.id === id ? offset.px : 0;
-        setOffset(null);
-        if (wasHorizontal && px <= -threshold) onDelete(id);
+
+        const cardEl = cardEls.current.get(id);
+        const bgEl   = bgEls.current.get(id);
+        const shouldDelete = isHorizontal && currentPx <= -threshold;
+
+        if (!shouldDelete) {
+          if (cardEl) {
+            cardEl.style.transition = 'transform 0.22s ease-out';
+            cardEl.style.transform  = 'translateX(0px)';
+          }
+          if (bgEl) bgEl.style.opacity = '0';
+        }
+
+        if (isHorizontal) {
+          // The synthetic click fires before the next macrotask.
+          // Keep isSwipingRef true so click handlers can guard against
+          // accidental taps immediately after a swipe gesture completes.
+          setTimeout(() => { isSwipingRef.current = false; }, 0);
+        } else {
+          isSwipingRef.current = false;
+        }
+
+        if (shouldDelete) onDelete(id);
       },
     };
   }
 
-  function cardStyle(id: string): React.CSSProperties {
-    const px = offset?.id === id ? offset.px : 0;
-    return {
-      transform: `translateX(${px}px)`,
-      transition: offset?.id === id ? 'none' : 'transform 0.22s ease-out',
-    };
-  }
-
-  function deleteBgOpacity(id: string): number {
-    const px = offset?.id === id ? Math.abs(offset.px) : 0;
-    return Math.min(1, px / threshold);
-  }
-
-  return { bind, cardStyle, deleteBgOpacity, isSwiping: offset !== null };
+  return { bind, setCardEl, setBgEl, isSwipingRef };
 }
