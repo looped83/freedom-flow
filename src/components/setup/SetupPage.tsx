@@ -46,7 +46,7 @@ export function SetupPage({
   const [active, setActive] = useState<SetupTab>('goals');
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <main className="max-w-4xl mx-auto">
       <div className="px-4 pt-6 pb-0">
         <PageHeader icon={SETUP_ICON} title="Setup" />
         <div
@@ -93,6 +93,6 @@ export function SetupPage({
           <PortfolioForm portfolio={portfolio} onSave={onSavePortfolio} onReset={onReset} />
         )}
       </div>
-    </div>
+    </main>
   );
 }

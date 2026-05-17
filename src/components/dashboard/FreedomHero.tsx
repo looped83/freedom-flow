@@ -80,7 +80,7 @@ export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange }
         >
           {/* Track */}
           <circle cx="100" cy="100" r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="14" />
-          {/* Projected year-end arc (transparent) – click to show projected % */}
+          {/* Projected year-end arc (transparent) – click/Enter to show projected % */}
           {projPct > pct && (
             <circle
               cx="100" cy="100" r={R}
@@ -89,11 +89,18 @@ export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange }
               strokeDasharray={CIRCUMFERENCE}
               strokeDashoffset={projDashOffset}
               transform="rotate(-90 100 100)"
+              role="button"
+              tabIndex={0}
+              aria-label={`Prognose anzeigen: ${projPct.toFixed(1)} % in einem Jahr`}
+              aria-pressed={showProjected}
               style={{ cursor: 'pointer' }}
               onClick={() => setShowProjected(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowProjected(true); }
+              }}
             />
           )}
-          {/* Current arc – click to revert to current % */}
+          {/* Current arc – click/Enter to revert to current % */}
           <circle
             ref={circleRef}
             cx="100" cy="100" r={R}
@@ -102,8 +109,15 @@ export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange }
             strokeDasharray={CIRCUMFERENCE}
             strokeDashoffset={CIRCUMFERENCE}
             transform="rotate(-90 100 100)"
+            role={showProjected ? 'button' : undefined}
+            tabIndex={showProjected ? 0 : undefined}
+            aria-label={showProjected ? `Aktuelle ${pct.toFixed(1)} % anzeigen` : undefined}
+            aria-pressed={showProjected ? false : undefined}
             style={{ cursor: showProjected ? 'pointer' : 'default' }}
             onClick={() => setShowProjected(false)}
+            onKeyDown={showProjected ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowProjected(false); }
+            } : undefined}
           />
           <text x="100" y="93" textAnchor="middle" dominantBaseline="middle"
             fill="white" fontSize="28" fontWeight="700" fontFamily="inherit">

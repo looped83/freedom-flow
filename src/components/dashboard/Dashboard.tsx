@@ -84,9 +84,8 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onGoal
           <button
             onClick={() => onGoalClick?.(nextGoal.id)}
             className="w-full bg-surface-2 rounded-xl px-4 py-3 flex items-center gap-3 text-left hover:bg-surface-3 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
-            aria-label={`${nextGoal.name} in Setup öffnen`}
           >
-            <span className="flex-shrink-0 text-white/60">
+            <span className="flex-shrink-0 text-white/60" aria-hidden="true">
               <CategoryIcon category={nextGoal.category} />
             </span>
             <div className="flex-1 min-w-0">
@@ -112,6 +111,7 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onGoal
                 <p className="text-xs text-white/40">{nextGoal.achievedYear}</p>
               )}
             </div>
+            <span className="sr-only">. In Setup öffnen.</span>
           </button>
           <p className="text-xs text-accent/70 mt-3 font-bold">
             Noch {formatEuro(nextGoal.monthlyAmount - nextGoal.coveredAmount)} bis zum nächsten Meilenstein.
@@ -162,9 +162,8 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onGoal
                   <button
                     onClick={() => onGoalClick?.(g.id)}
                     className="w-full bg-surface-2 rounded-xl px-4 py-3 flex items-center gap-3 text-left hover:bg-surface-3 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
-                    aria-label={`${g.name} in Setup öffnen`}
                   >
-                    <span className="flex-shrink-0 text-white/60">
+                    <span className="flex-shrink-0 text-white/60" aria-hidden="true">
                       <CategoryIcon category={g.category} />
                     </span>
                     <div className="flex-1 min-w-0">
@@ -190,6 +189,7 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onGoal
                         <p className="text-xs text-white/40">{g.achievedYear}</p>
                       )}
                     </div>
+                    <span className="sr-only">. In Setup öffnen.</span>
                   </button>
                 </li>
               );
