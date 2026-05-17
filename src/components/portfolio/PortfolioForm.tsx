@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Portfolio } from '../../types';
 import { formatEuro, liveFormatAmount, parseGerman } from '../../utils/formatting';
+import { DivvyDiaryImport } from './DivvyDiaryImport';
 
 const fmtInt = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 const fmtDec = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -115,6 +116,11 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
   const [form, setForm] = useState<Portfolio>({ ...portfolio });
   const [saved, setSaved] = useState(false);
 
+  function handleImport(imported: Portfolio) {
+    setForm(imported);
+    onSave(imported);
+  }
+
   function handleChange(field: keyof Portfolio, value: number) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
@@ -147,7 +153,9 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6" aria-label="Portfolio-Daten bearbeiten">
+      <DivvyDiaryImport currentPortfolio={form} onImport={handleImport} />
+
+      <form onSubmit={handleSubmit} className="space-y-6 mt-6" aria-label="Portfolio-Daten bearbeiten">
         {FIELDS.map((f) => (
           <NumberField
             key={f.id}
