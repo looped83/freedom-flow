@@ -52,6 +52,7 @@ export default function App() {
         <Dashboard
           portfolio={state.portfolio}
           goals={state.goals}
+          milestones={state.milestones}
           onIncomeChange={handleIncomeChange}
           onGoalClick={handleGoalClick}
         />
@@ -59,7 +60,7 @@ export default function App() {
 
       <Suspense fallback={<TabFallback />}>
         {tab === 'timeline' && (
-          <FreedomTimeline portfolio={state.portfolio} goals={state.goals} />
+          <FreedomTimeline portfolio={state.portfolio} goals={state.goals} milestones={state.milestones} />
         )}
         {tab === 'liveflow' && (
           <LiveFlow portfolio={state.portfolio} />

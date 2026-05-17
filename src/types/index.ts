@@ -41,20 +41,6 @@ export interface Portfolio {
   monthlyIncome: number;
 }
 
-export type UnlockType = 'income' | 'goal' | 'freedom' | 'lifetime';
-
-export interface Unlock {
-  id: string;
-  type: UnlockType;
-  title: string;
-  subtitle: string;
-  emoji: string;
-  achieved: boolean;
-  progressPct: number;      // 0–100
-  missingMonthly: number;   // how much more €/month needed (0 if achieved)
-  iconCategory?: GoalCategory;
-}
-
 export interface TimelineEntry {
   year: number;
   projectedMonthly: number;

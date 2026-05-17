@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
-import type { Goal, GoalResult, Portfolio } from '../../types';
+import type { Goal, GoalResult, Milestone, Portfolio } from '../../types';
 import {
-  buildLifeUnlocks,
   computeGoalResults,
   freeDaysPerMonth,
   monthlyDividends,
@@ -27,6 +26,7 @@ interface GoalSort { type: SortType; dir: SortDir }
 interface DashboardProps {
   portfolio: Portfolio;
   goals: Goal[];
+  milestones: Milestone[];
   onIncomeChange: (v: number) => void;
   onGoalClick?: (id: string) => void;
 }
@@ -55,7 +55,7 @@ const DASHBOARD_ICON = (
   </svg>
 );
 
-export function Dashboard({ portfolio, goals, onIncomeChange, onGoalClick }: DashboardProps) {
+export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onGoalClick }: DashboardProps) {
   const [showAllGoals, setShowAllGoals] = useState(false);
   const [goalFilter, setGoalFilter] = useState<GoalFilter>('all');
   const [goalSort, setGoalSort] = useState<GoalSort>({ type: 'amount', dir: 'desc' });
@@ -73,11 +73,6 @@ export function Dashboard({ portfolio, goals, onIncomeChange, onGoalClick }: Das
   const nextGoal = useMemo(
     () => [...allResults].sort((a, b) => a.monthlyAmount - b.monthlyAmount).find((g) => g.status !== 'covered'),
     [allResults],
-  );
-
-  const lifeUnlocks = useMemo(
-    () => buildLifeUnlocks(allResults, monthly, total, freeDays),
-    [allResults, monthly, total, freeDays],
   );
 
   const displayResults = useMemo(
@@ -148,7 +143,7 @@ export function Dashboard({ portfolio, goals, onIncomeChange, onGoalClick }: Das
 
       {/* Meilensteine */}
       <section className="bg-surface-1 rounded-2xl p-5 border border-white/5">
-        <LifeUnlocks unlocks={lifeUnlocks} />
+        <LifeUnlocks milestones={milestones} portfolio={portfolio} />
       </section>
 
       {/* Alle Ziele – separate tile */}
@@ -218,7 +213,7 @@ export function Dashboard({ portfolio, goals, onIncomeChange, onGoalClick }: Das
                       className="w-full bg-surface-2 rounded-xl px-4 py-3 flex items-center gap-3 text-left hover:bg-surface-3 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
                       aria-label={`${g.name} in Setup öffnen`}
                     >
-                      <span className="flex-shrink-0 text-white/60">
+                      <span className={`flex-shrink-0 ${g.status === 'covered' ? 'text-accent' : 'text-white/60'}`}>
                         <CategoryIcon category={g.category} />
                       </span>
                       <div className="flex-1 min-w-0">

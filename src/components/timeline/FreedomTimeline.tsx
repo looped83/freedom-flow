@@ -1,13 +1,17 @@
 import { Fragment, useMemo } from 'react';
-import type { TimelineEntry, Goal, Portfolio } from '../../types';
+import type { TimelineEntry, Goal, Milestone, MilestoneResult, Portfolio } from '../../types';
 import { CategoryIcon } from '../goals/CategoryIcon';
-import { buildFreedomTimeline, INCOME_THRESHOLDS } from '../../utils/calculations';
+import { MilestoneIcon } from '../milestones/MilestoneIcon';
+import { buildFreedomTimeline, projectMonthlyDividendsAtYear } from '../../utils/calculations';
+import { computeMilestoneResult, formatMilestoneDate, milestoneAchievedYear } from '../../utils/milestones';
+import { CURRENT_YEAR } from '../../constants/defaultData';
 import { formatEuro } from '../../utils/formatting';
 import { PageHeader } from '../layout/PageHeader';
 
 interface FreedomTimelineProps {
   portfolio: Portfolio;
   goals: Goal[];
+  milestones: Milestone[];
 }
 
 const TIMELINE_ICON = (
@@ -36,17 +40,22 @@ function YearBadge({ entry }: { entry: TimelineEntry }) {
   );
 }
 
-function MilestoneTile({ milestones }: { milestones: number[] }) {
+function MilestoneTile({ milestones }: { milestones: MilestoneResult[] }) {
   return (
     <div className="mt-2 bg-gold-muted border border-gold/20 rounded-xl px-3 py-2.5 flex flex-col gap-1.5">
-      {milestones.map((t) => (
-        <div key={t} className="flex items-center gap-2">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 flex-shrink-0 text-gold" aria-hidden="true">
-            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
-            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
-            <path d="M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v8a6 6 0 0 0 12 0V2z"/>
-          </svg>
-          <span className="text-xs text-gold font-semibold">{formatEuro(t)} / Mo. Dividenden</span>
+      {milestones.map((m) => (
+        <div key={m.id} className="flex items-center gap-2">
+          <span className="flex-shrink-0 text-gold">
+            <MilestoneIcon icon={m.icon} className="w-3.5 h-3.5" />
+          </span>
+          <span className="text-xs text-gold font-semibold flex-1 min-w-0 truncate">{m.title}</span>
+          <span className="text-[10px] text-gold/80 font-medium tabular-nums flex-shrink-0">
+            {m.type === 'dividend' && m.dividendTarget != null
+              ? `${formatEuro(m.dividendTarget)} / Mo.`
+              : m.dateTarget
+                ? formatMilestoneDate(m.dateTarget)
+                : ''}
+          </span>
         </div>
       ))}
     </div>
@@ -65,7 +74,7 @@ function GoalDot({ achieved }: { achieved: boolean }) {
   );
 }
 
-function EntryCard({ entry, isHero, milestones }: { entry: TimelineEntry; isHero?: boolean; milestones: number[] }) {
+function EntryCard({ entry, isHero, milestones }: { entry: TimelineEntry; isHero?: boolean; milestones: MilestoneResult[] }) {
   const hasGoals = entry.newGoals.length > 0;
   const achieved = entry.isPastYear;
 
@@ -129,26 +138,63 @@ function TimelineSeparator({ label }: { label: string }) {
   );
 }
 
-export function FreedomTimeline({ portfolio, goals }: FreedomTimelineProps) {
-  const allEntries = useMemo(() => buildFreedomTimeline(goals, portfolio), [goals, portfolio]);
+export function FreedomTimeline({ portfolio, goals, milestones }: FreedomTimelineProps) {
+  const baseEntries = useMemo(() => buildFreedomTimeline(goals, portfolio), [goals, portfolio]);
 
   const beyondHorizonGoals = useMemo(() => {
-    const ids = new Set(allEntries.flatMap((e) => e.newGoals.map((g) => g.id)));
+    const ids = new Set(baseEntries.flatMap((e) => e.newGoals.map((g) => g.id)));
     return goals.filter((g) => !ids.has(g.id));
-  }, [allEntries, goals]);
+  }, [baseEntries, goals]);
+
+  // Map each milestone to its calendar year (or null = beyond horizon / unreachable)
+  const milestonesByYear = useMemo(() => {
+    const map = new Map<number, MilestoneResult[]>();
+    const beyond: MilestoneResult[] = [];
+    for (const m of milestones) {
+      const year = milestoneAchievedYear(m, portfolio);
+      const result = computeMilestoneResult(m, portfolio);
+      if (year == null) {
+        beyond.push(result);
+        continue;
+      }
+      const list = map.get(year) ?? [];
+      list.push(result);
+      map.set(year, list);
+    }
+    // Sort each year's milestones for stable display
+    for (const list of map.values()) {
+      list.sort((a, b) => {
+        if (a.type !== b.type) return a.type === 'dividend' ? -1 : 1;
+        if (a.type === 'dividend') return (a.dividendTarget ?? 0) - (b.dividendTarget ?? 0);
+        return (a.dateTarget ?? '').localeCompare(b.dateTarget ?? '');
+      });
+    }
+    return { map, beyond };
+  }, [milestones, portfolio]);
+
+  // Merge milestone-only years into the timeline so milestones always have a card.
+  const allEntries = useMemo(() => {
+    const entryByYear = new Map<number, TimelineEntry>(baseEntries.map((e) => [e.year, e]));
+    for (const year of milestonesByYear.map.keys()) {
+      if (entryByYear.has(year)) continue;
+      const projMonthly = year === CURRENT_YEAR
+        ? portfolio.monthlyIncome
+        : year > CURRENT_YEAR
+          ? projectMonthlyDividendsAtYear(portfolio, year - CURRENT_YEAR)
+          : 0;
+      entryByYear.set(year, {
+        year,
+        projectedMonthly: projMonthly,
+        newGoals: [],
+        isCurrentYear: year === CURRENT_YEAR,
+        isFreedomYear: false,
+        isPastYear: year < CURRENT_YEAR,
+      });
+    }
+    return [...entryByYear.values()].sort((a, b) => a.year - b.year);
+  }, [baseEntries, milestonesByYear, portfolio]);
 
   const displayEntries = useMemo(() => [...allEntries].reverse(), [allEntries]);
-
-  const milestonesPerYear = useMemo(() => {
-    const map = new Map<number, number[]>();
-    let prev = 0;
-    for (const entry of allEntries) {
-      const crossed = INCOME_THRESHOLDS.filter((t) => t > prev && t <= entry.projectedMonthly);
-      if (crossed.length > 0) map.set(entry.year, crossed);
-      prev = entry.projectedMonthly;
-    }
-    return map;
-  }, [allEntries]);
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-6">
@@ -171,7 +217,7 @@ export function FreedomTimeline({ portfolio, goals }: FreedomTimelineProps) {
               return (
                 <Fragment key={entry.year}>
                   {showSeparator && <TimelineSeparator label="Rückblick" />}
-                  <EntryCard entry={entry} isHero={isHero} milestones={milestonesPerYear.get(entry.year) ?? []} />
+                  <EntryCard entry={entry} isHero={isHero} milestones={milestonesByYear.map.get(entry.year) ?? []} />
                 </Fragment>
               );
             })}
@@ -179,7 +225,7 @@ export function FreedomTimeline({ portfolio, goals }: FreedomTimelineProps) {
         </div>
       )}
 
-      {beyondHorizonGoals.length > 0 && (
+      {(beyondHorizonGoals.length > 0 || milestonesByYear.beyond.length > 0) && (
         <section className="mt-8 bg-surface-1 rounded-2xl p-5 border border-white/5">
           <h2 className="text-sm font-semibold text-white mb-3">Außerhalb des Horizonts</h2>
           <ul className="space-y-2" role="list">
@@ -190,6 +236,19 @@ export function FreedomTimeline({ portfolio, goals }: FreedomTimelineProps) {
                 </span>
                 <span className="text-sm text-white/60 flex-1">{goal.name}</span>
                 <span className="text-xs text-white/50 tabular-nums">{formatEuro(goal.monthlyAmount)} / Mo.</span>
+              </li>
+            ))}
+            {milestonesByYear.beyond.map((m) => (
+              <li key={m.id} className="bg-surface-2 rounded-xl px-4 py-3 flex items-center gap-3 opacity-50">
+                <span className="flex-shrink-0 text-gold">
+                  <MilestoneIcon icon={m.icon} className="w-5 h-5" />
+                </span>
+                <span className="text-sm text-white/60 flex-1 truncate">{m.title}</span>
+                <span className="text-xs text-white/50 tabular-nums flex-shrink-0">
+                  {m.type === 'dividend' && m.dividendTarget != null
+                    ? `${formatEuro(m.dividendTarget)} / Mo.`
+                    : ''}
+                </span>
               </li>
             ))}
           </ul>
