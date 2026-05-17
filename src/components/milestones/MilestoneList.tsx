@@ -175,18 +175,18 @@ export function MilestoneList({ milestones, portfolio, onAdd, onUpdate, onDelete
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-6">
+    <section className="max-w-4xl mx-auto px-4 py-6" aria-labelledby="milestones-heading">
       <div className="mb-5 flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs text-white/55 mb-0.5">Meilensteine</p>
-          <h1 className="text-xl font-bold text-white tabular-nums">
+          <h2 id="milestones-heading" className="text-xs text-white/55 mb-0.5 font-normal">Meilensteine</h2>
+          <p className="text-xl font-bold text-white tabular-nums">
             {totalCount}
             {totalCount > 0 && (
               <span className="text-sm font-medium text-white/55 ml-2">
                 {achievedCount}/{totalCount} erreicht
               </span>
             )}
-          </h1>
+          </p>
         </div>
         <button
           onClick={() => { setAdding(true); setEditingId(null); }}
@@ -295,21 +295,23 @@ export function MilestoneList({ milestones, portfolio, onAdd, onUpdate, onDelete
                   <button
                     onClick={() => toggleEdit(m.id)}
                     aria-expanded={isEditing}
-                    aria-label={`${m.title} ${isEditing ? 'schließen' : 'bearbeiten'}`}
                     className="flex items-center gap-3 flex-1 min-w-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
                   >
-                    <span className={`flex-shrink-0 ${achieved ? 'text-accent' : 'text-white/60'}`}>
+                    <span className={`flex-shrink-0 ${achieved ? 'text-accent' : 'text-white/60'}`} aria-hidden="true">
                       <MilestoneIcon icon={m.icon} />
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-white truncate flex items-center gap-1.5">
                         {m.title}
                         {achieved && (
-                          <span aria-label="erreicht" className="text-accent">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" aria-hidden="true">
-                              <polyline points="20 6 9 17 4 12"/>
-                            </svg>
-                          </span>
+                          <>
+                            <span className="sr-only">, erreicht</span>
+                            <span className="text-accent" aria-hidden="true">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" aria-hidden="true">
+                                <polyline points="20 6 9 17 4 12"/>
+                              </svg>
+                            </span>
+                          </>
                         )}
                       </p>
                       <p className="text-xs text-white/65 mt-0.5 truncate">
@@ -319,6 +321,7 @@ export function MilestoneList({ milestones, portfolio, onAdd, onUpdate, onDelete
                     <span className="text-sm font-semibold text-white/80 tabular-nums pr-2">
                       <MilestoneRightValue result={m} />
                     </span>
+                    <span className="sr-only">{isEditing ? '. Schließen' : '. Bearbeiten'}</span>
                     <IconChevron open={isEditing} />
                   </button>
 
@@ -366,6 +369,6 @@ export function MilestoneList({ milestones, portfolio, onAdd, onUpdate, onDelete
           );
         })}
       </ul>
-    </main>
+    </section>
   );
 }

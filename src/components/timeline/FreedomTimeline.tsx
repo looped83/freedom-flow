@@ -128,11 +128,11 @@ function EntryCard({ entry, isHero, milestones }: { entry: TimelineEntry; isHero
 
 function TimelineSeparator({ label }: { label: string }) {
   return (
-    <li aria-hidden="true">
+    <li role="separator" aria-label={label}>
       <div className="flex items-center gap-3 py-1">
-        <div className="flex-1 h-px bg-white/20" />
-        <span className="text-xs text-white font-bold uppercase tracking-wider">{label}</span>
-        <div className="flex-1 h-px bg-white/20" />
+        <div className="flex-1 h-px bg-white/20" aria-hidden="true" />
+        <span className="text-xs text-white font-bold uppercase tracking-wider" aria-hidden="true">{label}</span>
+        <div className="flex-1 h-px bg-white/20" aria-hidden="true" />
       </div>
     </li>
   );

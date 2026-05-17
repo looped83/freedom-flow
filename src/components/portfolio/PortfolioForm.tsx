@@ -131,9 +131,9 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
   const annual = annualDividends(form);
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-6">
+    <section className="max-w-4xl mx-auto px-4 py-6" aria-labelledby="portfolio-form-heading">
       <div className="mb-5">
-        <h1 className="text-lg font-bold text-white">Portfolio-Einstellungen</h1>
+        <h2 id="portfolio-form-heading" className="text-lg font-bold text-white">Portfolio-Einstellungen</h2>
         <p className="text-sm text-white/65 mt-1">Schieberegler oder Zahl direkt eingeben.</p>
       </div>
 
@@ -180,6 +180,6 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
           Alle Daten zurücksetzen
         </button>
       </div>
-    </main>
+    </section>
   );
 }

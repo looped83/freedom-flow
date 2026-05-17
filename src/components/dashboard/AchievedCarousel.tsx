@@ -51,12 +51,12 @@ export function AchievedCarousel({ heading, items, ariaLabel }: AchievedCarousel
               <div
                 key={item.id}
                 role="listitem"
-                aria-label={item.title}
+                aria-label={`${item.title}, erreicht`}
                 className="bg-surface-2 rounded-2xl p-3 flex flex-col items-center gap-1.5 text-center"
               >
-                <span className="text-accent">{item.icon}</span>
-                <p className="text-white/80 font-medium text-xs leading-tight">{item.title}</p>
-                <span className="text-[10px] text-accent font-semibold bg-accent/10 px-2 py-0.5 rounded-full">
+                <span className="text-accent" aria-hidden="true">{item.icon}</span>
+                <p className="text-white/80 font-medium text-xs leading-tight" aria-hidden="true">{item.title}</p>
+                <span aria-hidden="true" className="text-[10px] text-accent font-semibold bg-accent/10 px-2 py-0.5 rounded-full">
                   ✓ Erreicht
                 </span>
               </div>
