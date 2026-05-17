@@ -42,6 +42,15 @@ export function loadState(): AppState {
         'ms-18', 'ms-19', 'ms-20', 'ms-21', 'ms-22',
       ]);
       parsed.milestones = parsed.milestones.filter((m) => !REMOVED_DEFAULT_MS_IDS.has(m.id));
+      // Title migrations — only applied if the stored title still matches the
+      // previous default verbatim, so user-edited titles are preserved.
+      const TITLE_MIGRATIONS: Record<string, { from: string; to: string }> = {
+        'ms-1': { from: 'Erste 100 € / Monat', to: '100 € / Monat' },
+      };
+      parsed.milestones = parsed.milestones.map((m) => {
+        const rename = TITLE_MIGRATIONS[m.id];
+        return rename && m.title === rename.from ? { ...m, title: rename.to } : m;
+      });
       const storedMsIds = new Set(parsed.milestones.map((m) => m.id));
       const missingMs = DEFAULT_MILESTONES.filter((m) => !storedMsIds.has(m.id));
       if (missingMs.length > 0) parsed.milestones = [...parsed.milestones, ...missingMs];

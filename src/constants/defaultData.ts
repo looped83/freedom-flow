@@ -56,7 +56,9 @@ export const DEFAULT_GOALS: Goal[] = [
 // Default milestones — even 250 €/month steps from 100 € all the way through
 // 3.500 €/month, plus two motivating "Fixkosten" landmarks beyond the steps.
 export const DEFAULT_MILESTONES: Milestone[] = [
-  { id: 'ms-1',  title: 'Erste 100 € / Monat',        type: 'dividend', icon: 'star',     dividendTarget:   100 },
+  { id: 'ms-32', title: '25 € / Monat',               type: 'dividend', icon: 'heart',    dividendTarget:    25 },
+  { id: 'ms-33', title: '50 € / Monat',               type: 'dividend', icon: 'gift',     dividendTarget:    50 },
+  { id: 'ms-1',  title: '100 € / Monat',              type: 'dividend', icon: 'star',     dividendTarget:   100 },
   { id: 'ms-2',  title: '250 € / Monat',              type: 'dividend', icon: 'rocket',   dividendTarget:   250 },
   { id: 'ms-3',  title: '500 € / Monat',              type: 'dividend', icon: 'flag',     dividendTarget:   500 },
   { id: 'ms-23', title: '750 € / Monat',              type: 'dividend', icon: 'medal',    dividendTarget:   750 },

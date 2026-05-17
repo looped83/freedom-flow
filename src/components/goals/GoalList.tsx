@@ -5,6 +5,7 @@ import { computeGoalResults, totalMonthlyCosts } from '../../utils/calculations'
 import { formatEuro } from '../../utils/formatting';
 import { saveGoalDefault } from '../../utils/storage';
 import { useSwipeToDelete } from '../../hooks/useSwipeToDelete';
+import { BONUS_GOAL_ID } from '../../constants/defaultData';
 import { IconChevron, IconCheck, IconClose, IconTrash } from '../ui/Icons';
 import { GoalForm } from './GoalForm';
 
@@ -179,7 +180,13 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
                     aria-expanded={isEditing}
                     className="flex items-center gap-3 flex-1 min-w-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
                   >
-                    <span className={`flex-shrink-0 ${goal.status === 'covered' ? 'text-accent' : 'text-white/60'}`} aria-hidden="true">
+                    <span className={`flex-shrink-0 ${
+                      goal.id === BONUS_GOAL_ID
+                        ? 'text-orange-400'
+                        : goal.status === 'covered'
+                          ? 'text-accent'
+                          : 'text-white/60'
+                    }`} aria-hidden="true">
                       <CategoryIcon category={goal.category} />
                     </span>
                     <div className="flex-1 min-w-0">

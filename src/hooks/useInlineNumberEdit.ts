@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react';
-import { parseGerman } from '../utils/formatting';
+import { formatDecimal, parseGerman } from '../utils/formatting';
 
 /**
  * Click-to-edit inline numeric field. The display is a plain button; once
- * activated it swaps to a text input that commits on blur (or Enter) and
+ * activated it swaps to a text input pre-filled with the current value
+ * formatted to two German decimal places. Commits on blur (or Enter) and
  * reverts on Escape. The commit callback receives a German-parsed number;
  * invalid or negative input is silently rejected.
  */
@@ -13,7 +14,7 @@ export function useInlineNumberEdit(currentValue: number, onCommit: (v: number) 
   const [raw, setRaw] = useState('');
 
   function startEdit() {
-    setRaw(String(Math.round(currentValue)));
+    setRaw(formatDecimal(currentValue));
     setEditing(true);
     requestAnimationFrame(() => inputRef.current?.select());
   }
