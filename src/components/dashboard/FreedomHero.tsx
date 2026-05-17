@@ -93,7 +93,7 @@ export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange }
               tabIndex={0}
               aria-label={`Prognose anzeigen: ${projPct.toFixed(1)} % in einem Jahr`}
               aria-pressed={showProjected}
-              style={{ cursor: 'pointer' }}
+              style={{ cursor: 'pointer', outline: 'none' }}
               onClick={() => setShowProjected(true)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowProjected(true); }
@@ -113,7 +113,7 @@ export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange }
             tabIndex={showProjected ? 0 : undefined}
             aria-label={showProjected ? `Aktuelle ${pct.toFixed(1)} % anzeigen` : undefined}
             aria-pressed={showProjected ? false : undefined}
-            style={{ cursor: showProjected ? 'pointer' : 'default' }}
+            style={{ cursor: showProjected ? 'pointer' : 'default', outline: 'none' }}
             onClick={() => setShowProjected(false)}
             onKeyDown={showProjected ? (e) => {
               if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowProjected(false); }
