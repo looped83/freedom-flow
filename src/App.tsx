@@ -67,10 +67,14 @@ export default function App() {
         {tab === 'setup' && (
           <SetupPage
             goals={state.goals}
+            milestones={state.milestones}
             portfolio={state.portfolio}
             onAdd={actions.addGoal}
             onUpdate={actions.updateGoal}
             onDelete={actions.deleteGoal}
+            onAddMilestone={actions.addMilestone}
+            onUpdateMilestone={actions.updateMilestone}
+            onDeleteMilestone={actions.deleteMilestone}
             onSavePortfolio={actions.setPortfolio}
             onReset={handleReset}
             focusGoalId={focusGoalId}
