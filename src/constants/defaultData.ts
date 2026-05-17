@@ -66,5 +66,4 @@ export const DEFAULT_MILESTONES: Milestone[] = [
   { id: 'ms-29', title: '3.000 € / Monat',            type: 'dividend', icon: 'mountain', dividendTarget: 3_000 },
   { id: 'ms-30', title: '3.250 € / Monat',            type: 'dividend', icon: 'gem',      dividendTarget: 3_250 },
   { id: 'ms-31', title: '3.500 € / Monat',            type: 'dividend', icon: 'crown',    dividendTarget: 3_500 },
-  { id: 'ms-17', title: '2× Fixkosten – Luxus-Level', type: 'dividend', icon: 'rocket',   dividendTarget: 4_900 },
 ];

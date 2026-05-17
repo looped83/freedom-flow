@@ -1,6 +1,6 @@
 import type { Milestone, MilestoneResult, Portfolio } from '../types';
 import { CURRENT_YEAR } from '../constants/defaultData';
-import { projectMonthlyDividendsAtYear } from './calculations';
+import { projectMonthlyDividendsAtYear, projectMonthlyDividendsYearsAgo } from './calculations';
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -83,18 +83,33 @@ export function formatDaysRemaining(days: number): string {
 }
 
 const MAX_LOOKAHEAD_YEARS = 50;
+const MAX_LOOKBACK_YEARS = 50;
 
 /**
  * Calendar year in which a milestone is (or was) reached, or null if not within
- * `MAX_LOOKAHEAD_YEARS` from today.
- *  - dividend milestones: first year where projected monthly income meets the target
- *  - date milestones:     the calendar year of the target date
+ * `MAX_LOOKAHEAD_YEARS` ahead / `MAX_LOOKBACK_YEARS` behind today.
+ *
+ *  - dividend milestones, currently achieved: walk the compound model backwards
+ *    and place the milestone in the first past year where projected income drops
+ *    below the target (the year the threshold was crossed).
+ *  - dividend milestones, not yet achieved: first future year where projected
+ *    income meets the target.
+ *  - date milestones: the calendar year of the target date.
  */
 export function milestoneAchievedYear(milestone: Milestone, portfolio: Portfolio): number | null {
   if (milestone.type === 'dividend') {
     const target = milestone.dividendTarget ?? 0;
     if (target <= 0) return null;
-    if (portfolio.monthlyIncome >= target) return CURRENT_YEAR;
+    if (portfolio.monthlyIncome >= target) {
+      // Already achieved — find when it was first reached by reversing growth.
+      for (let y = 1; y <= MAX_LOOKBACK_YEARS; y++) {
+        if (projectMonthlyDividendsYearsAgo(portfolio, y) < target) {
+          return CURRENT_YEAR - (y - 1);
+        }
+      }
+      // Has been achieved for longer than the lookback window — clamp.
+      return CURRENT_YEAR - MAX_LOOKBACK_YEARS;
+    }
     for (let y = 1; y <= MAX_LOOKAHEAD_YEARS; y++) {
       if (projectMonthlyDividendsAtYear(portfolio, y) >= target) return CURRENT_YEAR + y;
     }

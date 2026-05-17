@@ -2,7 +2,7 @@ import { Fragment, useMemo } from 'react';
 import type { TimelineEntry, Goal, Milestone, MilestoneResult, Portfolio } from '../../types';
 import { CategoryIcon } from '../goals/CategoryIcon';
 import { MilestoneIcon } from '../milestones/MilestoneIcon';
-import { buildFreedomTimeline, projectMonthlyDividendsAtYear } from '../../utils/calculations';
+import { buildFreedomTimeline, projectMonthlyDividendsAtYear, projectMonthlyDividendsYearsAgo } from '../../utils/calculations';
 import { computeMilestoneResult, formatMilestoneDate, milestoneAchievedYear, milestoneSortKey } from '../../utils/milestones';
 import { CURRENT_YEAR } from '../../constants/defaultData';
 import { formatEuro } from '../../utils/formatting';
@@ -173,11 +173,12 @@ export function FreedomTimeline({ portfolio, goals, milestones }: FreedomTimelin
     const entryByYear = new Map<number, TimelineEntry>(baseEntries.map((e) => [e.year, e]));
     for (const year of milestonesByYear.map.keys()) {
       if (entryByYear.has(year)) continue;
-      const projMonthly = year === CURRENT_YEAR
+      const delta = year - CURRENT_YEAR;
+      const projMonthly = delta === 0
         ? portfolio.monthlyIncome
-        : year > CURRENT_YEAR
-          ? projectMonthlyDividendsAtYear(portfolio, year - CURRENT_YEAR)
-          : 0;
+        : delta > 0
+          ? projectMonthlyDividendsAtYear(portfolio, delta)
+          : projectMonthlyDividendsYearsAgo(portfolio, -delta);
       entryByYear.set(year, {
         year,
         projectedMonthly: projMonthly,
