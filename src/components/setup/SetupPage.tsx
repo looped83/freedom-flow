@@ -59,7 +59,7 @@ export function SetupPage({ goals, portfolio, onAdd, onUpdate, onDelete, onSaveP
 
       <div role="tabpanel">
         {active === 'goals' ? (
-          <GoalList goals={goals} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} focusGoalId={focusGoalId} />
+          <GoalList goals={goals} portfolio={portfolio} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} focusGoalId={focusGoalId} />
         ) : (
           <PortfolioForm portfolio={portfolio} onSave={onSavePortfolio} onReset={onReset} />
         )}

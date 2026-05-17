@@ -24,6 +24,10 @@ export function loadState(): AppState {
       if ((base.category as string) === 'Medizin') return { ...base, category: 'Gesundheit' } as Goal;
       return base;
     });
+    // Migration: add new default goals not yet in stored data
+    const storedIds = new Set(parsed.goals.map((g) => g.id));
+    const missing = DEFAULT_GOALS.filter((g) => !storedIds.has(g.id));
+    if (missing.length > 0) parsed.goals = [...parsed.goals, ...missing];
     return parsed;
   } catch {
     return getDefaultState();

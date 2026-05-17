@@ -1,13 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
-import type { Goal } from '../../types';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { Goal, Portfolio } from '../../types';
 import { CategoryIcon } from './CategoryIcon';
-import { totalMonthlyCosts } from '../../utils/calculations';
+import { computeGoalResults, monthlyDividends, totalMonthlyCosts } from '../../utils/calculations';
 import { formatEuro } from '../../utils/formatting';
 import { saveGoalDefault } from '../../utils/storage';
 import { GoalForm } from './GoalForm';
 
+type GoalFilter = 'all' | 'covered' | 'open';
+type SortType  = 'alpha' | 'amount';
+
 interface GoalListProps {
   goals: Goal[];
+  portfolio: Portfolio;
   onAdd: (g: Goal) => void;
   onUpdate: (g: Goal) => void;
   onDelete: (id: string) => void;
@@ -15,10 +19,6 @@ interface GoalListProps {
 }
 
 const SWIPE_DELETE_PX = 160;
-
-function sortDesc(goals: Goal[]): Goal[] {
-  return [...goals].sort((a, b) => b.monthlyAmount - a.monthlyAmount);
-}
 
 function IconTrash() {
   return (
@@ -38,10 +38,12 @@ function IconChevron({ open }: { open: boolean }) {
   );
 }
 
-export function GoalList({ goals, onAdd, onUpdate, onDelete, focusGoalId }: GoalListProps) {
+export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoalId }: GoalListProps) {
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [goalFilter, setGoalFilter] = useState<GoalFilter>('all');
+  const [goalSort, setGoalSort] = useState<{ type: SortType; dir: 'asc' | 'desc' }>({ type: 'amount', dir: 'desc' });
 
   const liRefs = useRef<Map<string, HTMLLIElement>>(new Map());
 
@@ -64,8 +66,29 @@ export function GoalList({ goals, onAdd, onUpdate, onDelete, focusGoalId }: Goal
   } | null>(null);
   const [swipeOffset, setSwipeOffset] = useState<{ id: string; px: number } | null>(null);
 
-  const sorted = sortDesc(goals);
-  const total = totalMonthlyCosts(goals);
+  const monthly = useMemo(() => monthlyDividends(portfolio), [portfolio]);
+  const total = useMemo(() => totalMonthlyCosts(goals), [goals]);
+  const allResults = useMemo(() => computeGoalResults(goals, monthly, portfolio), [goals, monthly, portfolio]);
+  const displayResults = useMemo(() => {
+    let results = [...allResults];
+    if (goalFilter === 'covered') results = results.filter((r) => r.status === 'covered');
+    else if (goalFilter === 'open') results = results.filter((r) => r.status !== 'covered');
+    if (goalSort.type === 'alpha') {
+      results.sort((a, b) => a.name.localeCompare(b.name, 'de'));
+      if (goalSort.dir === 'desc') results.reverse();
+    } else {
+      results.sort((a, b) => a.monthlyAmount - b.monthlyAmount);
+      if (goalSort.dir === 'desc') results.reverse();
+    }
+    return results;
+  }, [allResults, goalFilter, goalSort]);
+
+  function handleSortChange(type: SortType) {
+    setGoalSort((prev) => {
+      if (prev.type === type) return { type, dir: prev.dir === 'asc' ? 'desc' : 'asc' };
+      return { type, dir: type === 'amount' ? 'desc' : 'asc' };
+    });
+  }
 
   function toggleEdit(id: string) {
     // Ignore if we just finished a swipe gesture
@@ -144,6 +167,48 @@ export function GoalList({ goals, onAdd, onUpdate, onDelete, focusGoalId }: Goal
         </button>
       </div>
 
+      {/* Filter + sort controls */}
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex rounded-lg overflow-hidden border border-white/10" role="group" aria-label="Ziele filtern">
+          {([
+            { id: 'all',     label: 'Alle'     },
+            { id: 'covered', label: 'Erreicht'  },
+            { id: 'open',    label: 'Offen'    },
+          ] as { id: GoalFilter; label: string }[]).map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => setGoalFilter(id)}
+              aria-pressed={goalFilter === id}
+              className={`text-xs px-3 py-1.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+                goalFilter === id ? 'bg-accent/20 text-accent font-semibold' : 'text-white/45 hover:text-white/70'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="flex rounded-lg overflow-hidden border border-white/10" role="group" aria-label="Sortierung">
+          <button
+            onClick={() => handleSortChange('alpha')}
+            aria-pressed={goalSort.type === 'alpha'}
+            className={`text-xs px-3 py-1.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+              goalSort.type === 'alpha' ? 'bg-accent/20 text-accent font-semibold' : 'text-white/45 hover:text-white/70'
+            }`}
+          >
+            {goalSort.type === 'alpha' ? (goalSort.dir === 'asc' ? 'A–Z' : 'Z–A') : 'A–Z'}
+          </button>
+          <button
+            onClick={() => handleSortChange('amount')}
+            aria-pressed={goalSort.type === 'amount'}
+            className={`text-xs px-3 py-1.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+              goalSort.type === 'amount' ? 'bg-accent/20 text-accent font-semibold' : 'text-white/45 hover:text-white/70'
+            }`}
+          >
+            {goalSort.type === 'amount' ? (goalSort.dir === 'desc' ? '↓ €' : '↑ €') : '↓↑ €'}
+          </button>
+        </div>
+      </div>
+
       {adding && (
         <div className="bg-surface-1 rounded-2xl p-5 mb-4">
           <h2 className="text-sm font-semibold text-white mb-4">Neues Ziel</h2>
@@ -154,8 +219,12 @@ export function GoalList({ goals, onAdd, onUpdate, onDelete, focusGoalId }: Goal
         </div>
       )}
 
+      {displayResults.length === 0 && !adding && (
+        <p className="text-sm text-white/50 py-4 text-center">Keine Ausgaben in dieser Ansicht.</p>
+      )}
+
       <ul className="space-y-2" role="list" aria-label="Zielliste">
-        {sorted.map((goal) => {
+        {displayResults.map((goal) => {
           const isEditing = editingId === goal.id;
           const isConfirmDelete = confirmDelete === goal.id;
           const opacity = getDeleteBgOpacity(goal.id);
