@@ -55,6 +55,19 @@ export function projectMonthlyDividendsAtYear(portfolio: Portfolio, years: numbe
   return existingFV + savingsFV;
 }
 
+/** Reverse the compound model to estimate monthly dividend income
+ *  `yearsAgo` years back, accounting for both dividend growth and the ongoing
+ *  contribution of monthly savings. Floor at 0. */
+export function projectMonthlyDividendsYearsAgo(portfolio: Portfolio, yearsAgo: number): number {
+  const g = portfolio.dividendGrowth / 100;
+  const monthlySavingsDividends = portfolio.monthlySavings * (portfolio.dividendYield / 100);
+  if (g > 0) {
+    const growth = Math.pow(1 + g, yearsAgo);
+    return Math.max(0, (portfolio.monthlyIncome - monthlySavingsDividends * (growth - 1) / g) / growth);
+  }
+  return Math.max(0, portfolio.monthlyIncome - monthlySavingsDividends * yearsAgo);
+}
+
 /**
  * Compute coverage for each goal.
  *
@@ -125,8 +138,7 @@ export function buildFreedomTimeline(goals: Goal[], portfolio: Portfolio): Timel
 
   const sortedGoals = byAmountAsc(goals);
   const totalGoals = sortedGoals.length;
-  const g = portfolio.dividendGrowth / 100;
-  const monthlySavingsDividends = portfolio.monthlySavings * (portfolio.dividendYield / 100);
+  const pastMonthly = (yearsAgo: number) => projectMonthlyDividendsYearsAgo(portfolio, yearsAgo);
 
   function unlockedIds(monthly: number): Set<string> {
     const unlocked = new Set<string>();
@@ -137,15 +149,6 @@ export function buildFreedomTimeline(goals: Goal[], portfolio: Portfolio): Timel
       rem -= goal.monthlyAmount;
     }
     return unlocked;
-  }
-
-  /** Reverse the compound model to estimate monthly income `yearsAgo` years back. */
-  function pastMonthly(yearsAgo: number): number {
-    if (g > 0) {
-      const growth = Math.pow(1 + g, yearsAgo);
-      return Math.max(0, (portfolio.monthlyIncome - monthlySavingsDividends * (growth - 1) / g) / growth);
-    }
-    return Math.max(0, portfolio.monthlyIncome - monthlySavingsDividends * yearsAgo);
   }
 
   function newGoalsBetween(yearUnlocked: Set<string>, prevUnlocked: Set<string>): Goal[] {
