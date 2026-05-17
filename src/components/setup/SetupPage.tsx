@@ -37,7 +37,7 @@ export function SetupPage({ goals, portfolio, onAdd, onUpdate, onDelete, onSaveP
           aria-label="Setup-Bereiche"
         >
           {([
-            { id: 'goals',     label: 'Ziele'     },
+            { id: 'goals',     label: 'Ausgaben'  },
             { id: 'portfolio', label: 'Portfolio'  },
           ] as { id: SetupTab; label: string }[]).map((t) => (
             <button

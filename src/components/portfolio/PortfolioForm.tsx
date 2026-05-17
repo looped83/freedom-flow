@@ -20,11 +20,10 @@ interface NumberFieldProps {
   min: number;
   max: number;
   step: number;
-  description: string;
   onChange: (v: number) => void;
 }
 
-function NumberField({ fieldId, label, value, unit, min, max, step, description, onChange }: NumberFieldProps) {
+function NumberField({ fieldId, label, value, unit, min, max, step, onChange }: NumberFieldProps) {
   const [raw, setRaw] = useState('');
   const [focused, setFocused] = useState(false);
 
@@ -68,7 +67,6 @@ function NumberField({ fieldId, label, value, unit, min, max, step, description,
               if (e.key === 'Escape') setFocused(false);
             }}
             aria-label={`${label} direkt eingeben`}
-            aria-describedby={`${fieldId}-desc`}
             className="w-24 text-right text-sm font-bold text-white bg-surface-2 border border-white/10 rounded-lg px-2 py-1 focus:outline-none focus:border-accent tabular-nums"
           />
           <span className="text-sm text-white/65 w-8 flex-shrink-0">{unit}</span>
@@ -83,10 +81,8 @@ function NumberField({ fieldId, label, value, unit, min, max, step, description,
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
         aria-label={label}
-        aria-describedby={`${fieldId}-desc`}
         className="w-full accent-accent h-2 rounded-full cursor-pointer"
       />
-      <p id={`${fieldId}-desc`} className="text-xs text-white/60 mt-1">{description}</p>
     </div>
   );
 }
@@ -98,17 +94,16 @@ interface FieldConfig {
   min: number;
   max: number;
   step: number;
-  description: string;
 }
 
 const FIELDS: FieldConfig[] = [
-  { id: 'monthlyIncome', label: 'Monatliche Dividenden', unit: '€', min: 0, max: 10_000, step: 1, description: 'Deine aktuell erhaltenen monatlichen Dividenden' },
-  { id: 'value',         label: 'Portfolio-Wert',        unit: '€',     min: 0, max: 2_000_000, step: 100, description: 'Aktueller Gesamtwert deines Portfolios' },
-  { id: 'dividendYield', label: 'Dividendenrendite',     unit: '%',     min: 0, max:        20, step: 0.1, description: 'Durchschnittliche Dividendenrendite deines Portfolios' },
-  { id: 'monthlySavings',label: 'Monatliche Sparrate',   unit: '€',     min: 0, max:     5_000, step:  50, description: 'Betrag, den du monatlich investierst' },
-  { id: 'dividendGrowth',label: 'Dividendenwachstum',    unit: '%',     min: 0, max:        15, step: 0.5, description: 'Erwartetes jährliches Wachstum der Dividenden' },
-  { id: 'priceReturn',   label: 'Kursrendite',           unit: '%',     min: 0, max:        50, step: 0.5, description: 'Erwartete jährliche Kursrendite' },
-  { id: 'horizonYears',  label: 'Anlagehorizont',        unit: 'Jahre', min: 1, max:        40, step:   1, description: 'Wie viele Jahre planst du zu investieren?' },
+  { id: 'monthlyIncome', label: 'Monatliche Dividenden', unit: '€',     min: 0, max: 10_000,    step: 1   },
+  { id: 'value',         label: 'Portfolio-Wert',        unit: '€',     min: 0, max: 2_000_000, step: 100 },
+  { id: 'dividendYield', label: 'Dividendenrendite',     unit: '%',     min: 0, max: 20,        step: 0.1 },
+  { id: 'monthlySavings',label: 'Monatliche Sparrate',   unit: '€',     min: 0, max: 5_000,     step: 50  },
+  { id: 'dividendGrowth',label: 'Dividendenwachstum',    unit: '%',     min: 0, max: 15,        step: 0.5 },
+  { id: 'priceReturn',   label: 'Kursrendite',           unit: '%',     min: 0, max: 50,        step: 0.5 },
+  { id: 'horizonYears',  label: 'Anlagehorizont',        unit: 'Jahre', min: 1, max: 40,        step: 1   },
 ];
 
 interface PortfolioFormProps {
@@ -164,7 +159,6 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
             min={f.min}
             max={f.max}
             step={f.step}
-            description={f.description}
             onChange={(v) => handleChange(f.id, v)}
           />
         ))}

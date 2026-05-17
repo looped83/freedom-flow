@@ -4,6 +4,7 @@ import { freedomPercent, missingForFreedom } from '../../utils/calculations';
 
 interface FreedomHeroProps {
   monthly: number;
+  projectedMonthly: number;
   total: number;
   onIncomeChange: (v: number) => void;
 }
@@ -12,10 +13,12 @@ const R = 80;
 const CIRCUMFERENCE = 2 * Math.PI * R;
 const heroId = 'freedom-hero-heading';
 
-export function FreedomHero({ monthly, total, onIncomeChange }: FreedomHeroProps) {
+export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange }: FreedomHeroProps) {
   const pct = useMemo(() => freedomPercent(monthly, total), [monthly, total]);
+  const projPct = useMemo(() => freedomPercent(projectedMonthly, total), [projectedMonthly, total]);
   const missing = useMemo(() => missingForFreedom(monthly, total), [monthly, total]);
   const dashOffset = useMemo(() => CIRCUMFERENCE * (1 - Math.min(pct, 100) / 100), [pct]);
+  const projDashOffset = useMemo(() => CIRCUMFERENCE * (1 - Math.min(projPct, 100) / 100), [projPct]);
 
   const circleRef = useRef<SVGCircleElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -74,7 +77,20 @@ export function FreedomHero({ monthly, total, onIncomeChange }: FreedomHeroProps
           role="img"
           aria-label={`${pct.toFixed(1)} % finanziell frei`}
         >
+          {/* Track */}
           <circle cx="100" cy="100" r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="14" />
+          {/* Projected year-end arc (transparent) */}
+          {projPct > pct && (
+            <circle
+              cx="100" cy="100" r={R}
+              fill="none" stroke="rgba(74,222,128,0.22)" strokeWidth="14"
+              strokeLinecap="round"
+              strokeDasharray={CIRCUMFERENCE}
+              strokeDashoffset={projDashOffset}
+              transform="rotate(-90 100 100)"
+            />
+          )}
+          {/* Current arc */}
           <circle
             ref={circleRef}
             cx="100" cy="100" r={R}
@@ -125,7 +141,7 @@ export function FreedomHero({ monthly, total, onIncomeChange }: FreedomHeroProps
           </div>
 
           <div className="text-center">
-            <p className="text-xs text-white/55 mb-1">Monatliche Kosten</p>
+            <p className="text-xs text-white/55 mb-1">Monatliche Ausgaben</p>
             <p className="text-white font-bold text-sm tabular-nums">{formatEuro(total)}</p>
           </div>
 
