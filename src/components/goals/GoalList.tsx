@@ -266,7 +266,16 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
                       <CategoryIcon category={goal.category} />
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{goal.name}</p>
+                      <p className="text-sm font-medium text-white truncate flex items-center gap-1.5">
+                        <span className="truncate">{goal.name}</span>
+                        {goal.status === 'covered' && (
+                          <span aria-label="erreicht" className="text-accent flex-shrink-0">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" aria-hidden="true">
+                              <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                          </span>
+                        )}
+                      </p>
                       <p className="text-xs text-white/65 mt-0.5">{goal.category}</p>
                     </div>
                     <span className="text-sm font-semibold text-white/80 tabular-nums pr-2">

@@ -32,6 +32,13 @@ export function loadState(): AppState {
     if (!Array.isArray((parsed as Partial<AppState>).milestones)) {
       parsed.milestones = DEFAULT_MILESTONES.map((m) => ({ ...m }));
     } else {
+      // Drop former default milestones that have since been removed
+      // (themed/category targets, date targets, 3×/5×/10.000).
+      const REMOVED_DEFAULT_MS_IDS = new Set([
+        'ms-4', 'ms-5', 'ms-6', 'ms-7', 'ms-8', 'ms-9', 'ms-10', 'ms-11', 'ms-12',
+        'ms-18', 'ms-19', 'ms-20', 'ms-21', 'ms-22',
+      ]);
+      parsed.milestones = parsed.milestones.filter((m) => !REMOVED_DEFAULT_MS_IDS.has(m.id));
       const storedMsIds = new Set(parsed.milestones.map((m) => m.id));
       const missingMs = DEFAULT_MILESTONES.filter((m) => !storedMsIds.has(m.id));
       if (missingMs.length > 0) parsed.milestones = [...parsed.milestones, ...missingMs];
