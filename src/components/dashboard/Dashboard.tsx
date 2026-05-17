@@ -217,8 +217,17 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onGoal
                         <CategoryIcon category={g.category} />
                       </span>
                       <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-baseline mb-1">
-                          <span className="text-sm text-white font-medium truncate pr-2">{g.name}</span>
+                        <div className="flex justify-between items-baseline mb-1 gap-2">
+                          <span className="text-sm text-white font-medium truncate pr-2 flex items-center gap-1.5 min-w-0">
+                            <span className="truncate">{g.name}</span>
+                            {g.status === 'covered' && (
+                              <span aria-label="erreicht" className="text-accent flex-shrink-0">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" aria-hidden="true">
+                                  <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                              </span>
+                            )}
+                          </span>
                           <span className="text-xs text-white/55 flex-shrink-0 tabular-nums">
                             {formatEuro(g.coveredAmount)} / {formatEuro(g.monthlyAmount)}
                           </span>
