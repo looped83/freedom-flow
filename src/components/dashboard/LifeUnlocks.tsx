@@ -5,7 +5,17 @@ import { AchievedCarousel } from './AchievedCarousel';
 import { MilestoneIcon } from '../milestones/MilestoneIcon';
 import { computeMilestoneResults, formatDaysRemaining, formatMilestoneDate, milestoneSortKey } from '../../utils/milestones';
 import { formatEuro } from '../../utils/formatting';
-import { IconDiamond } from '../ui/Icons';
+
+const FLAG_ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
+    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
+  </svg>
+);
+const AWARD_ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
+    <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
+  </svg>
+);
 
 interface LifeUnlocksProps {
   milestones: Milestone[];
@@ -79,7 +89,7 @@ export function LifeUnlocks({ milestones, portfolio }: LifeUnlocksProps) {
       <section aria-label="Meilensteine" className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-            <span className="text-accent/70 flex-shrink-0" aria-hidden="true"><IconDiamond /></span>
+            <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{FLAG_ICON}</span>
             Meilensteine
           </h2>
         </div>
@@ -94,7 +104,7 @@ export function LifeUnlocks({ milestones, portfolio }: LifeUnlocksProps) {
     <section aria-label="Meilensteine" className="space-y-3">
       <div className="flex items-center justify-between px-1">
         <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-          <span className="text-accent/70 flex-shrink-0" aria-hidden="true"><IconDiamond /></span>
+          <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{FLAG_ICON}</span>
           <span>Meilensteine<span className="text-white/40 font-normal ml-1.5">({achieved.length}/{milestones.length})</span></span>
         </h2>
         {notAchieved.length > 3 && (
@@ -124,6 +134,7 @@ export function LifeUnlocks({ milestones, portfolio }: LifeUnlocksProps) {
 
       <AchievedCarousel
         heading="Erreichte Meilensteine"
+        headingIcon={AWARD_ICON}
         items={achieved.map((m) => ({
           id: m.id,
           title: m.title,

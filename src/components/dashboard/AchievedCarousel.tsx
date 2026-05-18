@@ -1,5 +1,4 @@
 import { type ReactNode, useMemo, useRef, useState } from 'react';
-import { IconDiamond } from '../ui/Icons';
 
 export interface AchievedItem {
   id: string;
@@ -11,6 +10,7 @@ interface AchievedCarouselProps {
   heading: string;
   items: AchievedItem[];
   ariaLabel?: string;
+  headingIcon?: ReactNode;
 }
 
 function chunks<T>(arr: T[], n: number): T[][] {
@@ -19,7 +19,7 @@ function chunks<T>(arr: T[], n: number): T[][] {
   return result;
 }
 
-export function AchievedCarousel({ heading, items, ariaLabel }: AchievedCarouselProps) {
+export function AchievedCarousel({ heading, items, ariaLabel, headingIcon }: AchievedCarouselProps) {
   const [activeIdx, setActiveIdx] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const slides = useMemo(() => chunks(items, 2), [items]);
@@ -35,7 +35,7 @@ export function AchievedCarousel({ heading, items, ariaLabel }: AchievedCarousel
   return (
     <div>
       <h3 className="text-sm font-semibold text-white mb-2 px-1 flex items-center gap-2">
-        <span className="text-accent/70 flex-shrink-0" aria-hidden="true"><IconDiamond /></span>
+        {headingIcon && <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{headingIcon}</span>}
         {heading}
       </h3>
       <div

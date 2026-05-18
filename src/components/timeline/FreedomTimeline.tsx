@@ -4,7 +4,13 @@ import { CategoryIcon } from '../goals/CategoryIcon';
 import { MilestoneIcon } from '../milestones/MilestoneIcon';
 import { buildFreedomTimeline, projectMonthlyDividendsAtYear, projectMonthlyDividendsYearsAgo } from '../../utils/calculations';
 import { computeMilestoneResult, filterMilestonesByExpenses, formatMilestoneDate, milestoneAchievedYear, milestoneSortKey } from '../../utils/milestones';
-import { IconChevron, IconDiamond } from '../ui/Icons';
+import { IconChevron } from '../ui/Icons';
+
+const BAR_ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" aria-hidden="true">
+    <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+  </svg>
+);
 import { CURRENT_YEAR } from '../../constants/defaultData';
 import { formatEuro } from '../../utils/formatting';
 import { PageHeader } from '../layout/PageHeader';
@@ -110,7 +116,7 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
             {entry.year}
           </span>
           <span className="text-xs font-bold text-white flex-1 flex items-center gap-1.5">
-            <span className="text-accent/70 flex-shrink-0" aria-hidden="true"><IconDiamond className="w-3.5 h-3.5" /></span>
+            <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{BAR_ICON}</span>
             Dividenden
           </span>
           <span className="text-sm font-bold text-green-400 tabular-nums">

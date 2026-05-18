@@ -2,7 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { formatEuro } from '../../utils/formatting';
 import { freedomPercent, missingForFreedom } from '../../utils/calculations';
 import { useInlineNumberEdit } from '../../hooks/useInlineNumberEdit';
-import { IconDiamond } from '../ui/Icons';
+
+const WAVE_ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
+    <path d="M2 12c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/>
+  </svg>
+);
 
 interface FreedomHeroProps {
   monthly: number;
@@ -61,7 +66,7 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
     <section className="rounded-2xl p-5 bg-accent-muted border border-accent/20" aria-labelledby={heroId}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-accent/70 flex-shrink-0" aria-hidden="true"><IconDiamond /></span>
+          <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{WAVE_ICON}</span>
           <p className="text-sm font-semibold text-white">Freedom Flow</p>
         </div>
         <div className="flex rounded-lg overflow-hidden border border-white/10" role="group" aria-label="Ansicht wählen">
