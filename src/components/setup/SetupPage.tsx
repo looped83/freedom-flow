@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Goal, Milestone, Portfolio } from '../../types';
 import { GoalList } from '../goals/GoalList';
 import { MilestoneList } from '../milestones/MilestoneList';
@@ -47,6 +47,11 @@ export function SetupPage({
 }: SetupPageProps) {
   const [active, setActive] = useState<SetupTab>('goals');
 
+  // When navigating here via a goal click, always surface the Goals sub-tab.
+  useEffect(() => {
+    if (focusGoalId) setActive('goals');
+  }, [focusGoalId]);
+
   return (
     <main className="max-w-4xl mx-auto">
       <div className="px-4 pt-6 pb-0">
@@ -78,11 +83,12 @@ export function SetupPage({
         </div>
       </div>
 
+      {/* All three panels stay mounted — CSS hidden preserves state between sub-tab switches */}
       <div role="tabpanel">
-        {active === 'goals' && (
+        <div hidden={active !== 'goals'}>
           <GoalList goals={goals} portfolio={portfolio} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} focusGoalId={focusGoalId} onFocusConsumed={onFocusConsumed} />
-        )}
-        {active === 'milestones' && (
+        </div>
+        <div hidden={active !== 'milestones'}>
           <MilestoneList
             milestones={milestones}
             goals={goals}
@@ -91,10 +97,10 @@ export function SetupPage({
             onUpdate={onUpdateMilestone}
             onDelete={onDeleteMilestone}
           />
-        )}
-        {active === 'portfolio' && (
+        </div>
+        <div hidden={active !== 'portfolio'}>
           <PortfolioForm portfolio={portfolio} onSave={onSavePortfolio} onReset={onReset} />
-        )}
+        </div>
       </div>
     </main>
   );

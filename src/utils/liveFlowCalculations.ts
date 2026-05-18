@@ -1,12 +1,6 @@
-import type { Goal } from '../types';
-
 function sanitize(value: number): number {
   if (!Number.isFinite(value) || value < 0) return 0;
   return value;
-}
-
-export function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
 }
 
 export function calculateAnnualDividends(monthlyDividends: number): number {
@@ -134,40 +128,6 @@ export function formatFreedomTime(value: number, unit: FreedomTimeUnit): string 
   return unit === 'minutes'
     ? fmtTimeInt.format(Math.round(Math.max(0, value)))
     : fmtTimeDec.format(Math.max(0, value));
-}
-
-export interface NextGoalCoverage {
-  goal: Goal;
-  progress: number;
-  coveredAmount: number;
-  missingAmount: number;
-}
-
-export function getNextGoalCoverage(
-  goals: Goal[],
-  monthlyDividends: number,
-): NextGoalCoverage | null {
-  if (goals.length === 0) return null;
-  const sorted = [...goals].sort((a, b) => a.monthlyAmount - b.monthlyAmount);
-  let rem = sanitize(monthlyDividends);
-
-  for (const goal of sorted) {
-    if (rem >= goal.monthlyAmount) {
-      rem -= goal.monthlyAmount;
-    } else {
-      const covered = Math.max(0, rem);
-      const progress = goal.monthlyAmount > 0
-        ? clamp(covered / goal.monthlyAmount, 0, 1)
-        : 0;
-      return {
-        goal,
-        progress,
-        coveredAmount: covered,
-        missingAmount: goal.monthlyAmount - covered,
-      };
-    }
-  }
-  return null;
 }
 
 export function calculateElapsedYears(startYear: number, now: Date): number {

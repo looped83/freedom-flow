@@ -27,19 +27,20 @@ function TabFallback() {
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('dashboard');
+  const [visitedTabs, setVisitedTabs] = useState<Set<Tab>>(() => new Set<Tab>());
   const [focusGoalId, setFocusGoalId] = useState<string | null>(null);
   const { state, actions } = useAppState();
 
-  // Tapping a tab — whether it's a new one or the active one — always
-  // returns the user to the top of the page. Same convention as iOS.
   const handleTabChange = useCallback((next: Tab) => {
     setTab(next);
+    setVisitedTabs((prev) => prev.has(next) ? prev : new Set([...prev, next]));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   const handleGoalClick = useCallback((id: string) => {
     setFocusGoalId(id);
     setTab('setup');
+    setVisitedTabs((prev) => prev.has('setup') ? prev : new Set([...prev, 'setup']));
   }, []);
 
   const handleReset = useCallback(() => {
@@ -57,7 +58,8 @@ export default function App() {
       <Header />
       <TabNav active={tab} onChange={handleTabChange} />
 
-      {tab === 'dashboard' && (
+      {/* Dashboard always mounted — no remount on tab switch, useMemo cache survives */}
+      <div hidden={tab !== 'dashboard'}>
         <Dashboard
           portfolio={state.portfolio}
           goals={state.goals}
@@ -66,31 +68,43 @@ export default function App() {
           onTotalChange={actions.setTotalExpenses}
           onGoalClick={handleGoalClick}
         />
-      )}
+      </div>
 
-      <Suspense fallback={<TabFallback />}>
-        {tab === 'timeline' && (
-          <FreedomTimeline portfolio={state.portfolio} goals={state.goals} milestones={state.milestones} />
+      {/* Lazy tabs: JS chunk loads on first visit, component stays mounted (hidden) on return.
+          Separate Suspense boundaries prevent one tab's loading from hiding another. */}
+      <Suspense fallback={tab === 'timeline' ? <TabFallback /> : null}>
+        {visitedTabs.has('timeline') && (
+          <div hidden={tab !== 'timeline'}>
+            <FreedomTimeline portfolio={state.portfolio} goals={state.goals} milestones={state.milestones} />
+          </div>
         )}
-        {tab === 'liveflow' && (
-          <LiveFlow portfolio={state.portfolio} />
+      </Suspense>
+      <Suspense fallback={tab === 'liveflow' ? <TabFallback /> : null}>
+        {visitedTabs.has('liveflow') && (
+          <div hidden={tab !== 'liveflow'}>
+            <LiveFlow portfolio={state.portfolio} />
+          </div>
         )}
-        {tab === 'setup' && (
-          <SetupPage
-            goals={state.goals}
-            milestones={state.milestones}
-            portfolio={state.portfolio}
-            onAdd={actions.addGoal}
-            onUpdate={actions.updateGoal}
-            onDelete={actions.deleteGoal}
-            onAddMilestone={actions.addMilestone}
-            onUpdateMilestone={actions.updateMilestone}
-            onDeleteMilestone={actions.deleteMilestone}
-            onSavePortfolio={actions.setPortfolio}
-            onReset={handleReset}
-            focusGoalId={focusGoalId}
-            onFocusConsumed={() => setFocusGoalId(null)}
-          />
+      </Suspense>
+      <Suspense fallback={tab === 'setup' ? <TabFallback /> : null}>
+        {visitedTabs.has('setup') && (
+          <div hidden={tab !== 'setup'}>
+            <SetupPage
+              goals={state.goals}
+              milestones={state.milestones}
+              portfolio={state.portfolio}
+              onAdd={actions.addGoal}
+              onUpdate={actions.updateGoal}
+              onDelete={actions.deleteGoal}
+              onAddMilestone={actions.addMilestone}
+              onUpdateMilestone={actions.updateMilestone}
+              onDeleteMilestone={actions.deleteMilestone}
+              onSavePortfolio={actions.setPortfolio}
+              onReset={handleReset}
+              focusGoalId={focusGoalId}
+              onFocusConsumed={() => setFocusGoalId(null)}
+            />
+          </div>
         )}
       </Suspense>
     </div>

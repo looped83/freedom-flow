@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 import { formatEuro } from '../../utils/formatting';
 import { freedomPercent, missingForFreedom } from '../../utils/calculations';
 import { useInlineNumberEdit } from '../../hooks/useInlineNumberEdit';
@@ -34,10 +36,6 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
 
   const circleRef = useRef<SVGCircleElement>(null);
   const [showProjected, setShowProjected] = useState(false);
-  const [reducedMotion] = useState(() =>
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-  );
 
   const commitIncome  = useCallback((v: number) => onIncomeChange(v / mul), [onIncomeChange, mul]);
   const commitExpense = useCallback((v: number) => onTotalChange(v / mul),  [onTotalChange,  mul]);
@@ -48,7 +46,7 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
   useEffect(() => {
     const el = circleRef.current;
     if (!el) return;
-    if (reducedMotion) {
+    if (prefersReducedMotion) {
       el.style.strokeDashoffset = String(dashOffset);
       return;
     }
@@ -60,7 +58,7 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
         el.style.strokeDashoffset = String(dashOffset);
       });
     });
-  }, [dashOffset, reducedMotion]);
+  }, [dashOffset]);
 
   return (
     <section className="rounded-2xl p-5 bg-accent-muted border border-accent/20" aria-labelledby={heroId}>
