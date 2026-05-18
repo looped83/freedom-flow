@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { formatDays } from '../../utils/formatting';
 
 interface FreedomCalendarProps {
@@ -45,7 +45,7 @@ export function FreedomCalendar({ freeDaysPerMonth }: FreedomCalendarProps) {
   );
 }
 
-function MonthView({ filledCount, freeDaysPerMonth }: { filledCount: number; freeDaysPerMonth: number }) {
+const MonthView = memo(function MonthView({ filledCount, freeDaysPerMonth }: { filledCount: number; freeDaysPerMonth: number }) {
   return (
     <div>
       <p className="text-white/80 text-sm mb-4">
@@ -68,9 +68,9 @@ function MonthView({ filledCount, freeDaysPerMonth }: { filledCount: number; fre
       </div>
     </div>
   );
-}
+});
 
-function YearView({ filledCount, freeDaysPerYear }: { filledCount: number; freeDaysPerYear: number }) {
+const YearView  = memo(function YearView({ filledCount, freeDaysPerYear }: { filledCount: number; freeDaysPerYear: number }) {
   return (
     <div>
       <p className="text-white/80 text-sm mb-4">
@@ -93,4 +93,4 @@ function YearView({ filledCount, freeDaysPerYear }: { filledCount: number; freeD
       </div>
     </div>
   );
-}
+});

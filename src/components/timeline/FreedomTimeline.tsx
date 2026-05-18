@@ -1,4 +1,4 @@
-import { Fragment, useMemo } from 'react';
+import { Fragment, memo, useMemo } from 'react';
 import type { TimelineEntry, Goal, Milestone, MilestoneResult, Portfolio } from '../../types';
 import { CategoryIcon } from '../goals/CategoryIcon';
 import { MilestoneIcon } from '../milestones/MilestoneIcon';
@@ -40,7 +40,7 @@ function YearBadge({ entry }: { entry: TimelineEntry }) {
   );
 }
 
-function MilestoneTile({ milestones }: { milestones: MilestoneResult[] }) {
+const MilestoneTile = memo(function MilestoneTile({ milestones }: { milestones: MilestoneResult[] }) {
   return (
     <div className="mt-2 flex flex-col gap-1.5">
       {milestones.map((m) => {
@@ -72,7 +72,7 @@ function MilestoneTile({ milestones }: { milestones: MilestoneResult[] }) {
       })}
     </div>
   );
-}
+});
 
 function GoalDot({ achieved }: { achieved: boolean }) {
   if (achieved) {
@@ -86,9 +86,8 @@ function GoalDot({ achieved }: { achieved: boolean }) {
   );
 }
 
-function EntryCard({ entry, isHero, milestones }: { entry: TimelineEntry; isHero?: boolean; milestones: MilestoneResult[] }) {
-  const sortedGoals = [...entry.newGoals].sort((a, b) => b.monthlyAmount - a.monthlyAmount);
-  const hasGoals = sortedGoals.length > 0;
+const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry: TimelineEntry; isHero?: boolean; milestones: MilestoneResult[] }) {
+  const hasGoals = entry.newGoals.length > 0;
   const achieved = entry.isPastYear;
 
   return (
@@ -116,7 +115,7 @@ function EntryCard({ entry, isHero, milestones }: { entry: TimelineEntry; isHero
 
         {hasGoals ? (
           <ul className={`space-y-1.5 ${milestones.length > 0 ? 'mt-2' : ''}`} role="list">
-            {sortedGoals.map((goal) => (
+            {entry.newGoals.map((goal) => (
               <li key={goal.id} className="flex items-center gap-2 text-sm">
                 <GoalDot achieved={achieved} />
                 <span className="flex-shrink-0 text-white/60">
@@ -137,7 +136,7 @@ function EntryCard({ entry, isHero, milestones }: { entry: TimelineEntry; isHero
       </div>
     </li>
   );
-}
+});
 
 function TimelineSeparator({ label }: { label: string }) {
   return (
@@ -183,7 +182,14 @@ export function FreedomTimeline({ portfolio, goals, milestones }: FreedomTimelin
 
   // Merge milestone-only years into the timeline so milestones always have a card.
   const allEntries = useMemo(() => {
-    const entryByYear = new Map<number, TimelineEntry>(baseEntries.map((e) => [e.year, e]));
+    const entryByYear = new Map<number, TimelineEntry>(
+      baseEntries.map((e) => [
+        e.year,
+        e.newGoals.length > 1
+          ? { ...e, newGoals: [...e.newGoals].sort((a, b) => b.monthlyAmount - a.monthlyAmount) }
+          : e,
+      ]),
+    );
     for (const year of milestonesByYear.map.keys()) {
       if (entryByYear.has(year)) continue;
       const delta = year - CURRENT_YEAR;

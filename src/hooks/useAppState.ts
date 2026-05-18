@@ -5,6 +5,7 @@ import { loadState, resetState, saveState } from '../utils/storage';
 
 type Action =
   | { type: 'SET_PORTFOLIO'; payload: Portfolio }
+  | { type: 'PATCH_PORTFOLIO'; payload: Partial<Portfolio> }
   | { type: 'ADD_GOAL'; payload: Goal }
   | { type: 'UPDATE_GOAL'; payload: Goal }
   | { type: 'DELETE_GOAL'; id: string }
@@ -88,6 +89,8 @@ function reducer(state: AppState, action: Action): AppState {
       };
     case 'DELETE_MILESTONE':
       return { ...state, milestones: state.milestones.filter((m) => m.id !== action.id) };
+    case 'PATCH_PORTFOLIO':
+      return { ...state, portfolio: { ...state.portfolio, ...action.payload } };
     case 'RESET':
       return resetState();
     default:
@@ -97,6 +100,7 @@ function reducer(state: AppState, action: Action): AppState {
 
 export interface AppActions {
   setPortfolio: (p: Portfolio) => void;
+  patchPortfolio: (partial: Partial<Portfolio>) => void;
   addGoal: (g: Goal) => void;
   updateGoal: (g: Goal) => void;
   deleteGoal: (id: string) => void;
@@ -120,6 +124,7 @@ export function useAppState() {
   // on every child that takes individual actions as props.
   const actions = useMemo<AppActions>(() => ({
     setPortfolio:     (p)  => dispatch({ type: 'SET_PORTFOLIO',      payload: p  }),
+    patchPortfolio:   (partial) => dispatch({ type: 'PATCH_PORTFOLIO', payload: partial }),
     addGoal:          (g)  => dispatch({ type: 'ADD_GOAL',           payload: g  }),
     updateGoal:       (g)  => dispatch({ type: 'UPDATE_GOAL',        payload: g  }),
     deleteGoal:       (id) => dispatch({ type: 'DELETE_GOAL',        id }),
