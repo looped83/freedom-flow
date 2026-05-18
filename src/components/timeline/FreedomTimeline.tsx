@@ -112,9 +112,9 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
           </button>
         )}
 
-        {/* Year label – inside tile, above dividend */}
-        <div className={`mb-2 ${collapsible && hasContent ? 'pr-7' : ''}`}>
-          <span className={`inline-block text-xs font-bold px-2 py-0.5 rounded-md border ${yearColor} ${
+        {/* Year badge + Dividende – single row */}
+        <div className={`flex items-center gap-2 ${hasContent && !collapsed ? 'mb-2' : ''} ${collapsible && hasContent ? 'pr-7' : ''}`}>
+          <span className={`inline-block text-xs font-bold px-2 py-0.5 rounded-md border flex-shrink-0 ${yearColor} ${
             entry.isCurrentYear
               ? 'border-orange-400/40 bg-orange-400/10'
               : entry.isFreedomYear
@@ -125,11 +125,7 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
           }`}>
             {entry.year}
           </span>
-        </div>
-
-        {/* Dividend row */}
-        <div className={`flex items-center justify-between ${hasContent && !collapsed ? 'mb-2' : ''} ${collapsible && hasContent ? 'pr-7' : ''}`}>
-          <span className="text-xs font-bold text-white">Dividende</span>
+          <span className="text-xs font-bold text-white flex-1">Dividende</span>
           <span className="text-sm font-bold text-green-400 tabular-nums">
             {formatEuro(entry.projectedMonthly)} / Mo.
           </span>
