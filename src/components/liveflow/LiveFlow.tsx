@@ -259,9 +259,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
         >
           {formatEuro(lifetimeTotal)}
         </p>
-        <p className="text-xs text-white/50 mt-2">
-          Seit {portfolio.lifetimeStartYear}
-        </p>
+        <p className="text-xs text-white/50 mt-2">Seit 2012</p>
       </section>
 
       {/* ── Cashflow ── */}
