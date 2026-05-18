@@ -18,7 +18,27 @@ import { FreedomHero } from './FreedomHero';
 import { LifeUnlocks } from './LifeUnlocks';
 import { AchievedCarousel } from './AchievedCarousel';
 import { CategoryIcon } from '../goals/CategoryIcon';
-import { IconDiamond } from '../ui/Icons';
+
+const TARGET_ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
+    <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+  </svg>
+);
+const CLOCK_ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
+    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+  </svg>
+);
+const CARD_ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
+    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+  </svg>
+);
+const CHECK_CIRCLE_ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+  </svg>
+);
 
 const MAX_VISIBLE_GOALS = 5;
 
@@ -99,7 +119,7 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTota
       {nextGoal && (
         <section className="bg-surface-1 rounded-2xl p-5 border border-accent/20" aria-labelledby="next-goal-title">
           <h2 id="next-goal-title" className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-            <span className="text-accent/70 flex-shrink-0" aria-hidden="true"><IconDiamond /></span>
+            <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{TARGET_ICON}</span>
             Nächstes Ziel
           </h2>
           <button
@@ -144,7 +164,7 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTota
       <section className="bg-surface-1 rounded-2xl p-5" aria-labelledby="freedom-time-title">
         <div className="flex items-center justify-between mb-4">
           <h2 id="freedom-time-title" className="text-sm font-semibold text-white flex items-center gap-2">
-            <span className="text-accent/70 flex-shrink-0" aria-hidden="true"><IconDiamond /></span>
+            <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{CLOCK_ICON}</span>
             Zurückgekaufte Zeit
           </h2>
           <div
@@ -196,7 +216,7 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTota
       <section className="bg-surface-1 rounded-2xl p-5 border border-white/5 space-y-3" aria-labelledby="all-goals-title">
         <div className="flex items-center justify-between gap-2">
           <h2 id="all-goals-title" className="text-sm font-semibold text-white flex items-center gap-2">
-            <span className="text-accent/70 flex-shrink-0" aria-hidden="true"><IconDiamond /></span>
+            <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{CARD_ICON}</span>
             <span>Ausgaben<span className="text-white/40 font-normal ml-1.5">({achievedGoals.length}/{allResults.length})</span></span>
           </h2>
           {openGoals.length > MAX_VISIBLE_GOALS && (
@@ -262,6 +282,7 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTota
 
         <AchievedCarousel
           heading="Erreichte Ausgaben"
+          headingIcon={CHECK_CIRCLE_ICON}
           items={achievedGoals.map((g) => ({
             id: g.id,
             title: g.name,

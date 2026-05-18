@@ -19,7 +19,20 @@ import {
 } from '../../utils/liveFlowCalculations';
 import { formatEuro } from '../../utils/formatting';
 import { PageHeader } from '../layout/PageHeader';
-import { IconDiamond } from '../ui/Icons';
+
+const SUN_ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
+    <circle cx="12" cy="12" r="4"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+  </svg>
+);
+const REFRESH_ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
+    <polyline points="23 4 23 10 17 10"/>
+    <polyline points="1 20 1 14 7 14"/>
+    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+  </svg>
+);
 
 interface LiveFlowProps {
   portfolio: Portfolio;
@@ -125,7 +138,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-accent/70 flex-shrink-0" aria-hidden="true"><IconDiamond /></span>
+              <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{SUN_ICON}</span>
               <p className="text-sm font-bold text-white">Heute verdient</p>
             </div>
             <p
@@ -286,7 +299,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
           id="lf-cashflow-heading"
           className="text-sm font-semibold text-white mb-3 flex items-center gap-2"
         >
-          <span className="text-accent/70 flex-shrink-0" aria-hidden="true"><IconDiamond /></span>
+          <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{REFRESH_ICON}</span>
           Cashflow
         </h2>
         <div className="grid grid-cols-3 gap-3">
