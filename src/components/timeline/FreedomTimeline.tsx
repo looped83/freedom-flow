@@ -113,9 +113,19 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
         )}
 
         {/* Year label – inside tile, above dividend */}
-        <p className={`text-xs font-bold mb-1.5 ${yearColor} ${collapsible && hasContent ? 'pr-7' : ''}`}>
-          {entry.year}
-        </p>
+        <div className={`mb-2 ${collapsible && hasContent ? 'pr-7' : ''}`}>
+          <span className={`inline-block text-xs font-bold px-2 py-0.5 rounded-md border ${yearColor} ${
+            entry.isCurrentYear
+              ? 'border-orange-400/40 bg-orange-400/10'
+              : entry.isFreedomYear
+              ? 'border-accent/40 bg-accent/10'
+              : entry.isPastYear
+              ? 'border-white/15 bg-white/5'
+              : 'border-white/20 bg-white/5'
+          }`}>
+            {entry.year}
+          </span>
+        </div>
 
         {/* Dividend row */}
         <div className={`flex items-center justify-between ${hasContent && !collapsed ? 'mb-2' : ''} ${collapsible && hasContent ? 'pr-7' : ''}`}>
