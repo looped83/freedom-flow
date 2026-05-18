@@ -43,13 +43,13 @@ const MilestoneTile = memo(function MilestoneTile({ milestones }: { milestones: 
                 : 'bg-surface-2 border-white/8 opacity-60'
             }`}
           >
-            <span className={`flex-shrink-0 ${achieved ? 'text-gold' : 'text-white/40'}`}>
+            <span className={`flex-shrink-0 ${achieved ? 'text-gold' : 'text-white/55'}`}>
               <MilestoneIcon icon={m.icon} className="w-3.5 h-3.5" />
             </span>
             <span className={`text-xs font-semibold flex-1 min-w-0 truncate ${achieved ? 'text-gold' : 'text-white/50'}`}>
               {m.title}
             </span>
-            <span className={`text-[10px] font-medium tabular-nums flex-shrink-0 ${achieved ? 'text-gold/80' : 'text-white/35'}`}>
+            <span className={`text-[10px] font-medium tabular-nums flex-shrink-0 ${achieved ? 'text-gold/80' : 'text-white/55'}`}>
               {m.type === 'dividend' && m.dividendTarget != null
                 ? `${formatEuro(m.dividendTarget)} / Mo.`
                 : m.dateTarget
@@ -69,7 +69,7 @@ function GoalDot({ achieved }: { achieved: boolean }) {
   }
   return (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75"
-      strokeLinecap="round" className="w-3 h-3 flex-shrink-0 text-white/40" aria-hidden="true">
+      strokeLinecap="round" className="w-3 h-3 flex-shrink-0 text-white/55" aria-hidden="true">
       <circle cx="8" cy="8" r="5"/>
     </svg>
   );
@@ -89,7 +89,7 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
     : entry.isFreedomYear
     ? 'text-accent'
     : entry.isPastYear
-    ? 'text-white/45'
+    ? 'text-white/55'
     : 'text-white';
 
   return (
@@ -243,7 +243,7 @@ export function FreedomTimeline({ portfolio, goals, milestones }: FreedomTimelin
       {displayEntries.length === 0 ? (
         <div className="bg-surface-1 rounded-2xl p-8 text-center">
           <p className="text-white/50 text-sm">Keine Ziele im Horizont erreichbar.</p>
-          <p className="text-xs text-white/35 mt-2">Erhöhe deine Sparrate oder passe den Anlagehorizont an.</p>
+          <p className="text-xs text-white/55 mt-2">Erhöhe deine Sparrate oder passe den Anlagehorizont an.</p>
         </div>
       ) : (
         <div className="relative">

@@ -104,7 +104,7 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
               onClick={() => setGoalFilter(id)}
               aria-pressed={goalFilter === id}
               className={`text-xs px-3 py-1.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
-                goalFilter === id ? 'bg-accent/20 text-accent font-semibold' : 'text-white/45 hover:text-white/70'
+                goalFilter === id ? 'bg-accent/20 text-accent font-semibold' : 'text-white/55 hover:text-white/80'
               }`}
             >
               {label}
@@ -116,7 +116,7 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
             onClick={() => handleSortChange('alpha')}
             aria-pressed={goalSort.type === 'alpha'}
             className={`text-xs px-3 py-1.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
-              goalSort.type === 'alpha' ? 'bg-accent/20 text-accent font-semibold' : 'text-white/45 hover:text-white/70'
+              goalSort.type === 'alpha' ? 'bg-accent/20 text-accent font-semibold' : 'text-white/55 hover:text-white/80'
             }`}
           >
             {goalSort.type === 'alpha' ? (goalSort.dir === 'asc' ? 'A–Z' : 'Z–A') : 'A–Z'}
@@ -125,7 +125,7 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
             onClick={() => handleSortChange('amount')}
             aria-pressed={goalSort.type === 'amount'}
             className={`text-xs px-3 py-1.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
-              goalSort.type === 'amount' ? 'bg-accent/20 text-accent font-semibold' : 'text-white/45 hover:text-white/70'
+              goalSort.type === 'amount' ? 'bg-accent/20 text-accent font-semibold' : 'text-white/55 hover:text-white/80'
             }`}
           >
             {goalSort.type === 'amount' ? (goalSort.dir === 'desc' ? '↓ €' : '↑ €') : '↓↑ €'}
@@ -235,7 +235,7 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
                     <button
                       onClick={(e) => { e.stopPropagation(); setConfirmDelete(goal.id); setEditingId(null); }}
                       aria-label={`${goal.name} löschen`}
-                      className="flex-shrink-0 p-1.5 text-white/35 hover:text-red-400 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
+                      className="flex-shrink-0 p-1.5 text-white/55 hover:text-red-400 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
                     >
                       <IconTrash />
                     </button>
@@ -244,13 +244,15 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
 
                 {/* ── Expandable edit form ── */}
                 {isEditing && (
-                  <div className="animate-slide-down px-4 pb-4 pt-3">
-                    <GoalForm
-                      initial={goal}
-                      onSave={(g) => { onUpdate(g); setEditingId(null); }}
-                      onSaveAsDefault={saveGoalDefault}
-                      onCancel={() => setEditingId(null)}
-                    />
+                  <div className="animate-slide-down">
+                    <div className="px-4 pb-4 pt-3">
+                      <GoalForm
+                        initial={goal}
+                        onSave={(g) => { onUpdate(g); setEditingId(null); }}
+                        onSaveAsDefault={saveGoalDefault}
+                        onCancel={() => setEditingId(null)}
+                      />
+                    </div>
                   </div>
                 )}
               </div>

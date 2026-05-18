@@ -69,23 +69,28 @@
   }
 }
 
-/* Live Flow: 10-second ring sweep (r=10, C≈62.83) */
-@keyframes lf-ring-sweep {
-  from { stroke-dashoffset: 62.83; }
-  to   { stroke-dashoffset: 0; }
+/* Live Flow: composited ring – only transform:rotate, no layout/paint */
+@keyframes lf-ring-rotate {
+  to { transform: rotate(360deg); }
 }
-.lf-ring-sweep {
-  stroke-dashoffset: 62.83;
-  animation: lf-ring-sweep 10s linear infinite;
+.lf-ring {
+  border-radius: 9999px;
+  border: 2px solid rgba(74, 222, 128, 0.12);
+  border-top-color: #4ade80;
+  animation: lf-ring-rotate 2.5s linear infinite;
 }
 
-/* Goal card expand animation */
+/* Goal card expand – composited via grid-template-rows (no layout thrashing) */
 @keyframes slide-down {
-  from { max-height: 0; opacity: 0; }
-  to   { max-height: 700px; opacity: 1; }
+  from { grid-template-rows: 0fr; opacity: 0; }
+  to   { grid-template-rows: 1fr; opacity: 1; }
 }
 .animate-slide-down {
+  display: grid;
   animation: slide-down 0.22s ease-out forwards;
+}
+.animate-slide-down > div {
+  min-height: 0;
   overflow: hidden;
 }
 
