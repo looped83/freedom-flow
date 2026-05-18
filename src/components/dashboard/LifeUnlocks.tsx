@@ -105,7 +105,7 @@ export function LifeUnlocks({ milestones, portfolio }: LifeUnlocksProps) {
       <div className="flex items-center justify-between px-1">
         <h2 className="text-sm font-semibold text-white flex items-center gap-2">
           <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{FLAG_ICON}</span>
-          <span>Meilensteine<span className="text-white/40 font-normal ml-1.5">({achieved.length}/{milestones.length})</span></span>
+          <span>Meilensteine<span className="text-white/55 font-normal ml-1.5">({achieved.length}/{milestones.length})</span></span>
         </h2>
         {notAchieved.length > 3 && (
           <button
@@ -114,7 +114,7 @@ export function LifeUnlocks({ milestones, portfolio }: LifeUnlocksProps) {
             className={`text-xs px-3 py-1 rounded-lg border border-white/10 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
               showAll
                 ? 'bg-accent/20 text-accent font-semibold'
-                : 'text-white/45 hover:text-white/70'
+                : 'text-white/55 hover:text-white/80'
             }`}
           >
             {showAll ? '↑ Weniger' : `+${notAchieved.length - 3} weitere`}

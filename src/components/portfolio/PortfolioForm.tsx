@@ -204,7 +204,7 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
         <button
           type="button"
           onClick={onReset}
-          className="w-full text-sm text-white/45 hover:text-red-400 transition-colors py-2 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+          className="w-full text-sm text-white/55 hover:text-red-400 transition-colors py-2 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
         >
           Alle Daten zurücksetzen
         </button>

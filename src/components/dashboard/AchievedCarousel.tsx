@@ -48,6 +48,7 @@ export function AchievedCarousel({ heading, items, ariaLabel, headingIcon }: Ach
         {slides.map((pair, slideIdx) => (
           <div
             key={slideIdx}
+            role="presentation"
             className="flex-shrink-0 w-full snap-center grid grid-cols-2 gap-3 px-0.5 py-0.5"
             aria-hidden={slideIdx !== activeIdx}
           >

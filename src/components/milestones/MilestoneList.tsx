@@ -134,7 +134,7 @@ export function MilestoneList({ milestones, goals, portfolio, onAdd, onUpdate, o
               onClick={() => setFilter(id)}
               aria-pressed={filter === id}
               className={`text-xs px-3 py-1.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
-                filter === id ? 'bg-accent/20 text-accent font-semibold' : 'text-white/45 hover:text-white/70'
+                filter === id ? 'bg-accent/20 text-accent font-semibold' : 'text-white/55 hover:text-white/80'
               }`}
             >
               {label}
@@ -146,7 +146,7 @@ export function MilestoneList({ milestones, goals, portfolio, onAdd, onUpdate, o
             onClick={() => handleSortChange('alpha')}
             aria-pressed={sort.type === 'alpha'}
             className={`text-xs px-3 py-1.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
-              sort.type === 'alpha' ? 'bg-accent/20 text-accent font-semibold' : 'text-white/45 hover:text-white/70'
+              sort.type === 'alpha' ? 'bg-accent/20 text-accent font-semibold' : 'text-white/55 hover:text-white/80'
             }`}
           >
             {sort.type === 'alpha' ? (sort.dir === 'asc' ? 'A–Z' : 'Z–A') : 'A–Z'}
@@ -155,7 +155,7 @@ export function MilestoneList({ milestones, goals, portfolio, onAdd, onUpdate, o
             onClick={() => handleSortChange('status')}
             aria-pressed={sort.type === 'status'}
             className={`text-xs px-3 py-1.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
-              sort.type === 'status' ? 'bg-accent/20 text-accent font-semibold' : 'text-white/45 hover:text-white/70'
+              sort.type === 'status' ? 'bg-accent/20 text-accent font-semibold' : 'text-white/55 hover:text-white/80'
             }`}
           >
             Status
@@ -164,7 +164,7 @@ export function MilestoneList({ milestones, goals, portfolio, onAdd, onUpdate, o
             onClick={() => handleSortChange('target')}
             aria-pressed={sort.type === 'target'}
             className={`text-xs px-3 py-1.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
-              sort.type === 'target' ? 'bg-accent/20 text-accent font-semibold' : 'text-white/45 hover:text-white/70'
+              sort.type === 'target' ? 'bg-accent/20 text-accent font-semibold' : 'text-white/55 hover:text-white/80'
             }`}
           >
             {sort.type === 'target' ? (sort.dir === 'desc' ? '↓ Ziel' : '↑ Ziel') : '↓↑ Ziel'}
@@ -266,7 +266,7 @@ export function MilestoneList({ milestones, goals, portfolio, onAdd, onUpdate, o
                     <button
                       onClick={(e) => { e.stopPropagation(); setConfirmDelete(m.id); setEditingId(null); }}
                       aria-label={`${m.title} löschen`}
-                      className="flex-shrink-0 p-1.5 text-white/35 hover:text-red-400 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
+                      className="flex-shrink-0 p-1.5 text-white/55 hover:text-red-400 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
                     >
                       <IconTrash />
                     </button>
@@ -274,12 +274,14 @@ export function MilestoneList({ milestones, goals, portfolio, onAdd, onUpdate, o
                 </div>
 
                 {isEditing && (
-                  <div className="animate-slide-down px-4 pb-4 pt-3">
-                    <MilestoneForm
-                      initial={m}
-                      onSave={(saved) => { onUpdate(saved); setEditingId(null); }}
-                      onCancel={() => setEditingId(null)}
-                    />
+                  <div className="animate-slide-down">
+                    <div className="px-4 pb-4 pt-3">
+                      <MilestoneForm
+                        initial={m}
+                        onSave={(saved) => { onUpdate(saved); setEditingId(null); }}
+                        onCancel={() => setEditingId(null)}
+                      />
+                    </div>
                   </div>
                 )}
               </div>

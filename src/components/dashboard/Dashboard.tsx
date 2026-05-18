@@ -144,12 +144,12 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTota
             </div>
             <div className="flex-shrink-0 text-right min-w-[2.5rem]">
               <span className={`text-xs font-bold ${
-                nextGoal.status === 'partial' ? 'text-gold' : 'text-white/45'
+                nextGoal.status === 'partial' ? 'text-gold' : 'text-white/55'
               }`}>
                 {formatPercent(nextGoal.coveragePercent, 0)}
               </span>
               {nextGoal.achievedYear != null && (
-                <p className="text-xs text-white/40">{nextGoal.achievedYear}</p>
+                <p className="text-xs text-white/55">{nextGoal.achievedYear}</p>
               )}
             </div>
             <span className="sr-only">. In Setup öffnen.</span>
@@ -180,7 +180,7 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTota
                 className={`text-xs px-3 py-1 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
                   freedomUnit === id
                     ? 'bg-accent/20 text-accent font-semibold'
-                    : 'text-white/45 hover:text-white/70'
+                    : 'text-white/55 hover:text-white/80'
                 }`}
               >
                 {label}
@@ -217,7 +217,7 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTota
         <div className="flex items-center justify-between gap-2">
           <h2 id="all-goals-title" className="text-sm font-semibold text-white flex items-center gap-2">
             <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{CARD_ICON}</span>
-            <span>Ausgaben<span className="text-white/40 font-normal ml-1.5">({achievedGoals.length}/{allResults.length})</span></span>
+            <span>Ausgaben<span className="text-white/55 font-normal ml-1.5">({achievedGoals.length}/{allResults.length})</span></span>
           </h2>
           {openGoals.length > MAX_VISIBLE_GOALS && (
             <button
@@ -226,7 +226,7 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTota
               className={`text-xs px-3 py-1 rounded-lg border border-white/10 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
                 showAllGoals
                   ? 'bg-accent/20 text-accent font-semibold'
-                  : 'text-white/45 hover:text-white/70'
+                  : 'text-white/55 hover:text-white/80'
               }`}
             >
               {showAllGoals ? '↑ Weniger' : `+${openGoals.length - MAX_VISIBLE_GOALS} weitere`}
@@ -264,12 +264,12 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTota
                     </div>
                     <div className="flex-shrink-0 text-right min-w-[2.5rem]">
                       <span className={`text-xs font-bold ${
-                        g.status === 'partial' ? 'text-gold' : 'text-white/45'
+                        g.status === 'partial' ? 'text-gold' : 'text-white/55'
                       }`}>
                         {formatPercent(g.coveragePercent, 0)}
                       </span>
                       {g.achievedYear != null && (
-                        <p className="text-xs text-white/40">{g.achievedYear}</p>
+                        <p className="text-xs text-white/55">{g.achievedYear}</p>
                       )}
                     </div>
                     <span className="sr-only">. In Setup öffnen.</span>

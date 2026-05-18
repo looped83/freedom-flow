@@ -27,7 +27,7 @@ export function FreedomCalendar({ freeDaysPerMonth }: FreedomCalendarProps) {
               onClick={() => setView(v)}
               aria-pressed={view === v}
               className={`text-xs px-3 py-1 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
-                view === v ? 'bg-accent/20 text-accent font-semibold' : 'text-white/45 hover:text-white/70'
+                view === v ? 'bg-accent/20 text-accent font-semibold' : 'text-white/55 hover:text-white/80'
               }`}
             >
               {v === 'month' ? 'Monat' : 'Jahr'}

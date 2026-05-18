@@ -38,8 +38,6 @@ interface LiveFlowProps {
   portfolio: Portfolio;
 }
 
-// SVG ring: r=10 in 28×28 viewBox, C=2π×10≈62.83
-const RING_CIRC = 2 * Math.PI * 10;
 
 interface RateCard {
   id: string;
@@ -151,31 +149,8 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
             </p>
           </div>
 
-          {/* 10-second cycle ring – purely decorative */}
-          <svg
-            width="32"
-            height="32"
-            viewBox="0 0 28 28"
-            aria-hidden="true"
-            className="flex-shrink-0 mt-0.5"
-          >
-            <circle
-              cx="14" cy="14" r="10"
-              fill="none"
-              stroke="rgba(74,222,128,0.12)"
-              strokeWidth="2"
-            />
-            <circle
-              cx="14" cy="14" r="10"
-              fill="none"
-              stroke="#4ade80"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeDasharray={RING_CIRC}
-              transform="rotate(-90 14 14)"
-              className="lf-ring-sweep"
-            />
-          </svg>
+          {/* decorative live indicator ring */}
+          <div aria-hidden="true" className="lf-ring flex-shrink-0 mt-0.5 w-8 h-8" />
         </div>
 
         {/* Day progress */}
@@ -266,30 +241,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
             <p className="text-xs text-white/50 mt-2">Seit 2012</p>
           </div>
 
-          <svg
-            width="32"
-            height="32"
-            viewBox="0 0 28 28"
-            aria-hidden="true"
-            className="flex-shrink-0 mt-0.5"
-          >
-            <circle
-              cx="14" cy="14" r="10"
-              fill="none"
-              stroke="rgba(74,222,128,0.12)"
-              strokeWidth="2"
-            />
-            <circle
-              cx="14" cy="14" r="10"
-              fill="none"
-              stroke="#4ade80"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeDasharray={RING_CIRC}
-              transform="rotate(-90 14 14)"
-              className="lf-ring-sweep"
-            />
-          </svg>
+          <div aria-hidden="true" className="lf-ring flex-shrink-0 mt-0.5 w-8 h-8" />
         </div>
       </section>
 
