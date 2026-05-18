@@ -68,7 +68,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
     function tick() {
       if (!document.hidden) setNow(new Date());
     }
-    const id = setInterval(tick, 10_000);
+    const id = setInterval(tick, 1_000);
     document.addEventListener('visibilitychange', tick);
     return () => {
       clearInterval(id);
