@@ -73,7 +73,7 @@ export default function App() {
           <FreedomTimeline portfolio={state.portfolio} goals={state.goals} milestones={state.milestones} />
         )}
         {tab === 'liveflow' && (
-          <LiveFlow portfolio={state.portfolio} goals={state.goals} />
+          <LiveFlow portfolio={state.portfolio} />
         )}
         {tab === 'setup' && (
           <SetupPage

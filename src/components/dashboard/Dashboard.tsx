@@ -167,7 +167,7 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTota
         </div>
         {total > 0 ? (
           <p className="text-white/80 text-sm">
-            <span className="text-2xl text-accent font-bold tabular-nums">
+            <span className="text-3xl text-accent font-bold tabular-nums">
               {formatFreedomTime(
                 freedomUnit === 'days'    ? financedTime.days
                 : freedomUnit === 'hours' ? financedTime.hours
@@ -175,7 +175,7 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTota
                 freedomUnit,
               )}
             </span>
-            {' '}{FREEDOM_UNITS.find((u) => u.id === freedomUnit)?.full} pro Monat unabhängig durch Dividenden.
+            {' '}{FREEDOM_UNITS.find((u) => u.id === freedomUnit)?.full} pro Monat unabhängig.
           </p>
         ) : (
           <p className="text-sm text-white/50">

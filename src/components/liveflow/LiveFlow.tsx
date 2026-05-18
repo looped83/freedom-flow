@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Goal, Portfolio } from '../../types';
+import { useEffect, useState } from 'react';
+import type { Portfolio } from '../../types';
 import {
   calculateAnnualDividends,
   calculateDividendRatePerMinute,
@@ -15,17 +15,12 @@ import {
   calculateMonthProgress,
   calculateYearProgress,
   formatCurrencyForSmallAmounts,
-  calculateFinancedTime,
-  formatFreedomTime,
-  type FreedomTimeUnit,
 } from '../../utils/liveFlowCalculations';
-import { totalMonthlyCosts } from '../../utils/calculations';
 import { formatEuro } from '../../utils/formatting';
 import { PageHeader } from '../layout/PageHeader';
 
 interface LiveFlowProps {
   portfolio: Portfolio;
-  goals: Goal[];
 }
 
 // SVG ring: r=10 in 28×28 viewBox, C=2π×10≈62.83
@@ -47,12 +42,6 @@ const RATE_CARDS: RateCard[] = [
   { id: 'year',   label: 'Jahr',   getValue: (m) => calculateAnnualDividends(m),       small: false },
 ];
 
-const UNIT_OPTIONS: { id: FreedomTimeUnit; label: string; full: string }[] = [
-  { id: 'days',    label: 'Tage',    full: 'Tage'    },
-  { id: 'hours',   label: 'Std.',    full: 'Stunden' },
-  { id: 'minutes', label: 'Min.',    full: 'Minuten' },
-];
-
 const LIVEFLOW_ICON = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
     <polyline points="2 12 6 8 10 16 14 4 18 12 22 12"/>
@@ -70,11 +59,9 @@ function formatTime(date: Date): string {
   return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 }
 
-export function LiveFlow({ portfolio, goals }: LiveFlowProps) {
+export function LiveFlow({ portfolio }: LiveFlowProps) {
   const monthly = portfolio.monthlyIncome;
   const [now, setNow] = useState(() => new Date());
-  const [timeUnit, setTimeUnit] = useState<FreedomTimeUnit>('days');
-  const segmentRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
     function tick() {
@@ -88,14 +75,6 @@ export function LiveFlow({ portfolio, goals }: LiveFlowProps) {
     };
   }, []);
 
-  // Stable: recompute only when portfolio/goals change, not on every timer tick
-  const totalExpenses = useMemo(() => totalMonthlyCosts(goals), [goals]);
-  const financedTime = useMemo(
-    () => calculateFinancedTime(monthly, totalExpenses),
-    [monthly, totalExpenses],
-  );
-
-  // Timer-dependent values
   const earnedToday   = calculateEarnedTodaySoFar(monthly, now);
   const earnedWeek    = calculateEarnedThisWeekSoFar(monthly, now);
   const earnedMonth   = calculateEarnedThisMonthSoFar(monthly, now);
@@ -108,26 +87,6 @@ export function LiveFlow({ portfolio, goals }: LiveFlowProps) {
   const weekPct       = Math.round(weekProgress * 100);
   const monthPct      = Math.round(monthProgress * 100);
   const yearPct       = Math.round(yearProgress * 100);
-
-  function handleUnitKey(e: React.KeyboardEvent, currentIdx: number) {
-    let next = currentIdx;
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-      e.preventDefault();
-      next = (currentIdx + 1) % UNIT_OPTIONS.length;
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      next = (currentIdx - 1 + UNIT_OPTIONS.length) % UNIT_OPTIONS.length;
-    } else {
-      return;
-    }
-    setTimeUnit(UNIT_OPTIONS[next].id);
-    segmentRefs.current[next]?.focus();
-  }
-
-  const timeValue =
-    timeUnit === 'days'    ? financedTime.days
-    : timeUnit === 'hours' ? financedTime.hours
-    :                        financedTime.minutes;
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
@@ -233,67 +192,6 @@ export function LiveFlow({ portfolio, goals }: LiveFlowProps) {
             </div>
           ))}
         </div>
-
-      </section>
-
-      {/* ── Freedom Counter: Zurückgekaufte Zeit ── */}
-      <section
-        aria-labelledby="lf-freedom-heading"
-        className="bg-surface-1 rounded-2xl p-5 border border-white/5"
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h2 id="lf-freedom-heading" className="text-sm font-semibold text-white">
-            Zurückgekaufte Zeit
-          </h2>
-
-          {/* Segmented control – matches Dashboard toggle style */}
-          <div
-            role="radiogroup"
-            aria-label="Zeiteinheit auswählen"
-            className="flex rounded-lg overflow-hidden border border-white/10"
-          >
-            {UNIT_OPTIONS.map(({ id, label }, idx) => {
-              const selected = timeUnit === id;
-              return (
-                <button
-                  key={id}
-                  ref={(el) => { segmentRefs.current[idx] = el; }}
-                  role="radio"
-                  aria-checked={selected}
-                  tabIndex={selected ? 0 : -1}
-                  onClick={() => setTimeUnit(id)}
-                  onKeyDown={(e) => handleUnitKey(e, idx)}
-                  className={`text-xs px-3 py-1 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
-                    selected
-                      ? 'bg-accent/20 text-accent font-semibold'
-                      : 'text-white/45 hover:text-white/70'
-                  }`}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {totalExpenses > 0 ? (
-          <>
-            <p
-              className="text-4xl font-bold text-white tabular-nums leading-none"
-              aria-live="polite"
-              aria-atomic="true"
-            >
-              {formatFreedomTime(timeValue, timeUnit)}
-            </p>
-            <p className="text-sm text-accent font-medium mt-2">
-              {UNIT_OPTIONS.find((u) => u.id === timeUnit)?.full} pro Monat zurückgekauft
-            </p>
-          </>
-        ) : (
-          <p className="text-sm text-white/50 py-2">
-            Füge Ausgaben im Setup hinzu, um deine zurückgekaufte Zeit zu sehen.
-          </p>
-        )}
       </section>
 
       {/* ── Cashflow ── */}
