@@ -86,9 +86,14 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
 
   return (
     <li
-      className="relative pl-16"
+      className="relative"
       aria-label={entry.isCurrentYear ? `Heute (${entry.year})` : `Jahr ${entry.year}`}
     >
+      {/* Year label – above the tile */}
+      <p className={`text-xs font-bold mb-1.5 ${yearColor}`}>
+        {entry.year}
+      </p>
+
       <div className={`rounded-2xl p-4 relative ${
         isHero
           ? 'bg-accent-muted border-2 border-accent/40'
@@ -112,15 +117,10 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
           </button>
         )}
 
-        {/* Year label – inside tile, above dividend */}
-        <p className={`text-xs font-bold mb-1.5 ${yearColor} ${collapsible && hasContent ? 'pr-7' : ''}`}>
-          {entry.year}
-        </p>
-
         {/* Dividend row */}
         <div className={`flex items-center justify-between ${hasContent && !collapsed ? 'mb-2' : ''} ${collapsible && hasContent ? 'pr-7' : ''}`}>
           <span className="text-xs font-bold text-white">Dividende</span>
-          <span className="text-sm font-bold text-orange-400 tabular-nums">
+          <span className="text-sm font-bold text-green-400 tabular-nums">
             {formatEuro(entry.projectedMonthly)} / Mo.
           </span>
         </div>
@@ -242,7 +242,6 @@ export function FreedomTimeline({ portfolio, goals, milestones }: FreedomTimelin
         </div>
       ) : (
         <div className="relative">
-          <div className="absolute left-7 top-0 bottom-0 w-px bg-white/8" aria-hidden="true" />
           <ol className="space-y-5" aria-label="Freedom Timeline">
             {displayEntries.map((entry, idx) => {
               const isHero = idx === 0;
