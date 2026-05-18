@@ -1,6 +1,16 @@
 /** Small icon set shared across list/card components. Always aria-hidden;
  *  consumers provide their own labels on the surrounding interactive elements. */
 
+export function IconDiamond({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M6 3h12l4 6-10 13L2 9l4-6z"/>
+      <path d="M2 9h20"/>
+      <path d="M8.5 3 6 9m9-6 2.5 6M12 3v6"/>
+    </svg>
+  );
+}
+
 export function IconTrash() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">

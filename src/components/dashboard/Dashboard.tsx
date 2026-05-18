@@ -18,6 +18,7 @@ import { FreedomHero } from './FreedomHero';
 import { LifeUnlocks } from './LifeUnlocks';
 import { AchievedCarousel } from './AchievedCarousel';
 import { CategoryIcon } from '../goals/CategoryIcon';
+import { IconDiamond } from '../ui/Icons';
 
 const MAX_VISIBLE_GOALS = 5;
 
@@ -97,7 +98,8 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTota
       {/* Nächstes Ziel */}
       {nextGoal && (
         <section className="bg-surface-1 rounded-2xl p-5 border border-accent/20" aria-labelledby="next-goal-title">
-          <h2 id="next-goal-title" className="text-sm font-semibold text-white mb-3">
+          <h2 id="next-goal-title" className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+            <span className="text-accent/70 flex-shrink-0" aria-hidden="true"><IconDiamond /></span>
             Nächstes Ziel
           </h2>
           <button
@@ -141,7 +143,8 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTota
       {/* Zurückgekaufte Zeit */}
       <section className="bg-surface-1 rounded-2xl p-5" aria-labelledby="freedom-time-title">
         <div className="flex items-center justify-between mb-4">
-          <h2 id="freedom-time-title" className="text-sm font-semibold text-white">
+          <h2 id="freedom-time-title" className="text-sm font-semibold text-white flex items-center gap-2">
+            <span className="text-accent/70 flex-shrink-0" aria-hidden="true"><IconDiamond /></span>
             Zurückgekaufte Zeit
           </h2>
           <div
@@ -192,11 +195,9 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTota
       {/* Ausgaben – open list + achieved carousel */}
       <section className="bg-surface-1 rounded-2xl p-5 border border-white/5 space-y-3" aria-labelledby="all-goals-title">
         <div className="flex items-center justify-between gap-2">
-          <h2 id="all-goals-title" className="text-sm font-semibold text-white">
-            Ausgaben
-            <span className="text-white/40 font-normal ml-1.5">
-              ({achievedGoals.length}/{allResults.length})
-            </span>
+          <h2 id="all-goals-title" className="text-sm font-semibold text-white flex items-center gap-2">
+            <span className="text-accent/70 flex-shrink-0" aria-hidden="true"><IconDiamond /></span>
+            <span>Ausgaben<span className="text-white/40 font-normal ml-1.5">({achievedGoals.length}/{allResults.length})</span></span>
           </h2>
           {openGoals.length > MAX_VISIBLE_GOALS && (
             <button

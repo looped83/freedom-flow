@@ -19,6 +19,7 @@ import {
 } from '../../utils/liveFlowCalculations';
 import { formatEuro } from '../../utils/formatting';
 import { PageHeader } from '../layout/PageHeader';
+import { IconDiamond } from '../ui/Icons';
 
 interface LiveFlowProps {
   portfolio: Portfolio;
@@ -123,7 +124,10 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
         {/* Top: Heute verdient */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-white mb-2">Heute verdient</p>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-accent/70 flex-shrink-0" aria-hidden="true"><IconDiamond /></span>
+              <p className="text-sm font-bold text-white">Heute verdient</p>
+            </div>
             <p
               id="lf-hero-heading"
               className="text-5xl font-bold text-accent tabular-nums leading-none"
@@ -280,8 +284,9 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
       <section aria-labelledby="lf-cashflow-heading">
         <h2
           id="lf-cashflow-heading"
-          className="text-sm font-semibold text-white mb-3"
+          className="text-sm font-semibold text-white mb-3 flex items-center gap-2"
         >
+          <span className="text-accent/70 flex-shrink-0" aria-hidden="true"><IconDiamond /></span>
           Cashflow
         </h2>
         <div className="grid grid-cols-3 gap-3">

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { formatEuro } from '../../utils/formatting';
 import { freedomPercent, missingForFreedom } from '../../utils/calculations';
 import { useInlineNumberEdit } from '../../hooks/useInlineNumberEdit';
+import { IconDiamond } from '../ui/Icons';
 
 interface FreedomHeroProps {
   monthly: number;
@@ -59,7 +60,10 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
   return (
     <section className="rounded-2xl p-5 bg-accent-muted border border-accent/20" aria-labelledby={heroId}>
       <div className="flex items-center justify-between mb-3">
-        <p className="text-sm font-semibold text-white">Freedom Flow</p>
+        <div className="flex items-center gap-2">
+          <span className="text-accent/70 flex-shrink-0" aria-hidden="true"><IconDiamond /></span>
+          <p className="text-sm font-semibold text-white">Freedom Flow</p>
+        </div>
         <div className="flex rounded-lg overflow-hidden border border-white/10" role="group" aria-label="Ansicht wählen">
           {(['month', 'year'] as const).map((v) => (
             <button
