@@ -20,6 +20,7 @@ interface SetupPageProps {
   onSavePortfolio: (p: Portfolio) => void;
   onReset: () => void;
   focusGoalId?: string | null;
+  onFocusConsumed?: () => void;
 }
 
 const SETUP_ICON = (
@@ -42,6 +43,7 @@ export function SetupPage({
   onSavePortfolio,
   onReset,
   focusGoalId,
+  onFocusConsumed,
 }: SetupPageProps) {
   const [active, setActive] = useState<SetupTab>('goals');
 
@@ -78,7 +80,7 @@ export function SetupPage({
 
       <div role="tabpanel">
         {active === 'goals' && (
-          <GoalList goals={goals} portfolio={portfolio} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} focusGoalId={focusGoalId} />
+          <GoalList goals={goals} portfolio={portfolio} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} focusGoalId={focusGoalId} onFocusConsumed={onFocusConsumed} />
         )}
         {active === 'milestones' && (
           <MilestoneList

@@ -21,9 +21,10 @@ interface GoalListProps {
   onUpdate: (g: Goal) => void;
   onDelete: (id: string) => void;
   focusGoalId?: string | null;
+  onFocusConsumed?: () => void;
 }
 
-export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoalId }: GoalListProps) {
+export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoalId, onFocusConsumed }: GoalListProps) {
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -35,11 +36,12 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
   useEffect(() => {
     if (!focusGoalId) return;
     setEditingId(focusGoalId);
+    onFocusConsumed?.();
     const timer = setTimeout(() => {
       liRefs.current.get(focusGoalId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 350);
     return () => clearTimeout(timer);
-  }, [focusGoalId]);
+  }, [focusGoalId, onFocusConsumed]);
 
   const swipe = useSwipeToDelete(onDelete, { isLocked: (id) => editingId === id });
 
