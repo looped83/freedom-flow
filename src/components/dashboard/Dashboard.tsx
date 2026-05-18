@@ -175,7 +175,7 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTota
                 freedomUnit,
               )}
             </span>
-            {' '}{FREEDOM_UNITS.find((u) => u.id === freedomUnit)?.full} pro Monat unabhängig.
+            {' '}<span className="font-bold text-accent">{FREEDOM_UNITS.find((u) => u.id === freedomUnit)?.full}</span> pro Monat unabhängig.
           </p>
         ) : (
           <p className="text-sm text-white/50">
