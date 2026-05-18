@@ -89,6 +89,7 @@ export default function App() {
             onSavePortfolio={actions.setPortfolio}
             onReset={handleReset}
             focusGoalId={focusGoalId}
+            onFocusConsumed={() => setFocusGoalId(null)}
           />
         )}
       </Suspense>
