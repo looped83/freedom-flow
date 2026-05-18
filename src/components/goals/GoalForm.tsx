@@ -72,20 +72,23 @@ export function GoalForm({ initial, onSave, onSaveAsDefault, onCancel }: GoalFor
 
         <div>
           <label htmlFor="goal-amount" className="block text-xs text-white/70 mb-1">
-            Monatlicher Betrag (€)
+            Monatlicher Betrag
           </label>
-          <input
-            ref={amount.ref}
-            id="goal-amount"
-            type="text"
-            inputMode="decimal"
-            value={amount.value}
-            onChange={amount.onChange}
-            placeholder="z. B. 42,90"
-            className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/55 focus:outline-none focus:border-accent text-sm"
-            aria-describedby={errors.amount ? 'goal-amount-error' : undefined}
-            aria-invalid={!!errors.amount}
-          />
+          <div className="relative">
+            <input
+              ref={amount.ref}
+              id="goal-amount"
+              type="text"
+              inputMode="decimal"
+              value={amount.value}
+              onChange={amount.onChange}
+              placeholder="z. B. 42,90"
+              className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 pr-7 text-white placeholder-white/55 focus:outline-none focus:border-accent text-sm"
+              aria-describedby={errors.amount ? 'goal-amount-error' : undefined}
+              aria-invalid={!!errors.amount}
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-white/30 pointer-events-none">€</span>
+          </div>
           {errors.amount && (
             <p id="goal-amount-error" role="alert" className="text-xs text-red-400 mt-1">{errors.amount}</p>
           )}

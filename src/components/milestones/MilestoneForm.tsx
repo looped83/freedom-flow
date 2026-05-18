@@ -74,20 +74,23 @@ export function MilestoneForm({ initial, onSave, onCancel }: MilestoneFormProps)
         {type === 'dividend' && (
           <div>
             <label htmlFor="milestone-amount" className="block text-xs text-white/70 mb-1">
-              Monatliche Dividende (€)
+              Monatliche Dividende
             </label>
-            <input
-              ref={amount.ref}
-              id="milestone-amount"
-              type="text"
-              inputMode="decimal"
-              value={amount.value}
-              onChange={amount.onChange}
-              placeholder="z. B. 1.500,00"
-              className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/55 focus:outline-none focus:border-accent text-sm"
-              aria-describedby={errors.dividendTarget ? 'milestone-amount-error' : undefined}
-              aria-invalid={!!errors.dividendTarget}
-            />
+            <div className="relative">
+              <input
+                ref={amount.ref}
+                id="milestone-amount"
+                type="text"
+                inputMode="decimal"
+                value={amount.value}
+                onChange={amount.onChange}
+                placeholder="z. B. 1.500,00"
+                className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 pr-7 text-white placeholder-white/55 focus:outline-none focus:border-accent text-sm"
+                aria-describedby={errors.dividendTarget ? 'milestone-amount-error' : undefined}
+                aria-invalid={!!errors.dividendTarget}
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-white/30 pointer-events-none">€</span>
+            </div>
             {errors.dividendTarget && (
               <p id="milestone-amount-error" role="alert" className="text-xs text-red-400 mt-1">{errors.dividendTarget}</p>
             )}
