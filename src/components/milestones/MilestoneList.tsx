@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
-import type { Milestone, MilestoneResult, Portfolio } from '../../types';
+import type { Goal, Milestone, MilestoneResult, Portfolio } from '../../types';
 import { formatEuro } from '../../utils/formatting';
 import { computeMilestoneResults, formatDaysRemaining, formatMilestoneDate, milestoneSortKey } from '../../utils/milestones';
+import { totalMonthlyCosts } from '../../utils/calculations';
 import { useSwipeToDelete } from '../../hooks/useSwipeToDelete';
 import { IconChevron, IconCheck, IconClose, IconTrash } from '../ui/Icons';
 import { MilestoneIcon } from './MilestoneIcon';
@@ -14,6 +15,7 @@ type SortType = 'alpha' | 'target' | 'status';
 
 interface MilestoneListProps {
   milestones: Milestone[];
+  goals: Goal[];
   portfolio: Portfolio;
   onAdd: (m: Milestone) => void;
   onUpdate: (m: Milestone) => void;
@@ -48,7 +50,7 @@ function MilestoneRightValue({ result }: { result: MilestoneResult }) {
   return null;
 }
 
-export function MilestoneList({ milestones, portfolio, onAdd, onUpdate, onDelete }: MilestoneListProps) {
+export function MilestoneList({ milestones, goals, portfolio, onAdd, onUpdate, onDelete }: MilestoneListProps) {
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -57,7 +59,14 @@ export function MilestoneList({ milestones, portfolio, onAdd, onUpdate, onDelete
 
   const swipe = useSwipeToDelete(onDelete, { isLocked: (id) => editingId === id });
 
-  const allResults = useMemo(() => computeMilestoneResults(milestones, portfolio), [milestones, portfolio]);
+  const totalExpenses = useMemo(() => totalMonthlyCosts(goals), [goals]);
+
+  const visibleMilestones = useMemo(
+    () => milestones.filter((m) => m.type !== 'dividend' || (m.dividendTarget ?? 0) <= totalExpenses),
+    [milestones, totalExpenses],
+  );
+
+  const allResults = useMemo(() => computeMilestoneResults(visibleMilestones, portfolio), [visibleMilestones, portfolio]);
 
   const achievedCount = useMemo(
     () => allResults.reduce((n, r) => (r.status === 'achieved' ? n + 1 : n), 0),
@@ -84,7 +93,7 @@ export function MilestoneList({ milestones, portfolio, onAdd, onUpdate, onDelete
     return filtered;
   }, [allResults, filter, sort]);
 
-  const totalCount = milestones.length;
+  const totalCount = visibleMilestones.length;
 
   function handleSortChange(type: SortType) {
     setSort((prev) => {
