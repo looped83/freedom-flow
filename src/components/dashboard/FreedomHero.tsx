@@ -17,6 +17,9 @@ const CIRCUMFERENCE = 2 * Math.PI * R;
 const heroId = 'freedom-hero-heading';
 
 export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onIncomeChange, onTotalChange }: FreedomHeroProps) {
+  const [view, setView] = useState<'month' | 'year'>('month');
+  const mul = view === 'year' ? 12 : 1;
+
   const pct = useMemo(() => freedomPercent(monthly, total), [monthly, total]);
   const projPct = useMemo(() => freedomPercent(projectedMonthly, total), [projectedMonthly, total]);
   const missing = useMemo(() => missingForFreedom(monthly, total), [monthly, total]);
@@ -52,7 +55,23 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
 
   return (
     <section className="rounded-2xl p-5 bg-accent-muted border border-accent/20" aria-labelledby={heroId}>
-      <p className="text-sm font-semibold text-white mb-3">Freedom Flow</p>
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm font-semibold text-white">Freedom Flow</p>
+        <div className="flex rounded-lg overflow-hidden border border-white/10" role="group" aria-label="Ansicht wählen">
+          {(['month', 'year'] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              aria-pressed={view === v}
+              className={`text-xs px-3 py-1 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+                view === v ? 'bg-accent/20 text-accent font-semibold' : 'text-white/45 hover:text-white/70'
+              }`}
+            >
+              {v === 'month' ? 'Monat' : 'Jahr'}
+            </button>
+          ))}
+        </div>
+      </div>
       <h2 id={heroId} className="sr-only">Finanzielle Freiheit</h2>
 
       <div className="flex flex-col items-center gap-4">
@@ -117,10 +136,10 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3 w-full">
-          {/* Dividenden – tappable to edit */}
+          {/* Dividenden – tappable to edit (month view only) */}
           <div className="text-center">
             <p className="text-xs text-white/55 mb-1">Dividenden</p>
-            {income.editing ? (
+            {view === 'month' && income.editing ? (
               <input
                 ref={income.inputRef}
                 type="text"
@@ -134,21 +153,23 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
                 style={{ fontSize: '16px' }}
                 className="font-bold text-accent text-center bg-transparent border-b border-accent focus:outline-none w-full tabular-nums"
               />
-            ) : (
+            ) : view === 'month' ? (
               <button
                 onClick={income.startEdit}
                 aria-label={`Dividenden: ${formatEuro(monthly)}, tippen zum Bearbeiten`}
                 className="text-accent font-bold text-sm tabular-nums underline decoration-dotted underline-offset-2 hover:opacity-75 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
               >
-                {formatEuro(monthly)}
+                {formatEuro(monthly * mul)}
               </button>
+            ) : (
+              <p className="text-accent font-bold text-sm tabular-nums">{formatEuro(monthly * mul)}</p>
             )}
           </div>
 
-          {/* Ausgaben / Monat – tappable to edit; overshoot creates a Bonus goal */}
+          {/* Ausgaben / Monat|Jahr – tappable to edit (month view only) */}
           <div className="text-center">
-            <p className="text-xs text-white/55 mb-1">Ausgaben / Monat</p>
-            {expense.editing ? (
+            <p className="text-xs text-white/55 mb-1">{view === 'month' ? 'Ausgaben / Monat' : 'Ausgaben / Jahr'}</p>
+            {view === 'month' && expense.editing ? (
               <input
                 ref={expense.inputRef}
                 type="text"
@@ -162,20 +183,22 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
                 style={{ fontSize: '16px' }}
                 className="font-bold text-white text-center bg-transparent border-b border-white/40 focus:outline-none w-full tabular-nums"
               />
-            ) : (
+            ) : view === 'month' ? (
               <button
                 onClick={expense.startEdit}
                 aria-label={`Ausgaben pro Monat: ${formatEuro(total)}, tippen zum Bearbeiten`}
                 className="text-white font-bold text-sm tabular-nums underline decoration-dotted underline-offset-2 hover:opacity-75 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
               >
-                {formatEuro(total)}
+                {formatEuro(total * mul)}
               </button>
+            ) : (
+              <p className="text-white font-bold text-sm tabular-nums">{formatEuro(total * mul)}</p>
             )}
           </div>
 
           <div className="text-center">
             <p className="text-xs text-white/55 mb-1">Offen</p>
-            <p className="text-white/65 font-bold text-sm tabular-nums">{formatEuro(missing)}</p>
+            <p className="text-white/65 font-bold text-sm tabular-nums">{formatEuro(missing * mul)}</p>
           </div>
         </div>
 
