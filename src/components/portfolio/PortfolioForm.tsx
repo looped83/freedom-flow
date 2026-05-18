@@ -154,6 +154,7 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
         <p className="text-sm text-white/65 mt-1">Schieberegler oder Zahl direkt eingeben.</p>
       </div>
 
+      <h3 className="text-sm font-semibold text-accent mb-3">Portfolio</h3>
       <div className="grid grid-cols-2 gap-3 mb-6">
         <div className="bg-surface-1 rounded-2xl p-5">
           <p className="text-xs text-white/65 mb-1">Jährliche Dividenden</p>
