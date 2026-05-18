@@ -1,4 +1,4 @@
-import type { Milestone, MilestoneResult, Portfolio } from '../types';
+import type { Goal, Milestone, MilestoneResult, Portfolio } from '../types';
 import { CURRENT_YEAR } from '../constants/defaultData';
 import { projectMonthlyDividendsAtYear, projectMonthlyDividendsYearsAgo } from './calculations';
 
@@ -124,4 +124,9 @@ export function milestoneAchievedYear(milestone: Milestone, portfolio: Portfolio
   if (!milestone.dateTarget) return null;
   const d = parseIsoDate(milestone.dateTarget);
   return d ? d.getFullYear() : null;
+}
+
+export function filterMilestonesByExpenses(milestones: Milestone[], goals: Goal[]): Milestone[] {
+  const total = goals.reduce((s, g) => s + g.monthlyAmount, 0);
+  return milestones.filter((m) => m.type !== 'dividend' || (m.dividendTarget ?? 0) <= total);
 }
