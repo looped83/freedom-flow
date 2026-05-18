@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Goal, Milestone, MilestoneResult, Portfolio } from '../../types';
 import { formatEuro } from '../../utils/formatting';
-import { computeMilestoneResults, formatDaysRemaining, formatMilestoneDate, milestoneSortKey } from '../../utils/milestones';
-import { totalMonthlyCosts } from '../../utils/calculations';
+import { computeMilestoneResults, filterMilestonesByExpenses, formatDaysRemaining, formatMilestoneDate, milestoneSortKey } from '../../utils/milestones';
 import { useSwipeToDelete } from '../../hooks/useSwipeToDelete';
 import { IconChevron, IconCheck, IconClose, IconTrash } from '../ui/Icons';
 import { MilestoneIcon } from './MilestoneIcon';
@@ -59,11 +58,9 @@ export function MilestoneList({ milestones, goals, portfolio, onAdd, onUpdate, o
 
   const swipe = useSwipeToDelete(onDelete, { isLocked: (id) => editingId === id });
 
-  const totalExpenses = useMemo(() => totalMonthlyCosts(goals), [goals]);
-
   const visibleMilestones = useMemo(
-    () => milestones.filter((m) => m.type !== 'dividend' || (m.dividendTarget ?? 0) <= totalExpenses),
-    [milestones, totalExpenses],
+    () => filterMilestonesByExpenses(milestones, goals),
+    [milestones, goals],
   );
 
   const allResults = useMemo(() => computeMilestoneResults(visibleMilestones, portfolio), [visibleMilestones, portfolio]);

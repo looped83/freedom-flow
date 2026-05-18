@@ -2,8 +2,9 @@ import { Fragment, memo, useMemo, useState } from 'react';
 import type { TimelineEntry, Goal, Milestone, MilestoneResult, Portfolio } from '../../types';
 import { CategoryIcon } from '../goals/CategoryIcon';
 import { MilestoneIcon } from '../milestones/MilestoneIcon';
-import { buildFreedomTimeline, projectMonthlyDividendsAtYear, projectMonthlyDividendsYearsAgo, totalMonthlyCosts } from '../../utils/calculations';
-import { computeMilestoneResult, formatMilestoneDate, milestoneAchievedYear, milestoneSortKey } from '../../utils/milestones';
+import { buildFreedomTimeline, projectMonthlyDividendsAtYear, projectMonthlyDividendsYearsAgo } from '../../utils/calculations';
+import { computeMilestoneResult, filterMilestonesByExpenses, formatMilestoneDate, milestoneAchievedYear, milestoneSortKey } from '../../utils/milestones';
+import { IconChevron } from '../ui/Icons';
 import { CURRENT_YEAR } from '../../constants/defaultData';
 import { formatEuro } from '../../utils/formatting';
 import { PageHeader } from '../layout/PageHeader';
@@ -75,6 +76,7 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
   const hasGoals = entry.newGoals.length > 0;
   const achieved = entry.isPastYear;
   const hasContent = hasGoals || entry.isFreedomYear || milestones.length > 0;
+  const isInteractive = collapsible && hasContent;
 
   const yearColor = entry.isCurrentYear
     ? 'text-orange-400'
@@ -90,27 +92,20 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
       aria-label={entry.isCurrentYear ? `Heute (${entry.year})` : `Jahr ${entry.year}`}
     >
       <div
-        className={`rounded-2xl p-4 relative ${
-          isHero
-            ? 'bg-accent-muted border-2 border-accent/40'
-            : 'bg-surface-1'
-        } ${collapsible && hasContent ? 'cursor-pointer select-none' : ''}`}
-        onClick={collapsible && hasContent ? () => setCollapsed((c) => !c) : undefined}
-        role={collapsible && hasContent ? 'button' : undefined}
-        aria-expanded={collapsible && hasContent ? !collapsed : undefined}
-        aria-label={collapsible && hasContent ? (collapsed ? `${entry.year} ausklappen` : `${entry.year} einklappen`) : undefined}
+        className={`rounded-2xl p-4 relative ${isHero ? 'bg-accent-muted border-2 border-accent/40' : 'bg-surface-1'} ${isInteractive ? 'cursor-pointer select-none' : ''}`}
+        onClick={isInteractive ? () => setCollapsed((c) => !c) : undefined}
+        role={isInteractive ? 'button' : undefined}
+        tabIndex={isInteractive ? 0 : undefined}
+        onKeyDown={isInteractive ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCollapsed((c) => !c); } } : undefined}
+        aria-expanded={isInteractive ? !collapsed : undefined}
+        aria-label={isInteractive ? (collapsed ? `${entry.year} ausklappen` : `${entry.year} einklappen`) : undefined}
       >
-
-        {/* Year badge + Dividieren – single row */}
         <div className={`flex items-center gap-2 ${hasContent && !collapsed ? 'mb-2' : ''}`}>
           <span className={`inline-block text-xs font-bold px-2 py-0.5 rounded-md border flex-shrink-0 ${yearColor} ${
-            entry.isCurrentYear
-              ? 'border-orange-400/40 bg-orange-400/10'
-              : entry.isFreedomYear
-              ? 'border-accent/40 bg-accent/10'
-              : entry.isPastYear
-              ? 'border-white/15 bg-white/5'
-              : 'border-white/20 bg-white/5'
+            entry.isCurrentYear ? 'border-orange-400/40 bg-orange-400/10'
+            : entry.isFreedomYear ? 'border-accent/40 bg-accent/10'
+            : entry.isPastYear  ? 'border-white/15 bg-white/5'
+            : 'border-white/20 bg-white/5'
           }`}>
             {entry.year}
           </span>
@@ -118,14 +113,7 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
           <span className="text-sm font-bold text-green-400 tabular-nums">
             {formatEuro(entry.projectedMonthly)} / Mo.
           </span>
-          {collapsible && hasContent && (
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"
-              strokeLinecap="round" className={`w-3.5 h-3.5 flex-shrink-0 text-white/40 transition-transform duration-200 ${collapsed ? '' : 'rotate-180'}`}
-              aria-hidden="true"
-            >
-              <polyline points="3 6 8 11 13 6" />
-            </svg>
-          )}
+          {isInteractive && <IconChevron open={!collapsed} />}
         </div>
 
         {!collapsed && (
@@ -174,11 +162,9 @@ function TimelineSeparator({ label }: { label: string }) {
 export function FreedomTimeline({ portfolio, goals, milestones }: FreedomTimelineProps) {
   const baseEntries = useMemo(() => buildFreedomTimeline(goals, portfolio), [goals, portfolio]);
 
-  const totalExpenses = useMemo(() => totalMonthlyCosts(goals), [goals]);
-
   const visibleMilestones = useMemo(
-    () => milestones.filter((m) => m.type !== 'dividend' || (m.dividendTarget ?? 0) <= totalExpenses),
-    [milestones, totalExpenses],
+    () => filterMilestonesByExpenses(milestones, goals),
+    [milestones, goals],
   );
 
   const beyondHorizonGoals = useMemo(() => {
