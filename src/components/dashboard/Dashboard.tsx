@@ -2,21 +2,30 @@ import { useMemo, useState } from 'react';
 import type { Goal, GoalResult, Milestone, Portfolio } from '../../types';
 import {
   computeGoalResults,
-  freeDaysPerMonth,
   projectMonthlyDividendsAtYear,
   totalMonthlyCosts,
 } from '../../utils/calculations';
 import { BONUS_GOAL_ID } from '../../constants/defaultData';
 import { formatEuro, formatPercent } from '../../utils/formatting';
+import {
+  calculateFinancedTime,
+  formatFreedomTime,
+  type FreedomTimeUnit,
+} from '../../utils/liveFlowCalculations';
 import { PageHeader } from '../layout/PageHeader';
 import { ProgressBar } from './ProgressBar';
-import { FreedomCalendar } from './FreedomCalendar';
 import { FreedomHero } from './FreedomHero';
 import { LifeUnlocks } from './LifeUnlocks';
 import { AchievedCarousel } from './AchievedCarousel';
 import { CategoryIcon } from '../goals/CategoryIcon';
 
 const MAX_VISIBLE_GOALS = 5;
+
+const FREEDOM_UNITS: { id: FreedomTimeUnit; label: string; full: string }[] = [
+  { id: 'days',    label: 'Tage',  full: 'Tage'     },
+  { id: 'hours',   label: 'Std.',  full: 'Stunden'  },
+  { id: 'minutes', label: 'Min.',  full: 'Minuten'  },
+];
 
 interface DashboardProps {
   portfolio: Portfolio;
@@ -35,12 +44,13 @@ const DASHBOARD_ICON = (
 
 export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTotalChange, onGoalClick }: DashboardProps) {
   const [showAllGoals, setShowAllGoals] = useState(false);
+  const [freedomUnit, setFreedomUnit] = useState<FreedomTimeUnit>('days');
 
   const monthly = portfolio.monthlyIncome;
   const projectedMonthly = useMemo(() => projectMonthlyDividendsAtYear(portfolio, 1), [portfolio]);
   const total        = useMemo(() => totalMonthlyCosts(goals), [goals]);
   const minExpenses  = useMemo(() => totalMonthlyCosts(goals.filter((g) => g.id !== BONUS_GOAL_ID)), [goals]);
-  const freeDays = useMemo(() => freeDaysPerMonth(monthly, total), [monthly, total]);
+  const financedTime = useMemo(() => calculateFinancedTime(monthly, total), [monthly, total]);
 
   const allResults = useMemo(
     () => computeGoalResults(goals, monthly, portfolio),
@@ -128,8 +138,52 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTota
         </section>
       )}
 
-      {/* Freedom Calendar */}
-      <FreedomCalendar freeDaysPerMonth={freeDays} />
+      {/* Zurückgekaufte Zeit */}
+      <section className="bg-surface-1 rounded-2xl p-5" aria-labelledby="freedom-time-title">
+        <div className="flex items-center justify-between mb-4">
+          <h2 id="freedom-time-title" className="text-sm font-semibold text-white">
+            Zurückgekaufte Zeit
+          </h2>
+          <div
+            className="flex rounded-lg overflow-hidden border border-white/10"
+            role="group"
+            aria-label="Zeiteinheit wählen"
+          >
+            {FREEDOM_UNITS.map(({ id, label }) => (
+              <button
+                key={id}
+                onClick={() => setFreedomUnit(id)}
+                aria-pressed={freedomUnit === id}
+                className={`text-xs px-3 py-1 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+                  freedomUnit === id
+                    ? 'bg-accent/20 text-accent font-semibold'
+                    : 'text-white/45 hover:text-white/70'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {total > 0 ? (
+          <p className="text-white/80 text-sm">
+            <span className="text-accent font-bold">
+              {formatFreedomTime(
+                freedomUnit === 'days'    ? financedTime.days
+                : freedomUnit === 'hours' ? financedTime.hours
+                :                          financedTime.minutes,
+                freedomUnit,
+              )}
+              {' '}{FREEDOM_UNITS.find((u) => u.id === freedomUnit)?.full}
+            </span>
+            {' '}pro Monat zurückgekauft.
+          </p>
+        ) : (
+          <p className="text-sm text-white/50">
+            Füge Ausgaben im Setup hinzu.
+          </p>
+        )}
+      </section>
 
       {/* Meilensteine */}
       <section className="bg-surface-1 rounded-2xl p-5 border border-white/5">
