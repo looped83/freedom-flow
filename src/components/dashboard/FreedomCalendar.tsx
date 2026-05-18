@@ -1,6 +1,9 @@
 import { memo, useState } from 'react';
 import { formatDays } from '../../utils/formatting';
 
+const MONTH_DOTS = Array.from({ length: 30 }, (_, i) => i);
+const YEAR_DOTS  = Array.from({ length: 365 }, (_, i) => i);
+
 interface FreedomCalendarProps {
   freeDaysPerMonth: number;
 }
@@ -59,7 +62,7 @@ const MonthView = memo(function MonthView({ filledCount, freeDaysPerMonth }: { f
         className="grid gap-2"
         style={{ gridTemplateColumns: 'repeat(10, minmax(0, 1fr))' }}
       >
-        {Array.from({ length: 30 }, (_, i) => (
+        {MONTH_DOTS.map((i) => (
           <div
             key={i}
             className={`aspect-square rounded-full ${i < filledCount ? 'bg-accent' : 'bg-white/20'}`}
@@ -84,7 +87,7 @@ const YearView  = memo(function YearView({ filledCount, freeDaysPerYear }: { fil
         className="grid gap-1"
         style={{ gridTemplateColumns: 'repeat(26, minmax(0, 1fr))' }}
       >
-        {Array.from({ length: 365 }, (_, i) => (
+        {YEAR_DOTS.map((i) => (
           <div
             key={i}
             className={`aspect-square rounded-sm ${i < filledCount ? 'bg-gold' : 'bg-white/20'}`}

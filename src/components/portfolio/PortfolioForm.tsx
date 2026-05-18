@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Portfolio } from '../../types';
 import { formatEuro, liveFormatAmount, parseGerman } from '../../utils/formatting';
 
@@ -126,6 +126,9 @@ interface PortfolioFormProps {
 export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps) {
   const [form, setForm] = useState<Portfolio>({ ...portfolio });
   const [saved, setSaved] = useState(false);
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (savedTimer.current) clearTimeout(savedTimer.current); }, []);
 
   function handleChange(field: keyof Portfolio, value: number) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -135,7 +138,8 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
     ev.preventDefault();
     onSave(form);
     setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    if (savedTimer.current) clearTimeout(savedTimer.current);
+    savedTimer.current = setTimeout(() => setSaved(false), 2000);
   }
 
   const monthly = form.monthlyIncome;
