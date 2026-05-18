@@ -42,22 +42,34 @@ function YearBadge({ entry }: { entry: TimelineEntry }) {
 
 function MilestoneTile({ milestones }: { milestones: MilestoneResult[] }) {
   return (
-    <div className="mt-2 bg-gold-muted border border-gold/20 rounded-xl px-3 py-2.5 flex flex-col gap-1.5">
-      {milestones.map((m) => (
-        <div key={m.id} className="flex items-center gap-2">
-          <span className="flex-shrink-0 text-gold">
-            <MilestoneIcon icon={m.icon} className="w-3.5 h-3.5" />
-          </span>
-          <span className="text-xs text-gold font-semibold flex-1 min-w-0 truncate">{m.title}</span>
-          <span className="text-[10px] text-gold/80 font-medium tabular-nums flex-shrink-0">
-            {m.type === 'dividend' && m.dividendTarget != null
-              ? `${formatEuro(m.dividendTarget)} / Mo.`
-              : m.dateTarget
-                ? formatMilestoneDate(m.dateTarget)
-                : ''}
-          </span>
-        </div>
-      ))}
+    <div className="mt-2 flex flex-col gap-1.5">
+      {milestones.map((m) => {
+        const achieved = m.status === 'achieved';
+        return (
+          <div
+            key={m.id}
+            className={`flex items-center gap-2 rounded-xl px-3 py-2 border ${
+              achieved
+                ? 'bg-gold-muted border-gold/20'
+                : 'bg-surface-2 border-white/8 opacity-60'
+            }`}
+          >
+            <span className={`flex-shrink-0 ${achieved ? 'text-gold' : 'text-white/40'}`}>
+              <MilestoneIcon icon={m.icon} className="w-3.5 h-3.5" />
+            </span>
+            <span className={`text-xs font-semibold flex-1 min-w-0 truncate ${achieved ? 'text-gold' : 'text-white/50'}`}>
+              {m.title}
+            </span>
+            <span className={`text-[10px] font-medium tabular-nums flex-shrink-0 ${achieved ? 'text-gold/80' : 'text-white/35'}`}>
+              {m.type === 'dividend' && m.dividendTarget != null
+                ? `${formatEuro(m.dividendTarget)} / Mo.`
+                : m.dateTarget
+                  ? formatMilestoneDate(m.dateTarget)
+                  : ''}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
