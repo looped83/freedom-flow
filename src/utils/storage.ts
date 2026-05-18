@@ -17,10 +17,10 @@ export function loadState(): AppState {
     }
     // Migration: add lifetime dividend fields if missing from old data
     if (parsed.portfolio.lifetimeDividends === undefined) {
-      parsed.portfolio.lifetimeDividends = 0;
+      parsed.portfolio.lifetimeDividends = DEFAULT_PORTFOLIO.lifetimeDividends;
     }
     if (parsed.portfolio.lifetimeStartYear === undefined) {
-      parsed.portfolio.lifetimeStartYear = new Date().getFullYear();
+      parsed.portfolio.lifetimeStartYear = DEFAULT_PORTFOLIO.lifetimeStartYear;
     }
     // Migration: sync category of default goals so code-level changes take effect
     const defaultById = new Map(DEFAULT_GOALS.map((g) => [g.id, g]));
