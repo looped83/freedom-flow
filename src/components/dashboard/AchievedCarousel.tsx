@@ -1,4 +1,4 @@
-import { type ReactNode, useRef, useState } from 'react';
+import { type ReactNode, useMemo, useRef, useState } from 'react';
 
 export interface AchievedItem {
   id: string;
@@ -21,7 +21,7 @@ function chunks<T>(arr: T[], n: number): T[][] {
 export function AchievedCarousel({ heading, items, ariaLabel }: AchievedCarouselProps) {
   const [activeIdx, setActiveIdx] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const slides = chunks(items, 2);
+  const slides = useMemo(() => chunks(items, 2), [items]);
 
   function handleScroll() {
     const el = scrollRef.current;

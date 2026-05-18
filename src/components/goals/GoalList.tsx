@@ -9,6 +9,8 @@ import { BONUS_GOAL_ID } from '../../constants/defaultData';
 import { IconChevron, IconCheck, IconClose, IconTrash } from '../ui/Icons';
 import { GoalForm } from './GoalForm';
 
+const deCollator = new Intl.Collator('de');
+
 type GoalFilter = 'all' | 'covered' | 'open';
 type SortType  = 'alpha' | 'amount';
 
@@ -49,7 +51,7 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
     if (goalFilter === 'covered') results = results.filter((r) => r.status === 'covered');
     else if (goalFilter === 'open') results = results.filter((r) => r.status !== 'covered');
     if (goalSort.type === 'alpha') {
-      results.sort((a, b) => a.name.localeCompare(b.name, 'de'));
+      results.sort((a, b) => deCollator.compare(a.name, b.name));
       if (goalSort.dir === 'desc') results.reverse();
     } else {
       results.sort((a, b) => a.monthlyAmount - b.monthlyAmount);

@@ -7,6 +7,8 @@ import { IconChevron, IconCheck, IconClose, IconTrash } from '../ui/Icons';
 import { MilestoneIcon } from './MilestoneIcon';
 import { MilestoneForm } from './MilestoneForm';
 
+const deCollator = new Intl.Collator('de');
+
 type MilestoneFilter = 'all' | 'achieved' | 'open';
 type SortType = 'alpha' | 'target' | 'status';
 
@@ -69,7 +71,7 @@ export function MilestoneList({ milestones, portfolio, onAdd, onUpdate, onDelete
       : allResults.slice();
 
     const compare =
-      sort.type === 'alpha'  ? (a: MilestoneResult, b: MilestoneResult) => a.title.localeCompare(b.title, 'de')
+      sort.type === 'alpha'  ? (a: MilestoneResult, b: MilestoneResult) => deCollator.compare(a.title, b.title)
       : sort.type === 'target' ? (a: MilestoneResult, b: MilestoneResult) => milestoneSortKey(a) - milestoneSortKey(b)
       : (a: MilestoneResult, b: MilestoneResult) => {
           if (a.status !== b.status) return a.status === 'open' ? -1 : 1;
