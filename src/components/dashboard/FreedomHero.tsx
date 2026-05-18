@@ -33,8 +33,8 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
     window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   );
 
-  const income  = useInlineNumberEdit(monthly, onIncomeChange);
-  const expense = useInlineNumberEdit(total,   onTotalChange, { min: minExpenses });
+  const income  = useInlineNumberEdit(monthly * mul, (v) => onIncomeChange(v / mul));
+  const expense = useInlineNumberEdit(total * mul,   (v) => onTotalChange(v / mul), { min: minExpenses * mul });
 
   useEffect(() => {
     const el = circleRef.current;
@@ -136,10 +136,10 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3 w-full">
-          {/* Dividenden – tappable to edit (month view only) */}
+          {/* Dividenden – tappable to edit */}
           <div className="text-center">
             <p className="text-xs text-white/55 mb-1">Dividenden</p>
-            {view === 'month' && income.editing ? (
+            {income.editing ? (
               <input
                 ref={income.inputRef}
                 type="text"
@@ -149,27 +149,25 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
                 onChange={(e) => income.setRaw(e.target.value)}
                 onBlur={(e) => income.commit(e.target.value)}
                 onKeyDown={income.handleKeyDown}
-                aria-label="Monatliche Dividenden eingeben"
+                aria-label={view === 'month' ? 'Monatliche Dividenden eingeben' : 'Jährliche Dividenden eingeben'}
                 style={{ fontSize: '16px' }}
                 className="font-bold text-accent text-center bg-transparent border-b border-accent focus:outline-none w-full tabular-nums"
               />
-            ) : view === 'month' ? (
+            ) : (
               <button
                 onClick={income.startEdit}
-                aria-label={`Dividenden: ${formatEuro(monthly)}, tippen zum Bearbeiten`}
+                aria-label={`Dividenden: ${formatEuro(monthly * mul)}, tippen zum Bearbeiten`}
                 className="text-accent font-bold text-sm tabular-nums underline decoration-dotted underline-offset-2 hover:opacity-75 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
               >
                 {formatEuro(monthly * mul)}
               </button>
-            ) : (
-              <p className="text-accent font-bold text-sm tabular-nums">{formatEuro(monthly * mul)}</p>
             )}
           </div>
 
-          {/* Ausgaben / Monat|Jahr – tappable to edit (month view only) */}
+          {/* Ausgaben / Monat|Jahr – tappable to edit */}
           <div className="text-center">
             <p className="text-xs text-white/55 mb-1">{view === 'month' ? 'Ausgaben / Monat' : 'Ausgaben / Jahr'}</p>
-            {view === 'month' && expense.editing ? (
+            {expense.editing ? (
               <input
                 ref={expense.inputRef}
                 type="text"
@@ -179,20 +177,18 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
                 onChange={(e) => expense.setRaw(e.target.value)}
                 onBlur={(e) => expense.commit(e.target.value)}
                 onKeyDown={expense.handleKeyDown}
-                aria-label="Monatliche Ausgaben eingeben"
+                aria-label={view === 'month' ? 'Monatliche Ausgaben eingeben' : 'Jährliche Ausgaben eingeben'}
                 style={{ fontSize: '16px' }}
                 className="font-bold text-white text-center bg-transparent border-b border-white/40 focus:outline-none w-full tabular-nums"
               />
-            ) : view === 'month' ? (
+            ) : (
               <button
                 onClick={expense.startEdit}
-                aria-label={`Ausgaben pro Monat: ${formatEuro(total)}, tippen zum Bearbeiten`}
+                aria-label={`Ausgaben: ${formatEuro(total * mul)}, tippen zum Bearbeiten`}
                 className="text-white font-bold text-sm tabular-nums underline decoration-dotted underline-offset-2 hover:opacity-75 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
               >
                 {formatEuro(total * mul)}
               </button>
-            ) : (
-              <p className="text-white font-bold text-sm tabular-nums">{formatEuro(total * mul)}</p>
             )}
           </div>
 
