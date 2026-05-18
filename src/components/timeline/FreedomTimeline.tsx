@@ -89,11 +89,6 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
       className="relative"
       aria-label={entry.isCurrentYear ? `Heute (${entry.year})` : `Jahr ${entry.year}`}
     >
-      {/* Year label – above the tile */}
-      <p className={`text-xs font-bold mb-1.5 ${yearColor}`}>
-        {entry.year}
-      </p>
-
       <div className={`rounded-2xl p-4 relative ${
         isHero
           ? 'bg-accent-muted border-2 border-accent/40'
@@ -116,6 +111,11 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
             </svg>
           </button>
         )}
+
+        {/* Year label – inside tile, above dividend */}
+        <p className={`text-xs font-bold mb-1.5 ${yearColor} ${collapsible && hasContent ? 'pr-7' : ''}`}>
+          {entry.year}
+        </p>
 
         {/* Dividend row */}
         <div className={`flex items-center justify-between ${hasContent && !collapsed ? 'mb-2' : ''} ${collapsible && hasContent ? 'pr-7' : ''}`}>
