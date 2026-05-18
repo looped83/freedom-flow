@@ -172,7 +172,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
               className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"
             >
               <div
-                className="h-full bg-accent rounded-full motion-safe:transition-[width] motion-safe:duration-[2000ms] motion-safe:ease-linear"
+                className="h-full bg-accent rounded-full "
                 style={{ width: `${dayPct}%` }}
               />
             </div>
@@ -207,7 +207,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
                   className="h-1 bg-white/10 rounded-full overflow-hidden"
                 >
                   <div
-                    className="h-full bg-accent rounded-full motion-safe:transition-[width] motion-safe:duration-[2000ms] motion-safe:ease-linear"
+                    className="h-full bg-accent rounded-full "
                     style={{ width: `${pct}%` }}
                   />
                 </div>
@@ -242,7 +242,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
             >
               {formatEuro(lifetimeTotal)}
             </p>
-            <p className="text-xs text-white/50 mt-2">Seit 2012</p>
+            <p className="text-xs text-white/50 mt-2">Seit {portfolio.lifetimeStartYear}</p>
           </div>
 
           <div aria-hidden="true" className="lf-ring flex-shrink-0 mt-0.5 w-8 h-8" />
@@ -273,9 +273,21 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
         </div>
       </section>
 
-      <p className="text-center text-xs text-white/50 pb-2">
-        Zuletzt aktualisiert:&nbsp;{formatTime(now)}
-      </p>
+      <div className="pb-2 space-y-2">
+        <p className="text-center text-xs text-white/50">
+          Zuletzt aktualisiert:&nbsp;{formatTime(now)}
+        </p>
+        <div
+          role="progressbar"
+          aria-label="Nächste Aktualisierung in 10 Sekunden"
+          aria-valuenow={0}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          className="h-0.5 bg-white/10 rounded-full overflow-hidden"
+        >
+          <div key={String(now.getTime())} className="h-full bg-accent/40 rounded-full lf-countdown-bar" />
+        </div>
+      </div>
 
     </main>
   );

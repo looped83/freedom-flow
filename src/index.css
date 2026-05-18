@@ -80,6 +80,16 @@
   animation: lf-ring-rotate 2.5s linear infinite;
 }
 
+/* Live Flow: 10s refresh countdown bar — restarted by React key-remount on each tick */
+@keyframes lf-countdown {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+.lf-countdown-bar {
+  transform-origin: left;
+  animation: lf-countdown 10s linear forwards;
+}
+
 /* Goal card expand – composited via grid-template-rows (no layout thrashing) */
 @keyframes slide-down {
   from { grid-template-rows: 0fr; opacity: 0; }
