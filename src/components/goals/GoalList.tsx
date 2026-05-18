@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Goal, Portfolio } from '../../types';
+import type { Goal, GoalResult } from '../../types';
 import { CategoryIcon } from './CategoryIcon';
-import { computeGoalResults, totalMonthlyCosts } from '../../utils/calculations';
+import { totalMonthlyCosts } from '../../utils/calculations';
 import { formatEuro } from '../../utils/formatting';
 import { saveGoalDefault } from '../../utils/storage';
 import { useSwipeToDelete } from '../../hooks/useSwipeToDelete';
@@ -16,7 +16,7 @@ type SortType  = 'alpha' | 'amount';
 
 interface GoalListProps {
   goals: Goal[];
-  portfolio: Portfolio;
+  goalResults: GoalResult[];
   onAdd: (g: Goal) => void;
   onUpdate: (g: Goal) => void;
   onDelete: (id: string) => void;
@@ -24,7 +24,7 @@ interface GoalListProps {
   onFocusConsumed?: () => void;
 }
 
-export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoalId, onFocusConsumed }: GoalListProps) {
+export function GoalList({ goals, goalResults, onAdd, onUpdate, onDelete, focusGoalId, onFocusConsumed }: GoalListProps) {
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -45,11 +45,9 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
 
   const swipe = useSwipeToDelete(onDelete, { isLocked: (id) => editingId === id });
 
-  const monthly = portfolio.monthlyIncome;
   const total = useMemo(() => totalMonthlyCosts(goals), [goals]);
-  const allResults = useMemo(() => computeGoalResults(goals, monthly, portfolio), [goals, monthly, portfolio]);
   const displayResults = useMemo(() => {
-    let results = [...allResults];
+    let results = [...goalResults];
     if (goalFilter === 'covered') results = results.filter((r) => r.status === 'covered');
     else if (goalFilter === 'open') results = results.filter((r) => r.status !== 'covered');
     if (goalSort.type === 'alpha') {
@@ -60,7 +58,7 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
       if (goalSort.dir === 'desc') results.reverse();
     }
     return results;
-  }, [allResults, goalFilter, goalSort]);
+  }, [goalResults, goalFilter, goalSort]);
 
   function handleSortChange(type: SortType) {
     setGoalSort((prev) => {

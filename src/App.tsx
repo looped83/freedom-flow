@@ -29,7 +29,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('dashboard');
   const [visitedTabs, setVisitedTabs] = useState<Set<Tab>>(() => new Set<Tab>());
   const [focusGoalId, setFocusGoalId] = useState<string | null>(null);
-  const { state, actions } = useAppState();
+  const { state, actions, goalResults } = useAppState();
 
   const handleTabChange = useCallback((next: Tab) => {
     setTab(next);
@@ -63,6 +63,7 @@ export default function App() {
         <Dashboard
           portfolio={state.portfolio}
           goals={state.goals}
+          goalResults={goalResults}
           milestones={state.milestones}
           onIncomeChange={handleIncomeChange}
           onTotalChange={actions.setTotalExpenses}
@@ -91,6 +92,7 @@ export default function App() {
           <div hidden={tab !== 'setup'}>
             <SetupPage
               goals={state.goals}
+              goalResults={goalResults}
               milestones={state.milestones}
               portfolio={state.portfolio}
               onAdd={actions.addGoal}
