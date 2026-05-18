@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Portfolio } from '../../types';
 import {
   calculateAnnualDividends,
@@ -38,7 +38,6 @@ interface LiveFlowProps {
   portfolio: Portfolio;
 }
 
-
 interface RateCard {
   id: string;
   label: string;
@@ -68,9 +67,12 @@ const LIVE_BADGE = (
   </div>
 );
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-}
+// Module-level: avoid constructing on every render / every formatTime call
+const timeFormatter = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' });
+function formatTime(date: Date): string { return timeFormatter.format(date); }
+
+// Cent-snap: stable reference, no allocation on every render
+function snap(v: number): number { return Math.round(v * 100) / 100; }
 
 export function LiveFlow({ portfolio }: LiveFlowProps) {
   const monthly = portfolio.monthlyIncome;
@@ -88,26 +90,28 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
     };
   }, []);
 
-  const dailyRate = calculateDividendRatePerDay(monthly);
+  // startOfDay only changes when the calendar date changes (once per day), not every 10s tick.
+  const todayYear  = now.getFullYear();
+  const todayMonth = now.getMonth();
+  const todayDate  = now.getDate();
+  const startOfDay = useMemo(
+    () => new Date(todayYear, todayMonth, todayDate),
+    [todayYear, todayMonth, todayDate],
+  );
+
+  // Daily baselines: recompute only when income or calendar date changes.
+  const weekBase     = useMemo(() => snap(calculateEarnedThisWeekSoFar(monthly, startOfDay)),  [monthly, startOfDay]);
+  const monthBase    = useMemo(() => snap(calculateEarnedThisMonthSoFar(monthly, startOfDay)), [monthly, startOfDay]);
+  const yearBase     = useMemo(() => snap(calculateEarnedThisYearSoFar(monthly, startOfDay)),  [monthly, startOfDay]);
+  const lifetimeBase = useMemo(
+    () => snap(calculateLifetimeDividends(portfolio.lifetimeDividends, portfolio.lifetimeStartYear, monthly, startOfDay)),
+    [portfolio.lifetimeDividends, portfolio.lifetimeStartYear, monthly, startOfDay],
+  );
+
+  const dailyRate = useMemo(() => calculateDividendRatePerDay(monthly), [monthly]);
 
   // The sole changing value each tick.
   const earnedToday = calculateEarnedTodaySoFar(monthly, now);
-
-  // Midnight baselines — constant within the day.
-  // Snapped to exact cents so that (base + earnedToday) crosses every cent
-  // boundary at the same earnedToday value as earnedToday alone, guaranteeing
-  // all displayed numbers change on the exact same render.
-  const snap = (v: number) => Math.round(v * 100) / 100;
-  const startOfDay   = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const weekBase     = snap(calculateEarnedThisWeekSoFar(monthly, startOfDay));
-  const monthBase    = snap(calculateEarnedThisMonthSoFar(monthly, startOfDay));
-  const yearBase     = snap(calculateEarnedThisYearSoFar(monthly, startOfDay));
-  const lifetimeBase = snap(calculateLifetimeDividends(
-    portfolio.lifetimeDividends,
-    portfolio.lifetimeStartYear,
-    monthly,
-    startOfDay,
-  ));
 
   const earnedWeek    = weekBase    + earnedToday;
   const earnedMonth   = monthBase   + earnedToday;
