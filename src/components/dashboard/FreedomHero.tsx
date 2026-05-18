@@ -194,7 +194,7 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
 
           <div className="text-center">
             <p className="text-xs text-white/55 mb-1">Offen</p>
-            <p className="text-white/65 font-bold text-sm tabular-nums">{formatEuro(missing * mul)}</p>
+            <p className="text-white/65 font-bold text-sm tabular-nums text-center">{formatEuro(missing * mul)}</p>
           </div>
         </div>
 
