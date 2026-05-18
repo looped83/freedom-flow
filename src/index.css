@@ -69,15 +69,13 @@
   }
 }
 
-/* Live Flow: composited ring – only transform:rotate, no layout/paint */
-@keyframes lf-ring-rotate {
-  to { transform: rotate(360deg); }
+/* Live Flow: circular progress ring — stroke-dashoffset fills arc over 10s */
+@keyframes lf-ring-fill {
+  from { stroke-dashoffset: 81.68; }
+  to   { stroke-dashoffset: 0; }
 }
-.lf-ring {
-  border-radius: 9999px;
-  border: 2px solid rgba(74, 222, 128, 0.12);
-  border-top-color: #4ade80;
-  animation: lf-ring-rotate 2.5s linear infinite;
+.lf-ring-fill {
+  animation: lf-ring-fill 10s linear forwards;
 }
 
 /* Live Flow: 10s refresh countdown bar — restarted by React key-remount on each tick */
