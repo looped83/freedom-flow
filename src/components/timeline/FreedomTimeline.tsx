@@ -21,24 +21,6 @@ const TIMELINE_ICON = (
   </svg>
 );
 
-function YearBadge({ entry }: { entry: TimelineEntry }) {
-  return (
-    <div
-      className={`absolute left-0 top-1.5 w-14 h-7 rounded-lg flex items-center justify-center text-xs font-bold border-2 ${
-        entry.isCurrentYear
-          ? 'bg-orange-400/10 border-orange-400/60 text-orange-400'
-          : entry.isFreedomYear
-          ? 'bg-accent border-accent text-surface'
-          : entry.isPastYear
-          ? 'bg-surface-2 border-white/15 text-white/45'
-          : 'bg-surface-2 border-white/35 text-white'
-      }`}
-      aria-hidden="true"
-    >
-      {entry.year}
-    </div>
-  );
-}
 
 const MilestoneTile = memo(function MilestoneTile({ milestones }: { milestones: MilestoneResult[] }) {
   return (
@@ -94,48 +76,54 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
   const achieved = entry.isPastYear;
   const hasContent = hasGoals || entry.isFreedomYear || milestones.length > 0;
 
+  const yearColor = entry.isCurrentYear
+    ? 'text-orange-400'
+    : entry.isFreedomYear
+    ? 'text-accent'
+    : entry.isPastYear
+    ? 'text-white/45'
+    : 'text-white';
+
   return (
     <li
       className="relative pl-16"
       aria-label={entry.isCurrentYear ? `Heute (${entry.year})` : `Jahr ${entry.year}`}
     >
-      <YearBadge entry={entry} />
-
-      <div className={`rounded-2xl p-4 ${
+      <div className={`rounded-2xl p-4 relative ${
         isHero
           ? 'bg-accent-muted border-2 border-accent/40'
           : 'bg-surface-1'
       }`}>
 
-        {/* Dividende row – tappable toggle for future cards */}
-        {collapsible && hasContent ? (
+        {/* Chevron – absolute top-right, only for collapsible cards with content */}
+        {collapsible && hasContent && (
           <button
             onClick={() => setCollapsed((c) => !c)}
             aria-expanded={!collapsed}
-            className="flex items-center justify-between w-full mb-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
+            aria-label={collapsed ? `${entry.year} ausklappen` : `${entry.year} einklappen`}
+            className="absolute top-3 right-3 p-1 text-white/40 hover:text-white/70 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
           >
-            <span className="text-xs font-bold text-white">Dividende</span>
-            <span className="flex items-center gap-2">
-              <span className="text-sm font-bold text-orange-400 tabular-nums">
-                {formatEuro(entry.projectedMonthly)} / Mo.
-              </span>
-              <svg
-                viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"
-                strokeLinecap="round" className={`w-3.5 h-3.5 text-white/40 flex-shrink-0 transition-transform duration-200 ${collapsed ? '' : 'rotate-180'}`}
-                aria-hidden="true"
-              >
-                <polyline points="3 6 8 11 13 6" />
-              </svg>
-            </span>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"
+              strokeLinecap="round" className={`w-3.5 h-3.5 transition-transform duration-200 ${collapsed ? '' : 'rotate-180'}`}
+              aria-hidden="true"
+            >
+              <polyline points="3 6 8 11 13 6" />
+            </svg>
           </button>
-        ) : (
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-white">Dividende</span>
-            <span className="text-sm font-bold text-orange-400 tabular-nums">
-              {formatEuro(entry.projectedMonthly)} / Mo.
-            </span>
-          </div>
         )}
+
+        {/* Year label – inside tile, above dividend */}
+        <p className={`text-xs font-bold mb-1.5 ${yearColor} ${collapsible && hasContent ? 'pr-7' : ''}`}>
+          {entry.year}
+        </p>
+
+        {/* Dividend row */}
+        <div className={`flex items-center justify-between ${hasContent && !collapsed ? 'mb-2' : ''} ${collapsible && hasContent ? 'pr-7' : ''}`}>
+          <span className="text-xs font-bold text-white">Dividende</span>
+          <span className="text-sm font-bold text-orange-400 tabular-nums">
+            {formatEuro(entry.projectedMonthly)} / Mo.
+          </span>
+        </div>
 
         {!collapsed && (
           <>
