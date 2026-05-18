@@ -83,6 +83,7 @@ export function SetupPage({
         {active === 'milestones' && (
           <MilestoneList
             milestones={milestones}
+            goals={goals}
             portfolio={portfolio}
             onAdd={onAddMilestone}
             onUpdate={onUpdateMilestone}
