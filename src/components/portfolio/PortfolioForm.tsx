@@ -21,10 +21,11 @@ interface NumberFieldProps {
   max: number;
   step: number;
   hideSlider?: boolean;
+  valueClassName?: string;
   onChange: (v: number) => void;
 }
 
-function NumberField({ fieldId, label, value, unit, min, max, step, hideSlider, onChange }: NumberFieldProps) {
+function NumberField({ fieldId, label, value, unit, min, max, step, hideSlider, valueClassName, onChange }: NumberFieldProps) {
   const [raw, setRaw] = useState('');
   const [focused, setFocused] = useState(false);
 
@@ -70,7 +71,7 @@ function NumberField({ fieldId, label, value, unit, min, max, step, hideSlider, 
               if (e.key === 'Escape') setFocused(false);
             }}
             aria-label={`${label} direkt eingeben`}
-            className="w-24 text-right text-sm font-bold text-white bg-surface-2 border border-white/10 rounded-lg px-2 py-1 focus:outline-none focus:border-accent tabular-nums"
+            className={`w-24 text-right text-sm font-bold ${valueClassName ?? 'text-white'} bg-surface-2 border border-white/10 rounded-lg px-2 py-1 focus:outline-none focus:border-accent tabular-nums`}
           />
           <span className="text-sm text-white/65 w-8 flex-shrink-0">{unit}</span>
         </div>
@@ -100,6 +101,7 @@ interface FieldConfig {
   max: number;
   step: number;
   hideSlider?: boolean;
+  valueClassName?: string;
 }
 
 const FIELDS: FieldConfig[] = [
@@ -113,8 +115,8 @@ const FIELDS: FieldConfig[] = [
 ];
 
 const LIFETIME_FIELDS: FieldConfig[] = [
-  { id: 'lifetimeStartYear', label: 'Jahr',                         unit: 'Jahr', min: 2000, max: 2040, step: 1, hideSlider: true },
-  { id: 'lifetimeDividends', label: 'Erhaltene Dividende',          unit: '€', min: 0, max: 1_000_000, step: 1, hideSlider: true },
+  { id: 'lifetimeStartYear', label: 'Jahr',               unit: 'Jahr', min: 2000, max: 2040, step: 1, hideSlider: true, valueClassName: 'text-accent' },
+  { id: 'lifetimeDividends', label: 'Erhaltene Dividende', unit: '€',   min: 0, max: 1_000_000, step: 1, hideSlider: true, valueClassName: 'text-accent' },
 ];
 
 interface PortfolioFormProps {
@@ -147,10 +149,7 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
 
   return (
     <section className="max-w-4xl mx-auto px-4 py-6" aria-labelledby="portfolio-form-heading">
-      <div className="mb-5">
-        <h2 id="portfolio-form-heading" className="text-lg font-bold text-white">Portfolio-Einstellungen</h2>
-        <p className="text-sm text-white/65 mt-1">Schieberegler oder Zahl direkt eingeben.</p>
-      </div>
+      <h2 id="portfolio-form-heading" className="text-2xl font-bold text-accent mb-6">Portfolio</h2>
 
       <div className="grid grid-cols-2 gap-3 mb-6">
         <div className="bg-surface-1 rounded-2xl p-5">
@@ -179,7 +178,7 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
         ))}
 
         <div className="pt-4 border-t border-white/5 space-y-6">
-          <h3 className="text-sm font-semibold text-white/80">Lifetime-Dividenden</h3>
+          <h3 className="text-sm font-semibold text-accent">Lifetime-Dividenden</h3>
           {LIFETIME_FIELDS.map((f) => (
             <NumberField
               key={f.id}
@@ -191,6 +190,7 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
               max={f.max}
               step={f.step}
               hideSlider={f.hideSlider}
+              valueClassName={f.valueClassName}
               onChange={(v) => handleChange(f.id, v)}
             />
           ))}

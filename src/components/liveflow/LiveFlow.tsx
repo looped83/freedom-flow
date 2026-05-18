@@ -184,7 +184,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
         {/* Day progress */}
         <div className="mt-4 space-y-1.5">
           <p className="text-xs text-white/50">
-            von {formatEuro(dailyRate)} erwartet heute
+            {formatEuro(dailyRate)} heute erwartet
           </p>
           <div className="flex items-center gap-2">
             <div

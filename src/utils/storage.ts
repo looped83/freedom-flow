@@ -22,6 +22,10 @@ export function loadState(): AppState {
     if (parsed.portfolio.lifetimeStartYear === undefined) {
       parsed.portfolio.lifetimeStartYear = DEFAULT_PORTFOLIO.lifetimeStartYear;
     }
+    // Migration: update old default year 2012 to current default 2026
+    if (parsed.portfolio.lifetimeStartYear === 2012) {
+      parsed.portfolio.lifetimeStartYear = 2026;
+    }
     // Migration: sync category of default goals so code-level changes take effect
     const defaultById = new Map(DEFAULT_GOALS.map((g) => [g.id, g]));
     parsed.goals = parsed.goals.map((g) => {
