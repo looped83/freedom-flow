@@ -92,7 +92,7 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
       aria-label={entry.isCurrentYear ? `Heute (${entry.year})` : `Jahr ${entry.year}`}
     >
       <div
-        className={`rounded-2xl p-4 relative ${isHero ? 'bg-accent-muted border-2 border-accent/40' : 'bg-surface-1'} ${isInteractive ? 'cursor-pointer select-none' : ''}`}
+        className={`rounded-2xl p-4 relative ${isHero ? 'bg-accent-muted border-2 border-accent/40' : entry.isCurrentYear ? 'bg-surface-1 border border-accent/20' : 'bg-surface-1'} ${isInteractive ? 'cursor-pointer select-none' : ''}`}
         onClick={isInteractive ? () => setCollapsed((c) => !c) : undefined}
         role={isInteractive ? 'button' : undefined}
         tabIndex={isInteractive ? 0 : undefined}
