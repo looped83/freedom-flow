@@ -8,7 +8,7 @@ const fmtDec = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 1, maximu
 function formatFieldValue(value: number, unit: string): string {
   if (unit === '€') return fmtInt.format(value);
   if (unit === '%') return fmtDec.format(value);
-  if (unit === 'Jahr') return fmtInt.format(value);
+  if (unit === 'Jahr') return String(value);
   return String(value);
 }
 
@@ -20,10 +20,11 @@ interface NumberFieldProps {
   min: number;
   max: number;
   step: number;
+  hideSlider?: boolean;
   onChange: (v: number) => void;
 }
 
-function NumberField({ fieldId, label, value, unit, min, max, step, onChange }: NumberFieldProps) {
+function NumberField({ fieldId, label, value, unit, min, max, step, hideSlider, onChange }: NumberFieldProps) {
   const [raw, setRaw] = useState('');
   const [focused, setFocused] = useState(false);
 
@@ -46,17 +47,19 @@ function NumberField({ fieldId, label, value, unit, min, max, step, onChange }: 
   }
 
   const displayValue = focused ? raw : formatFieldValue(value, unit);
+  const inputId = `${fieldId}-input`;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-2">
-        <label htmlFor={`${fieldId}-slider`} className="text-sm text-white/80 font-medium">
+        <label htmlFor={inputId} className="text-sm text-white/80 font-medium">
           {label}
         </label>
         <div className="flex items-center gap-1.5">
           <input
+            id={inputId}
             type="text"
-            inputMode="decimal"
+            inputMode={unit === 'Jahr' ? 'numeric' : 'decimal'}
             style={{ fontSize: '16px' }}
             value={displayValue}
             onFocus={handleFocus}
@@ -72,17 +75,19 @@ function NumberField({ fieldId, label, value, unit, min, max, step, onChange }: 
           <span className="text-sm text-white/65 w-8 flex-shrink-0">{unit}</span>
         </div>
       </div>
-      <input
-        id={`${fieldId}-slider`}
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-        aria-label={label}
-        className="w-full accent-accent h-2 rounded-full cursor-pointer"
-      />
+      {!hideSlider && (
+        <input
+          id={`${fieldId}-slider`}
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(parseFloat(e.target.value))}
+          aria-label={label}
+          className="w-full accent-accent h-2 rounded-full cursor-pointer"
+        />
+      )}
     </div>
   );
 }
@@ -94,6 +99,7 @@ interface FieldConfig {
   min: number;
   max: number;
   step: number;
+  hideSlider?: boolean;
 }
 
 const FIELDS: FieldConfig[] = [
@@ -107,8 +113,8 @@ const FIELDS: FieldConfig[] = [
 ];
 
 const LIFETIME_FIELDS: FieldConfig[] = [
-  { id: 'lifetimeDividends', label: 'Bereits erhaltene Dividenden', unit: '€',    min: 0,    max: 1_000_000, step: 1    },
-  { id: 'lifetimeStartYear', label: 'Jahr',                         unit: 'Jahr', min: 2000, max: 2040,      step: 1    },
+  { id: 'lifetimeStartYear', label: 'Erste Dividenden erhalten', unit: 'Jahr', min: 2000, max: 2040, step: 1, hideSlider: true },
+  { id: 'lifetimeDividends', label: 'Bereits erhaltene Dividenden', unit: '€', min: 0, max: 1_000_000, step: 1, hideSlider: true },
 ];
 
 interface PortfolioFormProps {
@@ -180,6 +186,7 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
               min={f.min}
               max={f.max}
               step={f.step}
+              hideSlider={f.hideSlider}
               onChange={(v) => handleChange(f.id, v)}
             />
           ))}

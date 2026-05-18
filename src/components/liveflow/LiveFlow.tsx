@@ -208,29 +208,6 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
         </div>
       </section>
 
-      {/* ── Cashflow ── */}
-      <section aria-labelledby="lf-cashflow-heading">
-        <h2
-          id="lf-cashflow-heading"
-          className="text-sm font-semibold text-white mb-3"
-        >
-          Cashflow
-        </h2>
-        <div className="grid grid-cols-3 gap-3">
-          {RATE_CARDS.map(({ id, label, getValue, small }) => (
-            <div key={id} className="bg-surface-1 rounded-2xl p-4 border border-white/5">
-              <p className="text-xs text-white/60 mb-2">{label}</p>
-              <p className="text-accent font-bold text-base tabular-nums">
-                {small
-                  ? formatCurrencyForSmallAmounts(getValue(monthly))
-                  : formatEuro(getValue(monthly))
-                }
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* ── Lifetime Dividenden ── */}
       <section
         aria-labelledby="lf-lifetime-heading"
@@ -285,6 +262,29 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
         <p className="text-xs text-white/50 mt-2">
           Seit {portfolio.lifetimeStartYear}
         </p>
+      </section>
+
+      {/* ── Cashflow ── */}
+      <section aria-labelledby="lf-cashflow-heading">
+        <h2
+          id="lf-cashflow-heading"
+          className="text-sm font-semibold text-white mb-3"
+        >
+          Cashflow
+        </h2>
+        <div className="grid grid-cols-3 gap-3">
+          {RATE_CARDS.map(({ id, label, getValue, small }) => (
+            <div key={id} className="bg-surface-1 rounded-2xl p-4 border border-white/5">
+              <p className="text-xs text-white/60 mb-2">{label}</p>
+              <p className="text-accent font-bold text-base tabular-nums">
+                {small
+                  ? formatCurrencyForSmallAmounts(getValue(monthly))
+                  : formatEuro(getValue(monthly))
+                }
+              </p>
+            </div>
+          ))}
+        </div>
       </section>
 
       <p className="text-center text-xs text-white/50 pb-2">
