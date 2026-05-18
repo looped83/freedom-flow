@@ -9,9 +9,11 @@ import {
   calculateEarnedTodaySoFar,
   calculateEarnedThisWeekSoFar,
   calculateEarnedThisMonthSoFar,
+  calculateEarnedThisYearSoFar,
   calculateDayProgress,
   calculateWeekProgress,
   calculateMonthProgress,
+  calculateYearProgress,
   formatCurrencyForSmallAmounts,
 } from '../../utils/liveFlowCalculations';
 import { formatEuro } from '../../utils/formatting';
@@ -66,7 +68,7 @@ function MiniHeroTile({ label, value, progressPct, progressAriaLabel }: MiniHero
   return (
     <div className="bg-accent-muted border border-accent/20 rounded-2xl p-4">
       <p className="text-sm font-bold text-white mb-2">{label}</p>
-      <p className="text-2xl font-bold text-accent tabular-nums leading-none" aria-live="off">
+      <p className="text-xl font-bold text-accent tabular-nums leading-none" aria-live="off">
         {formatEuro(value)}
       </p>
       <div className="mt-3">
@@ -107,12 +109,15 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
   const earnedToday   = calculateEarnedTodaySoFar(monthly, now);
   const earnedWeek    = calculateEarnedThisWeekSoFar(monthly, now);
   const earnedMonth   = calculateEarnedThisMonthSoFar(monthly, now);
+  const earnedYear    = calculateEarnedThisYearSoFar(monthly, now);
   const dayProgress   = calculateDayProgress(now);
   const weekProgress  = calculateWeekProgress(now);
   const monthProgress = calculateMonthProgress(now);
+  const yearProgress  = calculateYearProgress(now);
   const dayPct        = Math.round(dayProgress * 100);
   const weekPct       = Math.round(weekProgress * 100);
   const monthPct      = Math.round(monthProgress * 100);
+  const yearPct       = Math.round(yearProgress * 100);
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
@@ -150,8 +155,8 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
         </div>
       </section>
 
-      {/* ── Mini-hero tiles: Woche · Monat ── */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* ── Mini-hero tiles: Woche · Monat · Jahr ── */}
+      <div className="grid grid-cols-3 gap-3">
         <MiniHeroTile
           label="Diese Woche"
           value={earnedWeek}
@@ -164,6 +169,12 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
           progressPct={monthPct}
           progressAriaLabel={`Monatsverlauf: ${monthPct} %`}
         />
+        <MiniHeroTile
+          label="Dieses Jahr"
+          value={earnedYear}
+          progressPct={yearPct}
+          progressAriaLabel={`Jahresverlauf: ${yearPct} %`}
+        />
       </div>
 
       {/* ── Cashflow ── */}
@@ -174,7 +185,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
         >
           Cashflow
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           {RATE_CARDS.map(({ id, label, getValue, small }) => (
             <div key={id} className="bg-surface-1 rounded-2xl p-4 border border-white/5">
               <p className="text-xs text-white/60 mb-2">{label}</p>

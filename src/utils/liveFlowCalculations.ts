@@ -63,6 +63,21 @@ export function calculateEarnedThisMonthSoFar(monthlyDividends: number, now: Dat
   return daily * (secondsElapsed / 86_400);
 }
 
+export function calculateEarnedThisYearSoFar(monthlyDividends: number, now: Date): number {
+  const daily = calculateDividendRatePerDay(monthlyDividends);
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+  const secondsElapsed = (now.getTime() - startOfYear.getTime()) / 1000;
+  return daily * (secondsElapsed / 86_400);
+}
+
+export function calculateYearProgress(now: Date): number {
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+  const startOfNextYear = new Date(now.getFullYear() + 1, 0, 1);
+  const totalSeconds = (startOfNextYear.getTime() - startOfYear.getTime()) / 1000;
+  const elapsedSeconds = (now.getTime() - startOfYear.getTime()) / 1000;
+  return Math.min(elapsedSeconds / totalSeconds, 1);
+}
+
 /**
  * Format a currency value with adaptive decimal places so small amounts
  * never display as 0,00 €.
