@@ -238,7 +238,7 @@ export function FreedomTimeline({ portfolio, goals, milestones }: FreedomTimelin
         </div>
       ) : (
         <div className="relative">
-          <ol className="space-y-5" aria-label="Freedom Timeline">
+          <ol className="space-y-2" aria-label="Freedom Timeline">
             {displayEntries.map((entry, idx) => {
               const isHero = idx === 0;
               const showSeparator =
