@@ -4,7 +4,7 @@ import { CategoryIcon } from '../goals/CategoryIcon';
 import { MilestoneIcon } from '../milestones/MilestoneIcon';
 import { buildFreedomTimeline, projectMonthlyDividendsAtYear, projectMonthlyDividendsYearsAgo } from '../../utils/calculations';
 import { computeMilestoneResult, filterMilestonesByExpenses, formatMilestoneDate, milestoneAchievedYear, milestoneSortKey } from '../../utils/milestones';
-import { IconChevron } from '../ui/Icons';
+import { IconChevron, IconDiamond } from '../ui/Icons';
 import { CURRENT_YEAR } from '../../constants/defaultData';
 import { formatEuro } from '../../utils/formatting';
 import { PageHeader } from '../layout/PageHeader';
@@ -109,7 +109,10 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
           }`}>
             {entry.year}
           </span>
-          <span className="text-xs font-bold text-white flex-1">Dividenden</span>
+          <span className="text-xs font-bold text-white flex-1 flex items-center gap-1.5">
+            <span className="text-accent/70 flex-shrink-0" aria-hidden="true"><IconDiamond className="w-3.5 h-3.5" /></span>
+            Dividenden
+          </span>
           <span className="text-sm font-bold text-green-400 tabular-nums">
             {formatEuro(entry.projectedMonthly)} / Mo.
           </span>

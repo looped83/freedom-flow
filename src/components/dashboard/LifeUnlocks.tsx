@@ -5,6 +5,7 @@ import { AchievedCarousel } from './AchievedCarousel';
 import { MilestoneIcon } from '../milestones/MilestoneIcon';
 import { computeMilestoneResults, formatDaysRemaining, formatMilestoneDate, milestoneSortKey } from '../../utils/milestones';
 import { formatEuro } from '../../utils/formatting';
+import { IconDiamond } from '../ui/Icons';
 
 interface LifeUnlocksProps {
   milestones: Milestone[];
@@ -77,7 +78,10 @@ export function LifeUnlocks({ milestones, portfolio }: LifeUnlocksProps) {
     return (
       <section aria-label="Meilensteine" className="space-y-3">
         <div className="flex items-center justify-between px-1">
-          <h2 className="text-sm font-semibold text-white">Meilensteine</h2>
+          <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+            <span className="text-accent/70 flex-shrink-0" aria-hidden="true"><IconDiamond /></span>
+            Meilensteine
+          </h2>
         </div>
         <p className="text-sm text-white/55 px-1">
           Noch keine Meilensteine. Lege deine ersten in Setup → Meilensteine an.
@@ -89,11 +93,9 @@ export function LifeUnlocks({ milestones, portfolio }: LifeUnlocksProps) {
   return (
     <section aria-label="Meilensteine" className="space-y-3">
       <div className="flex items-center justify-between px-1">
-        <h2 className="text-sm font-semibold text-white">
-          Meilensteine
-          <span className="text-white/40 font-normal ml-1.5">
-            ({achieved.length}/{milestones.length})
-          </span>
+        <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+          <span className="text-accent/70 flex-shrink-0" aria-hidden="true"><IconDiamond /></span>
+          <span>Meilensteine<span className="text-white/40 font-normal ml-1.5">({achieved.length}/{milestones.length})</span></span>
         </h2>
         {notAchieved.length > 3 && (
           <button
