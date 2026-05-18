@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 
 export interface AchievedItem {
   id: string;
@@ -24,11 +24,11 @@ export function AchievedCarousel({ heading, items, ariaLabel, headingIcon }: Ach
   const scrollRef = useRef<HTMLDivElement>(null);
   const slides = useMemo(() => chunks(items, 2), [items]);
 
-  function handleScroll() {
+  const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el || el.offsetWidth === 0) return;
     setActiveIdx(Math.round(el.scrollLeft / el.offsetWidth));
-  }
+  }, []);
 
   if (items.length === 0) return null;
 

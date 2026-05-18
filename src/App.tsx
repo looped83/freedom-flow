@@ -29,7 +29,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('dashboard');
   const [visitedTabs, setVisitedTabs] = useState<Set<Tab>>(() => new Set<Tab>());
   const [focusGoalId, setFocusGoalId] = useState<string | null>(null);
-  const { state, actions, goalResults } = useAppState();
+  const { state, actions, goalResults, milestoneResults, visibleMilestoneResults } = useAppState();
 
   const handleTabChange = useCallback((next: Tab) => {
     setTab(next);
@@ -64,7 +64,7 @@ export default function App() {
           portfolio={state.portfolio}
           goals={state.goals}
           goalResults={goalResults}
-          milestones={state.milestones}
+          milestoneResults={milestoneResults}
           onIncomeChange={handleIncomeChange}
           onTotalChange={actions.setTotalExpenses}
           onGoalClick={handleGoalClick}
@@ -76,7 +76,7 @@ export default function App() {
       <Suspense fallback={tab === 'timeline' ? <TabFallback /> : null}>
         {visitedTabs.has('timeline') && (
           <div hidden={tab !== 'timeline'}>
-            <FreedomTimeline portfolio={state.portfolio} goals={state.goals} milestones={state.milestones} />
+            <FreedomTimeline portfolio={state.portfolio} goals={state.goals} visibleMilestoneResults={visibleMilestoneResults} />
           </div>
         )}
       </Suspense>
@@ -93,7 +93,7 @@ export default function App() {
             <SetupPage
               goals={state.goals}
               goalResults={goalResults}
-              milestones={state.milestones}
+              visibleMilestoneResults={visibleMilestoneResults}
               portfolio={state.portfolio}
               onAdd={actions.addGoal}
               onUpdate={actions.updateGoal}

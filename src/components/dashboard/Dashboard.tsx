@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { Goal, GoalResult, Milestone, Portfolio } from '../../types';
+import type { Goal, GoalResult, MilestoneResult, Portfolio } from '../../types';
 import {
   projectMonthlyDividendsAtYear,
   totalMonthlyCosts,
@@ -51,7 +51,7 @@ interface DashboardProps {
   portfolio: Portfolio;
   goals: Goal[];
   goalResults: GoalResult[];
-  milestones: Milestone[];
+  milestoneResults: MilestoneResult[];
   onIncomeChange: (v: number) => void;
   onTotalChange: (v: number) => void;
   onGoalClick?: (id: string) => void;
@@ -63,7 +63,7 @@ const DASHBOARD_ICON = (
   </svg>
 );
 
-export function Dashboard({ portfolio, goals, goalResults, milestones, onIncomeChange, onTotalChange, onGoalClick }: DashboardProps) {
+export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onIncomeChange, onTotalChange, onGoalClick }: DashboardProps) {
   const [showAllGoals, setShowAllGoals] = useState(false);
   const [freedomUnit, setFreedomUnit] = useState<FreedomTimeUnit>('days');
 
@@ -94,6 +94,12 @@ export function Dashboard({ portfolio, goals, goalResults, milestones, onIncomeC
   }, [goalResults]);
 
   const visibleGoals = showAllGoals ? openGoals : openGoals.slice(0, MAX_VISIBLE_GOALS);
+
+  const achievedCarouselItems = useMemo(() => achievedGoals.map((g) => ({
+    id: g.id,
+    title: g.name,
+    icon: <CategoryIcon category={g.category} className="w-7 h-7" />,
+  })), [achievedGoals]);
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
@@ -204,7 +210,7 @@ export function Dashboard({ portfolio, goals, goalResults, milestones, onIncomeC
 
       {/* Meilensteine */}
       <section className="bg-surface-1 rounded-2xl p-5 border border-white/5">
-        <LifeUnlocks milestones={milestones} portfolio={portfolio} />
+        <LifeUnlocks milestoneResults={milestoneResults} />
       </section>
 
       {/* Ausgaben – open list + achieved carousel */}
@@ -278,11 +284,7 @@ export function Dashboard({ portfolio, goals, goalResults, milestones, onIncomeC
         <AchievedCarousel
           heading="Erreichte Ausgaben"
           headingIcon={CHECK_CIRCLE_ICON}
-          items={achievedGoals.map((g) => ({
-            id: g.id,
-            title: g.name,
-            icon: <CategoryIcon category={g.category} className="w-7 h-7" />,
-          }))}
+          items={achievedCarouselItems}
         />
       </section>
     </main>

@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import type { Milestone, MilestoneResult, Portfolio } from '../../types';
+import type { MilestoneResult } from '../../types';
 import { ProgressBar } from './ProgressBar';
 import { AchievedCarousel } from './AchievedCarousel';
 import { MilestoneIcon } from '../milestones/MilestoneIcon';
-import { computeMilestoneResults, formatDaysRemaining, formatMilestoneDate, milestoneSortKey } from '../../utils/milestones';
+import { formatDaysRemaining, formatMilestoneDate, milestoneSortKey } from '../../utils/milestones';
 import { formatEuro } from '../../utils/formatting';
 
 const FLAG_ICON = (
@@ -18,8 +18,7 @@ const AWARD_ICON = (
 );
 
 interface LifeUnlocksProps {
-  milestones: Milestone[];
-  portfolio: Portfolio;
+  milestoneResults: MilestoneResult[];
 }
 
 function barColor(progressPct: number): string {
@@ -63,15 +62,13 @@ function MilestoneCard({ result }: { result: MilestoneResult }) {
   );
 }
 
-export function LifeUnlocks({ milestones, portfolio }: LifeUnlocksProps) {
+export function LifeUnlocks({ milestoneResults }: LifeUnlocksProps) {
   const [showAll, setShowAll] = useState(false);
-
-  const results = useMemo(() => computeMilestoneResults(milestones, portfolio), [milestones, portfolio]);
 
   const { achieved, notAchieved } = useMemo(() => {
     const achieved: MilestoneResult[] = [];
     const notAchieved: MilestoneResult[] = [];
-    for (const r of results) {
+    for (const r of milestoneResults) {
       (r.status === 'achieved' ? achieved : notAchieved).push(r);
     }
     achieved.sort((a, b) => milestoneSortKey(a) - milestoneSortKey(b));
@@ -80,10 +77,16 @@ export function LifeUnlocks({ milestones, portfolio }: LifeUnlocksProps) {
       return milestoneSortKey(a) - milestoneSortKey(b);
     });
     return { achieved, notAchieved };
-  }, [results]);
+  }, [milestoneResults]);
   const visibleCards = showAll ? notAchieved : notAchieved.slice(0, 3);
 
-  if (milestones.length === 0) {
+  const carouselItems = useMemo(() => achieved.map((m) => ({
+    id: m.id,
+    title: m.title,
+    icon: <MilestoneIcon icon={m.icon} className="w-7 h-7" />,
+  })), [achieved]);
+
+  if (milestoneResults.length === 0) {
     return (
       <section aria-label="Meilensteine" className="space-y-3">
         <div className="flex items-center justify-between px-1">
@@ -104,7 +107,7 @@ export function LifeUnlocks({ milestones, portfolio }: LifeUnlocksProps) {
       <div className="flex items-center justify-between px-1">
         <h2 className="text-sm font-semibold text-white flex items-center gap-2">
           <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{FLAG_ICON}</span>
-          <span>Meilensteine<span className="text-white/55 font-normal ml-1.5">({achieved.length}/{milestones.length})</span></span>
+          <span>Meilensteine<span className="text-white/55 font-normal ml-1.5">({achieved.length}/{milestoneResults.length})</span></span>
         </h2>
         {notAchieved.length > 3 && (
           <button
@@ -134,11 +137,7 @@ export function LifeUnlocks({ milestones, portfolio }: LifeUnlocksProps) {
       <AchievedCarousel
         heading="Erreichte Meilensteine"
         headingIcon={AWARD_ICON}
-        items={achieved.map((m) => ({
-          id: m.id,
-          title: m.title,
-          icon: <MilestoneIcon icon={m.icon} className="w-7 h-7" />,
-        }))}
+        items={carouselItems}
       />
     </section>
   );
