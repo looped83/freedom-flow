@@ -25,6 +25,9 @@ interface LiveFlowProps {
 
 // SVG ring: r=10 in 28×28 viewBox, C=2π×10≈62.83
 const RING_CIRC = 2 * Math.PI * 10;
+// Day arc: r=26 in 64×64 viewBox, C=2π×26≈163.36
+const ARC_R = 26;
+const ARC_CIRC = 2 * Math.PI * ARC_R;
 
 interface RateCard {
   id: string;
@@ -75,6 +78,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
     };
   }, []);
 
+  const dailyRate     = calculateDividendRatePerDay(monthly);
   const earnedToday   = calculateEarnedTodaySoFar(monthly, now);
   const earnedWeek    = calculateEarnedThisWeekSoFar(monthly, now);
   const earnedMonth   = calculateEarnedThisMonthSoFar(monthly, now);
@@ -191,6 +195,73 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ── Alternative Hero: Heutiger Verlauf ── */}
+      <section
+        aria-labelledby="lf-verlauf-heading"
+        className="rounded-2xl p-6 border border-gold/20 bg-gold-muted"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-white mb-2 flex items-center gap-2">
+              Heutiger Verlauf
+              <span className="w-1.5 h-1.5 rounded-full bg-gold motion-safe:animate-pulse flex-shrink-0" aria-hidden="true" />
+            </p>
+            <p
+              id="lf-verlauf-heading"
+              className="text-5xl font-bold text-gold tabular-nums leading-none"
+              aria-live="off"
+              aria-atomic="true"
+            >
+              {formatEuro(earnedToday)}
+            </p>
+            <p className="text-xs text-white/45 mt-3">
+              von {formatEuro(dailyRate)} erwartet heute
+            </p>
+          </div>
+
+          {/* Day arc – fills clockwise as day progresses */}
+          <svg
+            width="72"
+            height="72"
+            viewBox="0 0 64 64"
+            aria-label={`Tagesfortschritt: ${dayPct} %`}
+            role="img"
+            className="flex-shrink-0"
+          >
+            <circle
+              cx="32" cy="32" r={ARC_R}
+              fill="none"
+              stroke="rgba(251,191,36,0.12)"
+              strokeWidth="4"
+            />
+            <circle
+              cx="32" cy="32" r={ARC_R}
+              fill="none"
+              stroke="#fbbf24"
+              strokeWidth="4"
+              strokeLinecap="round"
+              strokeDasharray={ARC_CIRC}
+              transform="rotate(-90 32 32)"
+              style={{
+                strokeDashoffset: ARC_CIRC * (1 - dayProgress),
+                transition: 'stroke-dashoffset 2s ease-in-out',
+              }}
+            />
+            <text
+              x="32" y="32"
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fill="rgba(251,191,36,0.85)"
+              fontSize="11"
+              fontWeight="700"
+              fontFamily="inherit"
+            >
+              {dayPct}%
+            </text>
+          </svg>
         </div>
       </section>
 
