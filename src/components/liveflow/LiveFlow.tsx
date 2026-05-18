@@ -78,24 +78,25 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
 
   const dailyRate = calculateDividendRatePerDay(monthly);
 
-  // The sole changing value each tick — everything else is derived from this
-  // so all displayed numbers cross cent boundaries on the exact same render.
+  // The sole changing value each tick.
   const earnedToday = calculateEarnedTodaySoFar(monthly, now);
 
-  // Midnight baseline: constant throughout the day, recomputed only when `now`
-  // crosses into a new date (which also updates `now` via the tick).
+  // Midnight baselines — constant within the day.
+  // Snapped to exact cents so that (base + earnedToday) crosses every cent
+  // boundary at the same earnedToday value as earnedToday alone, guaranteeing
+  // all displayed numbers change on the exact same render.
+  const snap = (v: number) => Math.round(v * 100) / 100;
   const startOfDay   = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const weekBase     = calculateEarnedThisWeekSoFar(monthly, startOfDay);
-  const monthBase    = calculateEarnedThisMonthSoFar(monthly, startOfDay);
-  const yearBase     = calculateEarnedThisYearSoFar(monthly, startOfDay);
-  const lifetimeBase = calculateLifetimeDividends(
+  const weekBase     = snap(calculateEarnedThisWeekSoFar(monthly, startOfDay));
+  const monthBase    = snap(calculateEarnedThisMonthSoFar(monthly, startOfDay));
+  const yearBase     = snap(calculateEarnedThisYearSoFar(monthly, startOfDay));
+  const lifetimeBase = snap(calculateLifetimeDividends(
     portfolio.lifetimeDividends,
     portfolio.lifetimeStartYear,
     monthly,
     startOfDay,
-  );
+  ));
 
-  // All share earnedToday as their variable delta → always change together
   const earnedWeek    = weekBase    + earnedToday;
   const earnedMonth   = monthBase   + earnedToday;
   const earnedYear    = yearBase    + earnedToday;
