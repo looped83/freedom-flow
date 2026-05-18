@@ -164,7 +164,7 @@ export function FreedomTimeline({ portfolio, goals, milestones }: FreedomTimelin
     }
     // Sort each year's milestones for stable display
     for (const list of map.values()) {
-      list.sort((a, b) => milestoneSortKey(a) - milestoneSortKey(b));
+      list.sort((a, b) => milestoneSortKey(b) - milestoneSortKey(a));
     }
     return { map, beyond };
   }, [milestones, portfolio]);
