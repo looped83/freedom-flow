@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { Portfolio } from '../../types';
 import {
   calculateAnnualDividends,
@@ -58,7 +58,7 @@ function formatTime(date: Date): string {
 
 
 interface MiniHeroProps {
-  label: string;
+  label: ReactNode;
   value: number;
   progressPct: number;
   progressAriaLabel: string;
@@ -67,8 +67,8 @@ interface MiniHeroProps {
 function MiniHeroTile({ label, value, progressPct, progressAriaLabel }: MiniHeroProps) {
   return (
     <div className="bg-accent-muted border border-accent/20 rounded-2xl p-4">
-      <p className="text-sm font-bold text-white mb-2">{label}</p>
-      <p className="text-xl font-bold text-accent tabular-nums leading-none" aria-live="off">
+      <p className="text-sm font-bold text-white mb-2 min-h-10 leading-5">{label}</p>
+      <p className="text-sm font-bold text-accent tabular-nums leading-none whitespace-nowrap" aria-live="off">
         {formatEuro(value)}
       </p>
       <div className="mt-3">
@@ -170,7 +170,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
           progressAriaLabel={`Monatsverlauf: ${monthPct} %`}
         />
         <MiniHeroTile
-          label="Dieses Jahr"
+          label={<>Dieses<br />Jahr</>}
           value={earnedYear}
           progressPct={yearPct}
           progressAriaLabel={`Jahresverlauf: ${yearPct} %`}
