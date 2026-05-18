@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useReducer } from 'react';
-import type { AppState, Goal, GoalResult, Milestone, Portfolio } from '../types';
+import type { AppState, Goal, GoalResult, Milestone, MilestoneResult, Portfolio } from '../types';
 import { AUTO_EXPENSES_MS_ID, BONUS_GOAL_ID } from '../constants/defaultData';
 import { loadState, resetState, saveState } from '../utils/storage';
 import { computeGoalResults } from '../utils/calculations';
+import { computeMilestoneResults, filterMilestonesByExpenses } from '../utils/milestones';
 
 type Action =
   | { type: 'SET_PORTFOLIO'; payload: Portfolio }
@@ -99,7 +100,7 @@ function reducer(state: AppState, action: Action): AppState {
   }
 }
 
-export type { GoalResult };
+export type { GoalResult, MilestoneResult };
 
 export interface AppActions {
   setPortfolio: (p: Portfolio) => void;
@@ -145,5 +146,17 @@ export function useAppState() {
     [state.goals, state.portfolio],
   );
 
-  return { state, actions, goalResults };
+  // All milestones evaluated (for Dashboard/LifeUnlocks).
+  const milestoneResults = useMemo<MilestoneResult[]>(
+    () => computeMilestoneResults(state.milestones, state.portfolio),
+    [state.milestones, state.portfolio],
+  );
+
+  // Expense-filtered milestones evaluated (for Timeline, MilestoneList).
+  const visibleMilestoneResults = useMemo<MilestoneResult[]>(
+    () => computeMilestoneResults(filterMilestonesByExpenses(state.milestones, state.goals), state.portfolio),
+    [state.milestones, state.goals, state.portfolio],
+  );
+
+  return { state, actions, goalResults, milestoneResults, visibleMilestoneResults };
 }

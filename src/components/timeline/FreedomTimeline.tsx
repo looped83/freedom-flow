@@ -1,9 +1,9 @@
 import { Fragment, memo, useMemo, useState } from 'react';
-import type { TimelineEntry, Goal, Milestone, MilestoneResult, Portfolio } from '../../types';
+import type { TimelineEntry, Goal, MilestoneResult, Portfolio } from '../../types';
 import { CategoryIcon } from '../goals/CategoryIcon';
 import { MilestoneIcon } from '../milestones/MilestoneIcon';
 import { buildFreedomTimeline, projectMonthlyDividendsAtYear, projectMonthlyDividendsYearsAgo } from '../../utils/calculations';
-import { computeMilestoneResult, filterMilestonesByExpenses, formatMilestoneDate, milestoneAchievedYear, milestoneSortKey } from '../../utils/milestones';
+import { formatMilestoneDate, milestoneAchievedYear, milestoneSortKey } from '../../utils/milestones';
 import { IconChevron } from '../ui/Icons';
 
 const BAR_ICON = (
@@ -20,7 +20,7 @@ const EMPTY_MILESTONES: MilestoneResult[] = [];
 interface FreedomTimelineProps {
   portfolio: Portfolio;
   goals: Goal[];
-  milestones: Milestone[];
+  visibleMilestoneResults: MilestoneResult[];
 }
 
 const TIMELINE_ICON = (
@@ -170,13 +170,8 @@ function TimelineSeparator({ label }: { label: string }) {
   );
 }
 
-export function FreedomTimeline({ portfolio, goals, milestones }: FreedomTimelineProps) {
+export function FreedomTimeline({ portfolio, goals, visibleMilestoneResults }: FreedomTimelineProps) {
   const baseEntries = useMemo(() => buildFreedomTimeline(goals, portfolio), [goals, portfolio]);
-
-  const visibleMilestones = useMemo(
-    () => filterMilestonesByExpenses(milestones, goals),
-    [milestones, goals],
-  );
 
   const beyondHorizonGoals = useMemo(() => {
     const ids = new Set(baseEntries.flatMap((e) => e.newGoals.map((g) => g.id)));
@@ -187,15 +182,14 @@ export function FreedomTimeline({ portfolio, goals, milestones }: FreedomTimelin
   const milestonesByYear = useMemo(() => {
     const map = new Map<number, MilestoneResult[]>();
     const beyond: MilestoneResult[] = [];
-    for (const m of visibleMilestones) {
+    for (const m of visibleMilestoneResults) {
       const year = milestoneAchievedYear(m, portfolio);
-      const result = computeMilestoneResult(m, portfolio);
       if (year == null) {
-        beyond.push(result);
+        beyond.push(m);
         continue;
       }
       const list = map.get(year) ?? [];
-      list.push(result);
+      list.push(m);
       map.set(year, list);
     }
     // Sort each year's milestones for stable display
@@ -203,7 +197,7 @@ export function FreedomTimeline({ portfolio, goals, milestones }: FreedomTimelin
       list.sort((a, b) => milestoneSortKey(b) - milestoneSortKey(a));
     }
     return { map, beyond };
-  }, [visibleMilestones, portfolio]);
+  }, [visibleMilestoneResults, portfolio]);
 
   // Merge milestone-only years into the timeline so milestones always have a card.
   const allEntries = useMemo(() => {

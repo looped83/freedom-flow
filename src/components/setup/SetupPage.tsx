@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { Goal, GoalResult, Milestone, Portfolio } from '../../types';
+import type { Goal, GoalResult, Milestone, MilestoneResult, Portfolio } from '../../types';
 import { GoalList } from '../goals/GoalList';
 import { MilestoneList } from '../milestones/MilestoneList';
 import { PortfolioForm } from '../portfolio/PortfolioForm';
@@ -10,7 +10,7 @@ type SetupTab = 'goals' | 'milestones' | 'portfolio';
 interface SetupPageProps {
   goals: Goal[];
   goalResults: GoalResult[];
-  milestones: Milestone[];
+  visibleMilestoneResults: MilestoneResult[];
   portfolio: Portfolio;
   onAdd: (g: Goal) => void;
   onUpdate: (g: Goal) => void;
@@ -34,7 +34,7 @@ const SETUP_ICON = (
 export function SetupPage({
   goals,
   goalResults,
-  milestones,
+  visibleMilestoneResults,
   portfolio,
   onAdd,
   onUpdate,
@@ -92,9 +92,7 @@ export function SetupPage({
         </div>
         <div hidden={active !== 'milestones'}>
           <MilestoneList
-            milestones={milestones}
-            goals={goals}
-            portfolio={portfolio}
+            milestoneResults={visibleMilestoneResults}
             onAdd={onAddMilestone}
             onUpdate={onUpdateMilestone}
             onDelete={onDeleteMilestone}
