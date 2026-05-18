@@ -211,27 +211,37 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
       {/* ── Lifetime Dividenden ── */}
       <section
         aria-labelledby="lf-lifetime-heading"
-        className="rounded-2xl p-5 border border-accent/20 bg-surface-1"
+        className="rounded-2xl p-6 border border-accent/20 bg-accent-muted"
       >
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2.5">
-            <span className="text-accent/70" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                <path d="M6 3h12l4 6-10 13L2 9l4-6z"/>
-                <path d="M2 9h20"/>
-                <path d="M8.5 3 6 9m9-6 2.5 6M12 3v6"/>
-              </svg>
-            </span>
-            <h2 id="lf-lifetime-heading" className="text-sm font-semibold text-white">
-              Lifetime Dividenden
-            </h2>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-accent/70 flex-shrink-0" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                  <path d="M6 3h12l4 6-10 13L2 9l4-6z"/>
+                  <path d="M2 9h20"/>
+                  <path d="M8.5 3 6 9m9-6 2.5 6M12 3v6"/>
+                </svg>
+              </span>
+              <p className="text-sm font-bold text-white">Lifetime Dividenden</p>
+            </div>
+            <p
+              id="lf-lifetime-heading"
+              className="text-5xl font-bold text-accent tabular-nums leading-none"
+              aria-live="off"
+              aria-atomic="true"
+            >
+              {formatEuro(lifetimeTotal)}
+            </p>
+            <p className="text-xs text-white/50 mt-2">Seit 2012</p>
           </div>
+
           <svg
-            width="28"
-            height="28"
+            width="32"
+            height="32"
             viewBox="0 0 28 28"
             aria-hidden="true"
-            className="flex-shrink-0"
+            className="flex-shrink-0 mt-0.5"
           >
             <circle
               cx="14" cy="14" r="10"
@@ -251,15 +261,6 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
             />
           </svg>
         </div>
-
-        <p
-          className="text-5xl font-bold text-accent tabular-nums leading-none"
-          aria-live="off"
-          aria-atomic="true"
-        >
-          {formatEuro(lifetimeTotal)}
-        </p>
-        <p className="text-xs text-white/50 mt-2">Seit 2012</p>
       </section>
 
       {/* ── Cashflow ── */}
