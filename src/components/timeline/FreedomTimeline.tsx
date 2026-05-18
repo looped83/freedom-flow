@@ -114,7 +114,7 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
           }`}>
             {entry.year}
           </span>
-          <span className="text-xs font-bold text-white flex-1">Dividieren</span>
+          <span className="text-xs font-bold text-white flex-1">Dividenden</span>
           <span className="text-sm font-bold text-green-400 tabular-nums">
             {formatEuro(entry.projectedMonthly)} / Mo.
           </span>
