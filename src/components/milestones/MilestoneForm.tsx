@@ -53,20 +53,45 @@ export function MilestoneForm({ initial, onSave, onCancel }: MilestoneFormProps)
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4" noValidate aria-label={initial ? 'Meilenstein bearbeiten' : 'Neuer Meilenstein'}>
-      <div>
-        <label htmlFor="milestone-title" className="block text-xs text-white/70 mb-1">Titel</label>
-        <input
-          id="milestone-title"
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="z. B. Miete gedeckt"
-          className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/55 focus:outline-none focus:border-accent text-sm"
-          aria-describedby={errors.title ? 'milestone-title-error' : undefined}
-          aria-invalid={!!errors.title}
-        />
-        {errors.title && (
-          <p id="milestone-title-error" role="alert" className="text-xs text-red-400 mt-1">{errors.title}</p>
+      <div className={type === 'dividend' ? 'grid grid-cols-2 gap-3' : ''}>
+        <div>
+          <label htmlFor="milestone-title" className="block text-xs text-white/70 mb-1">Titel</label>
+          <input
+            id="milestone-title"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="z. B. Miete gedeckt"
+            className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/55 focus:outline-none focus:border-accent text-sm"
+            aria-describedby={errors.title ? 'milestone-title-error' : undefined}
+            aria-invalid={!!errors.title}
+          />
+          {errors.title && (
+            <p id="milestone-title-error" role="alert" className="text-xs text-red-400 mt-1">{errors.title}</p>
+          )}
+        </div>
+
+        {type === 'dividend' && (
+          <div>
+            <label htmlFor="milestone-amount" className="block text-xs text-white/70 mb-1">
+              Monatliche Dividende (€)
+            </label>
+            <input
+              ref={amount.ref}
+              id="milestone-amount"
+              type="text"
+              inputMode="decimal"
+              value={amount.value}
+              onChange={amount.onChange}
+              placeholder="z. B. 1.500,00"
+              className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/55 focus:outline-none focus:border-accent text-sm"
+              aria-describedby={errors.dividendTarget ? 'milestone-amount-error' : undefined}
+              aria-invalid={!!errors.dividendTarget}
+            />
+            {errors.dividendTarget && (
+              <p id="milestone-amount-error" role="alert" className="text-xs text-red-400 mt-1">{errors.dividendTarget}</p>
+            )}
+          </div>
         )}
       </div>
 
@@ -96,28 +121,7 @@ export function MilestoneForm({ initial, onSave, onCancel }: MilestoneFormProps)
         </div>
       </div>
 
-      {type === 'dividend' ? (
-        <div>
-          <label htmlFor="milestone-amount" className="block text-xs text-white/70 mb-1">
-            Monatliche Dividenden (€)
-          </label>
-          <input
-            ref={amount.ref}
-            id="milestone-amount"
-            type="text"
-            inputMode="decimal"
-            value={amount.value}
-            onChange={amount.onChange}
-            placeholder="z. B. 1.500,00"
-            className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/55 focus:outline-none focus:border-accent text-sm"
-            aria-describedby={errors.dividendTarget ? 'milestone-amount-error' : undefined}
-            aria-invalid={!!errors.dividendTarget}
-          />
-          {errors.dividendTarget && (
-            <p id="milestone-amount-error" role="alert" className="text-xs text-red-400 mt-1">{errors.dividendTarget}</p>
-          )}
-        </div>
-      ) : (
+      {type === 'date' && (
         <div>
           <label htmlFor="milestone-date" className="block text-xs text-white/70 mb-1">Zieldatum</label>
           <input

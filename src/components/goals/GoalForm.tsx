@@ -30,7 +30,7 @@ export function GoalForm({ initial, onSave, onSaveAsDefault, onCancel }: GoalFor
 
   function validate() {
     const e: Record<string, string> = {};
-    if (!name.trim()) e.name = 'Name ist erforderlich.';
+    if (!name.trim()) e.name = 'Titel ist erforderlich.';
     const amt = parseGerman(amount.value);
     if (isNaN(amt) || amt <= 0) e.amount = 'Bitte einen gültigen Betrag > 0 eingeben.';
     return e;
@@ -52,42 +52,44 @@ export function GoalForm({ initial, onSave, onSaveAsDefault, onCancel }: GoalFor
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4" noValidate aria-label={initial ? 'Ziel bearbeiten' : 'Neues Ziel'}>
-      <div>
-        <label htmlFor="goal-name" className="block text-xs text-white/70 mb-1">Name</label>
-        <input
-          id="goal-name"
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="z. B. Fitnessstudio"
-          className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/55 focus:outline-none focus:border-accent text-sm"
-          aria-describedby={errors.name ? 'goal-name-error' : undefined}
-          aria-invalid={!!errors.name}
-        />
-        {errors.name && (
-          <p id="goal-name-error" role="alert" className="text-xs text-red-400 mt-1">{errors.name}</p>
-        )}
-      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label htmlFor="goal-name" className="block text-xs text-white/70 mb-1">Titel</label>
+          <input
+            id="goal-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="z. B. Fitnessstudio"
+            className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/55 focus:outline-none focus:border-accent text-sm"
+            aria-describedby={errors.name ? 'goal-name-error' : undefined}
+            aria-invalid={!!errors.name}
+          />
+          {errors.name && (
+            <p id="goal-name-error" role="alert" className="text-xs text-red-400 mt-1">{errors.name}</p>
+          )}
+        </div>
 
-      <div>
-        <label htmlFor="goal-amount" className="block text-xs text-white/70 mb-1">
-          Monatlicher Betrag (€)
-        </label>
-        <input
-          ref={amount.ref}
-          id="goal-amount"
-          type="text"
-          inputMode="decimal"
-          value={amount.value}
-          onChange={amount.onChange}
-          placeholder="z. B. 42,90"
-          className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/55 focus:outline-none focus:border-accent text-sm"
-          aria-describedby={errors.amount ? 'goal-amount-error' : undefined}
-          aria-invalid={!!errors.amount}
-        />
-        {errors.amount && (
-          <p id="goal-amount-error" role="alert" className="text-xs text-red-400 mt-1">{errors.amount}</p>
-        )}
+        <div>
+          <label htmlFor="goal-amount" className="block text-xs text-white/70 mb-1">
+            Monatlicher Betrag (€)
+          </label>
+          <input
+            ref={amount.ref}
+            id="goal-amount"
+            type="text"
+            inputMode="decimal"
+            value={amount.value}
+            onChange={amount.onChange}
+            placeholder="z. B. 42,90"
+            className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/55 focus:outline-none focus:border-accent text-sm"
+            aria-describedby={errors.amount ? 'goal-amount-error' : undefined}
+            aria-invalid={!!errors.amount}
+          />
+          {errors.amount && (
+            <p id="goal-amount-error" role="alert" className="text-xs text-red-400 mt-1">{errors.amount}</p>
+          )}
+        </div>
       </div>
 
       <div>
