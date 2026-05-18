@@ -1,4 +1,4 @@
-import { Fragment, memo, useMemo } from 'react';
+import { Fragment, memo, useMemo, useState } from 'react';
 import type { TimelineEntry, Goal, Milestone, MilestoneResult, Portfolio } from '../../types';
 import { CategoryIcon } from '../goals/CategoryIcon';
 import { MilestoneIcon } from '../milestones/MilestoneIcon';
@@ -87,8 +87,12 @@ function GoalDot({ achieved }: { achieved: boolean }) {
 }
 
 const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry: TimelineEntry; isHero?: boolean; milestones: MilestoneResult[] }) {
+  const collapsible = !entry.isPastYear && !entry.isCurrentYear;
+  const [collapsed, setCollapsed] = useState(collapsible);
+
   const hasGoals = entry.newGoals.length > 0;
   const achieved = entry.isPastYear;
+  const hasContent = hasGoals || entry.isFreedomYear || milestones.length > 0;
 
   return (
     <li
@@ -103,36 +107,62 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
           : 'bg-surface-1'
       }`}>
 
-        {/* Dividende row */}
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-bold text-white">Dividende</span>
-          <span className="text-sm font-bold text-orange-400 tabular-nums">
-            {formatEuro(entry.projectedMonthly)} / Mo.
-          </span>
-        </div>
+        {/* Dividende row – tappable toggle for future cards */}
+        {collapsible && hasContent ? (
+          <button
+            onClick={() => setCollapsed((c) => !c)}
+            aria-expanded={!collapsed}
+            className="flex items-center justify-between w-full mb-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
+          >
+            <span className="text-xs font-bold text-white">Dividende</span>
+            <span className="flex items-center gap-2">
+              <span className="text-sm font-bold text-orange-400 tabular-nums">
+                {formatEuro(entry.projectedMonthly)} / Mo.
+              </span>
+              <svg
+                viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"
+                strokeLinecap="round" className={`w-3.5 h-3.5 text-white/40 flex-shrink-0 transition-transform duration-200 ${collapsed ? '' : 'rotate-180'}`}
+                aria-hidden="true"
+              >
+                <polyline points="3 6 8 11 13 6" />
+              </svg>
+            </span>
+          </button>
+        ) : (
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-white">Dividende</span>
+            <span className="text-sm font-bold text-orange-400 tabular-nums">
+              {formatEuro(entry.projectedMonthly)} / Mo.
+            </span>
+          </div>
+        )}
 
-        {milestones.length > 0 && <MilestoneTile milestones={milestones} />}
+        {!collapsed && (
+          <>
+            {milestones.length > 0 && <MilestoneTile milestones={milestones} />}
 
-        {hasGoals ? (
-          <ul className={`space-y-1.5 ${milestones.length > 0 ? 'mt-2' : ''}`} role="list">
-            {entry.newGoals.map((goal) => (
-              <li key={goal.id} className="flex items-center gap-2 text-sm">
-                <GoalDot achieved={achieved} />
-                <span className="flex-shrink-0 text-white/60">
-                  <CategoryIcon category={goal.category} className="w-4 h-4" />
-                </span>
-                <span className={`flex-1 min-w-0 truncate ${achieved ? 'text-white/60' : 'text-white'}`}>
-                  {goal.name}
-                </span>
-                <span className="text-xs text-white/50 flex-shrink-0 tabular-nums">
-                  {formatEuro(goal.monthlyAmount)} / Mo.
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : entry.isFreedomYear ? (
-          <p className="text-sm text-white/50">Alle Ziele vollständig gedeckt.</p>
-        ) : null}
+            {hasGoals ? (
+              <ul className={`space-y-1.5 ${milestones.length > 0 ? 'mt-2' : ''}`} role="list">
+                {entry.newGoals.map((goal) => (
+                  <li key={goal.id} className="flex items-center gap-2 text-sm">
+                    <GoalDot achieved={achieved} />
+                    <span className="flex-shrink-0 text-white/60">
+                      <CategoryIcon category={goal.category} className="w-4 h-4" />
+                    </span>
+                    <span className={`flex-1 min-w-0 truncate ${achieved ? 'text-white/60' : 'text-white'}`}>
+                      {goal.name}
+                    </span>
+                    <span className="text-xs text-white/50 flex-shrink-0 tabular-nums">
+                      {formatEuro(goal.monthlyAmount)} / Mo.
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : entry.isFreedomYear ? (
+              <p className="text-sm text-white/50">Alle Ziele vollständig gedeckt.</p>
+            ) : null}
+          </>
+        )}
       </div>
     </li>
   );
