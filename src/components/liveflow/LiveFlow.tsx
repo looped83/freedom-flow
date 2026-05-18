@@ -67,6 +67,30 @@ const LIVE_BADGE = (
   </div>
 );
 
+// r=13 → circumference = 2π·13 ≈ 81.68
+function RefreshRing({ nowMs }: { nowMs: number }) {
+  return (
+    <svg
+      width="32" height="32" viewBox="0 0 32 32"
+      className="flex-shrink-0 mt-0.5"
+      style={{ transform: 'rotate(-90deg)' }}
+      aria-hidden="true"
+    >
+      <circle cx="16" cy="16" r="13" fill="none" stroke="rgba(74,222,128,0.15)" strokeWidth="2" />
+      <circle
+        key={String(nowMs)}
+        cx="16" cy="16" r="13"
+        fill="none"
+        stroke="#4ade80"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeDasharray="81.68"
+        className="lf-ring-fill"
+      />
+    </svg>
+  );
+}
+
 // Module-level: avoid constructing on every render / every formatTime call
 const timeFormatter = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' });
 function formatTime(date: Date): string { return timeFormatter.format(date); }
@@ -154,7 +178,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
           </div>
 
           {/* decorative live indicator ring */}
-          <div aria-hidden="true" className="lf-ring flex-shrink-0 mt-0.5 w-8 h-8" />
+          <RefreshRing nowMs={now.getTime()} />
         </div>
 
         {/* Day progress */}
@@ -172,7 +196,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
               className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"
             >
               <div
-                className="h-full bg-accent rounded-full motion-safe:transition-[width] motion-safe:duration-[2000ms] motion-safe:ease-linear"
+                className="h-full bg-accent rounded-full "
                 style={{ width: `${dayPct}%` }}
               />
             </div>
@@ -207,7 +231,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
                   className="h-1 bg-white/10 rounded-full overflow-hidden"
                 >
                   <div
-                    className="h-full bg-accent rounded-full motion-safe:transition-[width] motion-safe:duration-[2000ms] motion-safe:ease-linear"
+                    className="h-full bg-accent rounded-full "
                     style={{ width: `${pct}%` }}
                   />
                 </div>
@@ -242,10 +266,10 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
             >
               {formatEuro(lifetimeTotal)}
             </p>
-            <p className="text-xs text-white/50 mt-2">Seit 2012</p>
+            <p className="text-xs text-white/50 mt-2">Seit {portfolio.lifetimeStartYear}</p>
           </div>
 
-          <div aria-hidden="true" className="lf-ring flex-shrink-0 mt-0.5 w-8 h-8" />
+          <RefreshRing nowMs={now.getTime()} />
         </div>
       </section>
 
@@ -273,9 +297,21 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
         </div>
       </section>
 
-      <p className="text-center text-xs text-white/50 pb-2">
-        Zuletzt aktualisiert:&nbsp;{formatTime(now)}
-      </p>
+      <div className="pb-2 space-y-2">
+        <p className="text-center text-xs text-white/50">
+          Zuletzt aktualisiert:&nbsp;{formatTime(now)}
+        </p>
+        <div
+          role="progressbar"
+          aria-label="Nächste Aktualisierung in 10 Sekunden"
+          aria-valuenow={0}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          className="h-0.5 bg-white/10 rounded-full overflow-hidden"
+        >
+          <div key={String(now.getTime())} className="h-full bg-accent/40 rounded-full lf-countdown-bar" />
+        </div>
+      </div>
 
     </main>
   );
