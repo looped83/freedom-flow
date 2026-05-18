@@ -166,7 +166,7 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
 
           {/* Ausgaben / Monat|Jahr – tappable to edit */}
           <div className="text-center">
-            <p className="text-xs text-white/55 mb-1">{view === 'month' ? 'Ausgaben / Monat' : 'Ausgaben / Jahr'}</p>
+            <p className="text-xs text-white/55 mb-1">Ausgaben</p>
             {expense.editing ? (
               <input
                 ref={expense.inputRef}
