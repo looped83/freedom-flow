@@ -149,7 +149,10 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
 
   return (
     <section className="max-w-4xl mx-auto px-4 py-6" aria-labelledby="portfolio-form-heading">
-      <h2 id="portfolio-form-heading" className="text-2xl font-bold text-accent mb-6">Portfolio</h2>
+      <div className="mb-5">
+        <h2 id="portfolio-form-heading" className="text-lg font-bold text-white">Portfolio-Einstellungen</h2>
+        <p className="text-sm text-white/65 mt-1">Schieberegler oder Zahl direkt eingeben.</p>
+      </div>
 
       <div className="grid grid-cols-2 gap-3 mb-6">
         <div className="bg-surface-1 rounded-2xl p-5">
