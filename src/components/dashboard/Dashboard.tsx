@@ -6,6 +6,7 @@ import {
   projectMonthlyDividendsAtYear,
   totalMonthlyCosts,
 } from '../../utils/calculations';
+import { BONUS_GOAL_ID } from '../../constants/defaultData';
 import { formatEuro, formatPercent } from '../../utils/formatting';
 import { PageHeader } from '../layout/PageHeader';
 import { ProgressBar } from './ProgressBar';
@@ -37,7 +38,8 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTota
 
   const monthly = portfolio.monthlyIncome;
   const projectedMonthly = useMemo(() => projectMonthlyDividendsAtYear(portfolio, 1), [portfolio]);
-  const total   = useMemo(() => totalMonthlyCosts(goals), [goals]);
+  const total        = useMemo(() => totalMonthlyCosts(goals), [goals]);
+  const minExpenses  = useMemo(() => totalMonthlyCosts(goals.filter((g) => g.id !== BONUS_GOAL_ID)), [goals]);
   const freeDays = useMemo(() => freeDaysPerMonth(monthly, total), [monthly, total]);
 
   const allResults = useMemo(
@@ -77,6 +79,7 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTota
         monthly={monthly}
         projectedMonthly={projectedMonthly}
         total={total}
+        minExpenses={minExpenses}
         onIncomeChange={onIncomeChange}
         onTotalChange={onTotalChange}
       />

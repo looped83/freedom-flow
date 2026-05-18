@@ -7,6 +7,7 @@ interface FreedomHeroProps {
   monthly: number;
   projectedMonthly: number;
   total: number;
+  minExpenses: number;
   onIncomeChange: (v: number) => void;
   onTotalChange: (v: number) => void;
 }
@@ -15,7 +16,7 @@ const R = 80;
 const CIRCUMFERENCE = 2 * Math.PI * R;
 const heroId = 'freedom-hero-heading';
 
-export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange, onTotalChange }: FreedomHeroProps) {
+export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onIncomeChange, onTotalChange }: FreedomHeroProps) {
   const pct = useMemo(() => freedomPercent(monthly, total), [monthly, total]);
   const projPct = useMemo(() => freedomPercent(projectedMonthly, total), [projectedMonthly, total]);
   const missing = useMemo(() => missingForFreedom(monthly, total), [monthly, total]);
@@ -30,7 +31,7 @@ export function FreedomHero({ monthly, projectedMonthly, total, onIncomeChange, 
   );
 
   const income  = useInlineNumberEdit(monthly, onIncomeChange);
-  const expense = useInlineNumberEdit(total,   onTotalChange);
+  const expense = useInlineNumberEdit(total,   onTotalChange, { min: minExpenses });
 
   useEffect(() => {
     const el = circleRef.current;
