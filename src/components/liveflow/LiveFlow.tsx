@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Goal, Portfolio } from '../../types';
 import {
   calculateAnnualDividends,
@@ -17,14 +17,11 @@ import {
   formatCurrencyForSmallAmounts,
   calculateFinancedTime,
   formatFreedomTime,
-  getNextGoalCoverage,
   type FreedomTimeUnit,
 } from '../../utils/liveFlowCalculations';
-import { computeGoalResults, totalMonthlyCosts } from '../../utils/calculations';
+import { totalMonthlyCosts } from '../../utils/calculations';
 import { formatEuro } from '../../utils/formatting';
 import { PageHeader } from '../layout/PageHeader';
-import { ProgressBar } from '../dashboard/ProgressBar';
-import { CategoryIcon } from '../goals/CategoryIcon';
 
 interface LiveFlowProps {
   portfolio: Portfolio;
@@ -50,10 +47,10 @@ const RATE_CARDS: RateCard[] = [
   { id: 'year',   label: 'Jahr',   getValue: (m) => calculateAnnualDividends(m),       small: false },
 ];
 
-const UNIT_OPTIONS: { id: FreedomTimeUnit; label: string }[] = [
-  { id: 'days',    label: 'Tage'    },
-  { id: 'hours',   label: 'Stunden' },
-  { id: 'minutes', label: 'Minuten' },
+const UNIT_OPTIONS: { id: FreedomTimeUnit; label: string; full: string }[] = [
+  { id: 'days',    label: 'Tage',    full: 'Tage'    },
+  { id: 'hours',   label: 'Std.',    full: 'Stunden' },
+  { id: 'minutes', label: 'Min.',    full: 'Minuten' },
 ];
 
 const LIVEFLOW_ICON = (
@@ -69,48 +66,9 @@ const LIVE_BADGE = (
   </div>
 );
 
-const CHECK_ICON = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-accent" aria-hidden="true">
-    <polyline points="20 6 9 17 4 12"/>
-  </svg>
-);
-
 function formatTime(date: Date): string {
   return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 }
-
-interface MiniHeroProps {
-  label: ReactNode;
-  value: number;
-  progressPct: number;
-  progressAriaLabel: string;
-}
-
-const MiniHeroTile = memo(function MiniHeroTile({ label, value, progressPct, progressAriaLabel }: MiniHeroProps) {
-  return (
-    <div className="bg-accent-muted border border-accent/20 rounded-2xl p-4">
-      <p className="text-sm font-bold text-white mb-2 min-h-10 leading-5">{label}</p>
-      <p className="text-base font-bold text-accent tabular-nums leading-none whitespace-nowrap" aria-live="off">
-        {formatEuro(value)}
-      </p>
-      <div className="mt-3">
-        <div
-          role="progressbar"
-          aria-label={progressAriaLabel}
-          aria-valuenow={progressPct}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          className="h-1 bg-white/10 rounded-full overflow-hidden"
-        >
-          <div
-            className="h-full bg-accent rounded-full motion-safe:transition-[width] motion-safe:duration-[2000ms] motion-safe:ease-linear"
-            style={{ width: `${progressPct}%` }}
-          />
-        </div>
-      </div>
-    </div>
-  );
-});
 
 export function LiveFlow({ portfolio, goals }: LiveFlowProps) {
   const monthly = portfolio.monthlyIncome;
@@ -132,20 +90,10 @@ export function LiveFlow({ portfolio, goals }: LiveFlowProps) {
 
   // Stable: recompute only when portfolio/goals change, not on every timer tick
   const totalExpenses = useMemo(() => totalMonthlyCosts(goals), [goals]);
-  const goalResults = useMemo(
-    () => computeGoalResults(goals, monthly, portfolio),
-    [goals, monthly, portfolio],
-  );
-  const nextCoverage = useMemo(() => getNextGoalCoverage(goals, monthly), [goals, monthly]);
-  const nextResult = useMemo(
-    () => (nextCoverage ? goalResults.find((r) => r.id === nextCoverage.goal.id) ?? null : null),
-    [goalResults, nextCoverage],
-  );
   const financedTime = useMemo(
     () => calculateFinancedTime(monthly, totalExpenses),
     [monthly, totalExpenses],
   );
-  const allCovered = goals.length > 0 && goalResults.every((r) => r.status === 'covered');
 
   // Timer-dependent values
   const earnedToday   = calculateEarnedTodaySoFar(monthly, now);
@@ -181,21 +129,17 @@ export function LiveFlow({ portfolio, goals }: LiveFlowProps) {
     : timeUnit === 'hours' ? financedTime.hours
     :                        financedTime.minutes;
 
-  const unitLabel =
-    timeUnit === 'days' ? 'Tage' : timeUnit === 'hours' ? 'Stunden' : 'Minuten';
-
-  const coveragePct = nextCoverage ? Math.round(nextCoverage.progress * 100) : 0;
-
   return (
     <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
 
       <PageHeader icon={LIVEFLOW_ICON} title="Live Flow" right={LIVE_BADGE} />
 
-      {/* ── Hero: Heute verdient ── */}
+      {/* ── Hero: Heute + Woche/Monat/Jahr ── */}
       <section
         aria-labelledby="lf-hero-heading"
         className="rounded-2xl p-6 border border-accent/20 bg-accent-muted"
       >
+        {/* Top: Heute verdient */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-white mb-2">Heute verdient</p>
@@ -256,7 +200,41 @@ export function LiveFlow({ portfolio, goals }: LiveFlowProps) {
           </div>
         </div>
 
-        <p className="text-xs text-white/35 mt-3 leading-relaxed">
+        {/* Mini tiles: Woche · Monat · Jahr */}
+        <div className="mt-5 pt-4 border-t border-accent/15 grid grid-cols-3 gap-3">
+          {([
+            { label: 'Woche', value: earnedWeek,  pct: weekPct,  aria: `Wochenverlauf: ${weekPct} %`  },
+            { label: 'Monat', value: earnedMonth, pct: monthPct, aria: `Monatsverlauf: ${monthPct} %` },
+            { label: 'Jahr',  value: earnedYear,  pct: yearPct,  aria: `Jahresverlauf: ${yearPct} %`  },
+          ] as const).map(({ label, value, pct, aria }) => (
+            <div key={label} className="bg-white/5 rounded-xl p-3">
+              <p className="text-xs text-white/60 mb-1.5">{label}</p>
+              <p
+                className="text-sm font-bold text-accent tabular-nums leading-none whitespace-nowrap"
+                aria-live="off"
+              >
+                {formatEuro(value)}
+              </p>
+              <div className="mt-2">
+                <div
+                  role="progressbar"
+                  aria-label={aria}
+                  aria-valuenow={pct}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  className="h-1 bg-white/10 rounded-full overflow-hidden"
+                >
+                  <div
+                    className="h-full bg-accent rounded-full motion-safe:transition-[width] motion-safe:duration-[2000ms] motion-safe:ease-linear"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-xs text-white/35 mt-4 leading-relaxed">
           Rechnerischer Durchschnittswert · Live berechnet alle 10 Sekunden
         </p>
       </section>
@@ -264,39 +242,41 @@ export function LiveFlow({ portfolio, goals }: LiveFlowProps) {
       {/* ── Freedom Counter: Zurückgekaufte Zeit ── */}
       <section
         aria-labelledby="lf-freedom-heading"
-        className="bg-surface-1 rounded-2xl p-6 border border-white/5"
+        className="bg-surface-1 rounded-2xl p-5 border border-white/5"
       >
-        <h2 id="lf-freedom-heading" className="text-sm font-semibold text-white mb-4">
-          Zurückgekaufte Zeit
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 id="lf-freedom-heading" className="text-sm font-semibold text-white">
+            Zurückgekaufte Zeit
+          </h2>
 
-        {/* Segmented control – keyboard-navigable radiogroup */}
-        <div
-          role="radiogroup"
-          aria-label="Zeiteinheit auswählen"
-          className="flex rounded-xl overflow-hidden border border-white/10 mb-5"
-        >
-          {UNIT_OPTIONS.map(({ id, label }, idx) => {
-            const selected = timeUnit === id;
-            return (
-              <button
-                key={id}
-                ref={(el) => { segmentRefs.current[idx] = el; }}
-                role="radio"
-                aria-checked={selected}
-                tabIndex={selected ? 0 : -1}
-                onClick={() => setTimeUnit(id)}
-                onKeyDown={(e) => handleUnitKey(e, idx)}
-                className={`flex-1 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-0 ${
-                  selected
-                    ? 'bg-accent/20 text-accent'
-                    : 'text-white/45 hover:text-white/70'
-                }`}
-              >
-                {label}
-              </button>
-            );
-          })}
+          {/* Segmented control – matches Dashboard toggle style */}
+          <div
+            role="radiogroup"
+            aria-label="Zeiteinheit auswählen"
+            className="flex rounded-lg overflow-hidden border border-white/10"
+          >
+            {UNIT_OPTIONS.map(({ id, label }, idx) => {
+              const selected = timeUnit === id;
+              return (
+                <button
+                  key={id}
+                  ref={(el) => { segmentRefs.current[idx] = el; }}
+                  role="radio"
+                  aria-checked={selected}
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => setTimeUnit(id)}
+                  onKeyDown={(e) => handleUnitKey(e, idx)}
+                  className={`text-xs px-3 py-1 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+                    selected
+                      ? 'bg-accent/20 text-accent font-semibold'
+                      : 'text-white/45 hover:text-white/70'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {totalExpenses > 0 ? (
@@ -309,10 +289,7 @@ export function LiveFlow({ portfolio, goals }: LiveFlowProps) {
               {formatFreedomTime(timeValue, timeUnit)}
             </p>
             <p className="text-sm text-accent font-medium mt-2">
-              {unitLabel} pro Monat zurückgekauft
-            </p>
-            <p className="text-xs text-white/40 mt-3 leading-relaxed">
-              Basierend auf deinen monatlichen Ausgaben und Dividenden.
+              {UNIT_OPTIONS.find((u) => u.id === timeUnit)?.full} pro Monat zurückgekauft
             </p>
           </>
         ) : (
@@ -321,94 +298,6 @@ export function LiveFlow({ portfolio, goals }: LiveFlowProps) {
           </p>
         )}
       </section>
-
-      {/* ── Live Goal Fill: Nächstes Ziel ── */}
-      <section
-        aria-labelledby="lf-goal-heading"
-        className="bg-surface-1 rounded-2xl p-5 border border-accent/20"
-      >
-        <h2 id="lf-goal-heading" className="text-sm font-semibold text-white mb-3">
-          Nächstes Ziel im Flow
-        </h2>
-
-        {allCovered ? (
-          <div className="py-4 flex flex-col items-center gap-2">
-            {CHECK_ICON}
-            <p className="text-sm font-semibold text-accent">Alle Ziele erreicht</p>
-            <p className="text-xs text-white/50 text-center">
-              Deine Dividenden decken alle monatlichen Ausgaben.
-            </p>
-          </div>
-        ) : goals.length === 0 ? (
-          <p className="text-sm text-white/50 py-2">
-            Füge Ausgaben im Setup hinzu.
-          </p>
-        ) : nextCoverage && nextResult ? (
-          <div className="bg-surface-2 rounded-xl px-4 py-4">
-            {/* Goal header row */}
-            <div className="flex items-center gap-3 mb-3">
-              <span className="flex-shrink-0 text-white/60" aria-hidden="true">
-                <CategoryIcon category={nextCoverage.goal.category} />
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">
-                  {nextCoverage.goal.name}
-                </p>
-                <p className="text-xs text-white/50">{nextCoverage.goal.category}</p>
-              </div>
-              <div className="text-right flex-shrink-0">
-                <p className="text-sm font-semibold text-white/80 tabular-nums">
-                  {formatEuro(nextCoverage.goal.monthlyAmount)}
-                </p>
-                {nextResult.achievedYear != null && (
-                  <p className="text-xs text-white/40">{nextResult.achievedYear}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Progress bar */}
-            <ProgressBar
-              percent={coveragePct}
-              label={`${nextCoverage.goal.name}: ${coveragePct} % gedeckt`}
-              colorClass="bg-gold"
-            />
-
-            {/* Coverage info */}
-            <div className="flex justify-between items-center mt-3">
-              <p className="text-xs text-white/50 tabular-nums">
-                {formatEuro(nextCoverage.coveredAmount)} / {formatEuro(nextCoverage.goal.monthlyAmount)}
-              </p>
-              <p className="text-xs font-bold text-gold">{coveragePct}&thinsp;%</p>
-            </div>
-
-            <p className="text-xs text-accent/70 mt-2 font-medium">
-              Noch {formatEuro(nextCoverage.missingAmount)} monatliche Dividenden fehlen.
-            </p>
-          </div>
-        ) : null}
-      </section>
-
-      {/* ── Mini-hero tiles: Woche · Monat · Jahr ── */}
-      <div className="grid grid-cols-3 gap-3">
-        <MiniHeroTile
-          label="Diese Woche"
-          value={earnedWeek}
-          progressPct={weekPct}
-          progressAriaLabel={`Wochenverlauf: ${weekPct} %`}
-        />
-        <MiniHeroTile
-          label="Dieser Monat"
-          value={earnedMonth}
-          progressPct={monthPct}
-          progressAriaLabel={`Monatsverlauf: ${monthPct} %`}
-        />
-        <MiniHeroTile
-          label={<>Dieses<br />Jahr</>}
-          value={earnedYear}
-          progressPct={yearPct}
-          progressAriaLabel={`Jahresverlauf: ${yearPct} %`}
-        />
-      </div>
 
       {/* ── Cashflow ── */}
       <section aria-labelledby="lf-cashflow-heading">
