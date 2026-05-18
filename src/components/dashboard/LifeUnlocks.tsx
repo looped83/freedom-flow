@@ -68,20 +68,19 @@ export function LifeUnlocks({ milestones, portfolio }: LifeUnlocksProps) {
 
   const results = useMemo(() => computeMilestoneResults(milestones, portfolio), [milestones, portfolio]);
 
-  const achieved = useMemo(
-    () => results.filter((r) => r.status === 'achieved').sort((a, b) => milestoneSortKey(a) - milestoneSortKey(b)),
-    [results],
-  );
-  const notAchieved = useMemo(
-    () => results
-      .filter((r) => r.status !== 'achieved')
-      .sort((a, b) => {
-        // closest to completion first; then by target value
-        if (a.progressPercent !== b.progressPercent) return b.progressPercent - a.progressPercent;
-        return milestoneSortKey(a) - milestoneSortKey(b);
-      }),
-    [results],
-  );
+  const { achieved, notAchieved } = useMemo(() => {
+    const achieved: MilestoneResult[] = [];
+    const notAchieved: MilestoneResult[] = [];
+    for (const r of results) {
+      (r.status === 'achieved' ? achieved : notAchieved).push(r);
+    }
+    achieved.sort((a, b) => milestoneSortKey(a) - milestoneSortKey(b));
+    notAchieved.sort((a, b) => {
+      if (a.progressPercent !== b.progressPercent) return b.progressPercent - a.progressPercent;
+      return milestoneSortKey(a) - milestoneSortKey(b);
+    });
+    return { achieved, notAchieved };
+  }, [results]);
   const visibleCards = showAll ? notAchieved : notAchieved.slice(0, 3);
 
   if (milestones.length === 0) {

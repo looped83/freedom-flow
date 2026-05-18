@@ -15,6 +15,8 @@ import { CURRENT_YEAR } from '../../constants/defaultData';
 import { formatEuro } from '../../utils/formatting';
 import { PageHeader } from '../layout/PageHeader';
 
+const EMPTY_MILESTONES: MilestoneResult[] = [];
+
 interface FreedomTimelineProps {
   portfolio: Portfolio;
   goals: Goal[];
@@ -255,7 +257,7 @@ export function FreedomTimeline({ portfolio, goals, milestones }: FreedomTimelin
               return (
                 <Fragment key={entry.year}>
                   {showSeparator && <TimelineSeparator label="Rückblick" />}
-                  <EntryCard entry={entry} isHero={isHero} milestones={milestonesByYear.map.get(entry.year) ?? []} />
+                  <EntryCard entry={entry} isHero={isHero} milestones={milestonesByYear.map.get(entry.year) ?? EMPTY_MILESTONES} />
                 </Fragment>
               );
             })}
