@@ -9,6 +9,8 @@ export const DEFAULT_PORTFOLIO: Portfolio = {
   priceReturn: 5.0,
   horizonYears: 10,
   monthlyIncome: 808,
+  lifetimeDividends: 42_134.24,
+  lifetimeStartYear: 2025,
 };
 
 export const CURRENT_YEAR = new Date().getFullYear();

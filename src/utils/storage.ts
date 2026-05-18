@@ -15,6 +15,13 @@ export function loadState(): AppState {
       parsed.portfolio.monthlyIncome =
         (parsed.portfolio.value * parsed.portfolio.dividendYield) / 100 / 12;
     }
+    // Migration: add lifetime dividend fields if missing from old data
+    if (parsed.portfolio.lifetimeDividends === undefined) {
+      parsed.portfolio.lifetimeDividends = 0;
+    }
+    if (parsed.portfolio.lifetimeStartYear === undefined) {
+      parsed.portfolio.lifetimeStartYear = new Date().getFullYear();
+    }
     // Migration: sync category of default goals so code-level changes take effect
     const defaultById = new Map(DEFAULT_GOALS.map((g) => [g.id, g]));
     parsed.goals = parsed.goals.map((g) => {

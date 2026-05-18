@@ -38,6 +38,8 @@ export interface Portfolio {
   priceReturn: number;
   horizonYears: number;
   monthlyIncome: number;
+  lifetimeDividends: number;
+  lifetimeStartYear: number;
 }
 
 export interface TimelineEntry {

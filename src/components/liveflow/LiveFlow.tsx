@@ -14,6 +14,7 @@ import {
   calculateWeekProgress,
   calculateMonthProgress,
   calculateYearProgress,
+  calculateLifetimeDividends,
   formatCurrencyForSmallAmounts,
 } from '../../utils/liveFlowCalculations';
 import { formatEuro } from '../../utils/formatting';
@@ -74,6 +75,13 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
       document.removeEventListener('visibilitychange', tick);
     };
   }, []);
+
+  const lifetimeTotal = calculateLifetimeDividends(
+    portfolio.lifetimeDividends,
+    portfolio.lifetimeStartYear,
+    monthly,
+    now,
+  );
 
   const dailyRate     = calculateDividendRatePerDay(monthly);
   const earnedToday   = calculateEarnedTodaySoFar(monthly, now);
@@ -221,6 +229,62 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* ── Lifetime Dividenden ── */}
+      <section
+        aria-labelledby="lf-lifetime-heading"
+        className="rounded-2xl p-5 border border-accent/20 bg-surface-1"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="text-accent/70" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                <path d="M6 3h12l4 6-10 13L2 9l4-6z"/>
+                <path d="M2 9h20"/>
+                <path d="M8.5 3 6 9m9-6 2.5 6M12 3v6"/>
+              </svg>
+            </span>
+            <h2 id="lf-lifetime-heading" className="text-sm font-semibold text-white">
+              Lifetime Dividenden
+            </h2>
+          </div>
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 28 28"
+            aria-hidden="true"
+            className="flex-shrink-0"
+          >
+            <circle
+              cx="14" cy="14" r="10"
+              fill="none"
+              stroke="rgba(74,222,128,0.12)"
+              strokeWidth="2"
+            />
+            <circle
+              cx="14" cy="14" r="10"
+              fill="none"
+              stroke="#4ade80"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeDasharray={RING_CIRC}
+              transform="rotate(-90 14 14)"
+              className="lf-ring-sweep"
+            />
+          </svg>
+        </div>
+
+        <p
+          className="text-5xl font-bold text-accent tabular-nums leading-none"
+          aria-live="off"
+          aria-atomic="true"
+        >
+          {formatEuro(lifetimeTotal)}
+        </p>
+        <p className="text-xs text-white/50 mt-2">
+          Seit {portfolio.lifetimeStartYear}
+        </p>
       </section>
 
       <p className="text-center text-xs text-white/50 pb-2">
