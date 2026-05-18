@@ -4,15 +4,18 @@ import { Header } from './components/layout/Header';
 import { TabNav, type Tab } from './components/layout/TabNav';
 import { Dashboard } from './components/dashboard/Dashboard';
 
-const FreedomTimeline = lazy(() =>
-  import('./components/timeline/FreedomTimeline').then(({ FreedomTimeline: C }) => ({ default: C })),
-);
-const SetupPage = lazy(() =>
-  import('./components/setup/SetupPage').then(({ SetupPage: C }) => ({ default: C })),
-);
-const LiveFlow = lazy(() =>
-  import('./components/liveflow/LiveFlow').then(({ LiveFlow: C }) => ({ default: C })),
-);
+const FreedomTimeline = lazy(async () => {
+  const { FreedomTimeline } = await import('./components/timeline/FreedomTimeline');
+  return { default: FreedomTimeline };
+});
+const SetupPage = lazy(async () => {
+  const { SetupPage } = await import('./components/setup/SetupPage');
+  return { default: SetupPage };
+});
+const LiveFlow = lazy(async () => {
+  const { LiveFlow } = await import('./components/liveflow/LiveFlow');
+  return { default: LiveFlow };
+});
 
 function TabFallback() {
   return (
@@ -46,8 +49,8 @@ export default function App() {
   }, [actions]);
 
   const handleIncomeChange = useCallback((v: number) => {
-    actions.setPortfolio({ ...state.portfolio, monthlyIncome: v });
-  }, [actions, state.portfolio]);
+    actions.patchPortfolio({ monthlyIncome: v });
+  }, [actions]);
 
   return (
     <div className="min-h-screen bg-surface text-white pb-28 sm:pb-0">

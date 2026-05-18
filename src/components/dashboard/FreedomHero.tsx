@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { formatEuro } from '../../utils/formatting';
 import { freedomPercent, missingForFreedom } from '../../utils/calculations';
 import { useInlineNumberEdit } from '../../hooks/useInlineNumberEdit';
@@ -20,11 +20,11 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
   const [view, setView] = useState<'month' | 'year'>('month');
   const mul = view === 'year' ? 12 : 1;
 
-  const pct = useMemo(() => freedomPercent(monthly, total), [monthly, total]);
-  const projPct = useMemo(() => freedomPercent(projectedMonthly, total), [projectedMonthly, total]);
-  const missing = useMemo(() => missingForFreedom(monthly, total), [monthly, total]);
-  const dashOffset = useMemo(() => CIRCUMFERENCE * (1 - Math.min(pct, 100) / 100), [pct]);
-  const projDashOffset = useMemo(() => CIRCUMFERENCE * (1 - Math.min(projPct, 100) / 100), [projPct]);
+  const pct         = freedomPercent(monthly, total);
+  const projPct     = freedomPercent(projectedMonthly, total);
+  const missing     = missingForFreedom(monthly, total);
+  const dashOffset  = CIRCUMFERENCE * (1 - Math.min(pct, 100) / 100);
+  const projDashOffset = CIRCUMFERENCE * (1 - Math.min(projPct, 100) / 100);
 
   const circleRef = useRef<SVGCircleElement>(null);
   const [showProjected, setShowProjected] = useState(false);
@@ -33,8 +33,11 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
     window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   );
 
-  const income  = useInlineNumberEdit(monthly * mul, (v) => onIncomeChange(v / mul));
-  const expense = useInlineNumberEdit(total * mul,   (v) => onTotalChange(v / mul), { min: minExpenses * mul });
+  const commitIncome  = useCallback((v: number) => onIncomeChange(v / mul), [onIncomeChange, mul]);
+  const commitExpense = useCallback((v: number) => onTotalChange(v / mul),  [onTotalChange,  mul]);
+
+  const income  = useInlineNumberEdit(monthly * mul, commitIncome);
+  const expense = useInlineNumberEdit(total * mul,   commitExpense, { min: minExpenses * mul });
 
   useEffect(() => {
     const el = circleRef.current;

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { memo, useEffect, useState, type ReactNode } from 'react';
 import type { Portfolio } from '../../types';
 import {
   calculateAnnualDividends,
@@ -64,7 +64,7 @@ interface MiniHeroProps {
   progressAriaLabel: string;
 }
 
-function MiniHeroTile({ label, value, progressPct, progressAriaLabel }: MiniHeroProps) {
+const MiniHeroTile = memo(function MiniHeroTile({ label, value, progressPct, progressAriaLabel }: MiniHeroProps) {
   return (
     <div className="bg-accent-muted border border-accent/20 rounded-2xl p-4">
       <p className="text-sm font-bold text-white mb-2 min-h-10 leading-5">{label}</p>
@@ -88,7 +88,7 @@ function MiniHeroTile({ label, value, progressPct, progressAriaLabel }: MiniHero
       </div>
     </div>
   );
-}
+});
 
 export function LiveFlow({ portfolio }: LiveFlowProps) {
   const monthly = portfolio.monthlyIncome;
