@@ -23,7 +23,7 @@ interface MilestoneListProps {
 
 function MilestoneSubtitle({ result }: { result: MilestoneResult }) {
   if (result.type === 'dividend') {
-    if (result.status === 'achieved') return <>Erreicht</>;
+    if (result.status === 'achieved') return null;
     return <>noch {formatEuro(result.missingMonthly)}</>;
   }
   if (!result.dateTarget) return <>Zeitziel</>;
