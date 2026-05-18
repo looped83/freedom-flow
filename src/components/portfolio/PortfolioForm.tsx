@@ -20,12 +20,11 @@ interface NumberFieldProps {
   min: number;
   max: number;
   step: number;
-  hideSlider?: boolean;
   valueClassName?: string;
   onChange: (v: number) => void;
 }
 
-function NumberField({ fieldId, label, value, unit, min, max, step, hideSlider, valueClassName, onChange }: NumberFieldProps) {
+function NumberField({ fieldId, label, value, unit, min, max, step, valueClassName, onChange }: NumberFieldProps) {
   const [raw, setRaw] = useState('');
   const [focused, setFocused] = useState(false);
 
@@ -76,19 +75,6 @@ function NumberField({ fieldId, label, value, unit, min, max, step, hideSlider, 
           <span className="text-sm text-white/65 w-8 flex-shrink-0">{unit}</span>
         </div>
       </div>
-      {!hideSlider && (
-        <input
-          id={`${fieldId}-slider`}
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={(e) => onChange(parseFloat(e.target.value))}
-          aria-label={label}
-          className="w-full accent-accent h-2 rounded-full cursor-pointer"
-        />
-      )}
     </div>
   );
 }
@@ -100,7 +86,6 @@ interface FieldConfig {
   min: number;
   max: number;
   step: number;
-  hideSlider?: boolean;
   valueClassName?: string;
 }
 
@@ -115,8 +100,8 @@ const FIELDS: FieldConfig[] = [
 ];
 
 const LIFETIME_FIELDS: FieldConfig[] = [
-  { id: 'lifetimeStartYear', label: 'Jahr',               unit: 'Jahr', min: 2000, max: 2040, step: 1, hideSlider: true, valueClassName: 'text-accent' },
-  { id: 'lifetimeDividends', label: 'Erhaltene Dividende', unit: '€',   min: 0, max: 1_000_000, step: 1, hideSlider: true, valueClassName: 'text-accent' },
+  { id: 'lifetimeStartYear', label: 'Jahr',               unit: 'Jahr', min: 2000, max: 2040, step: 1, valueClassName: 'text-accent' },
+  { id: 'lifetimeDividends', label: 'Erhaltene Dividende', unit: '€',   min: 0, max: 1_000_000, step: 1, valueClassName: 'text-accent' },
 ];
 
 interface PortfolioFormProps {
@@ -149,8 +134,12 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
 
   return (
     <section className="max-w-4xl mx-auto px-4 py-6" aria-labelledby="portfolio-form-heading">
-      <h2 id="portfolio-form-heading" className="text-2xl font-bold text-accent mb-6">Portfolio</h2>
+      <div className="mb-5">
+        <h2 id="portfolio-form-heading" className="text-lg font-bold text-white">Portfolio-Einstellungen</h2>
+        <p className="text-sm text-white/65 mt-1">Schieberegler oder Zahl direkt eingeben.</p>
+      </div>
 
+      <h3 className="text-sm font-semibold text-accent mb-3">Portfolio</h3>
       <div className="grid grid-cols-2 gap-3 mb-6">
         <div className="bg-surface-1 rounded-2xl p-5">
           <p className="text-xs text-white/65 mb-1">Jährliche Dividenden</p>
@@ -189,7 +178,7 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
               min={f.min}
               max={f.max}
               step={f.step}
-              hideSlider={f.hideSlider}
+
               valueClassName={f.valueClassName}
               onChange={(v) => handleChange(f.id, v)}
             />
