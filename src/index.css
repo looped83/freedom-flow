@@ -69,6 +69,16 @@
   }
 }
 
+/* Live Flow: 10-second ring sweep (r=10, C≈62.83) */
+@keyframes lf-ring-sweep {
+  from { stroke-dashoffset: 62.83; }
+  to   { stroke-dashoffset: 0; }
+}
+.lf-ring-sweep {
+  stroke-dashoffset: 62.83;
+  animation: lf-ring-sweep 10s linear infinite;
+}
+
 /* Goal card expand animation */
 @keyframes slide-down {
   from { max-height: 0; opacity: 0; }
