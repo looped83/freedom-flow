@@ -113,7 +113,7 @@ const FIELDS: FieldConfig[] = [
 ];
 
 const LIFETIME_FIELDS: FieldConfig[] = [
-  { id: 'lifetimeStartYear', label: 'Erste Dividenden erhalten', unit: 'Jahr', min: 2000, max: 2040, step: 1, hideSlider: true },
+  { id: 'lifetimeStartYear', label: 'Jahr',                         unit: 'Jahr', min: 2000, max: 2040, step: 1, hideSlider: true },
   { id: 'lifetimeDividends', label: 'Bereits erhaltene Dividenden', unit: '€', min: 0, max: 1_000_000, step: 1, hideSlider: true },
 ];
 
