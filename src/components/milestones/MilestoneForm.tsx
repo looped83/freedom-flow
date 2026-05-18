@@ -10,21 +10,31 @@ interface MilestoneFormProps {
   onCancel: () => void;
 }
 
-function todayIso(): string {
+type DurationUnit = 'months' | 'years';
+
+function dateFromDuration(value: number, unit: DurationUnit): string {
   const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+  if (unit === 'years') d.setFullYear(d.getFullYear() + value);
+  else d.setMonth(d.getMonth() + value);
+  return d.toISOString().slice(0, 10);
+}
+
+function initDuration(iso: string | undefined): { value: string; unit: DurationUnit } {
+  if (!iso) return { value: '', unit: 'months' };
+  const target = new Date(iso);
+  const today = new Date();
+  const months = (target.getFullYear() - today.getFullYear()) * 12 + (target.getMonth() - today.getMonth());
+  if (months > 0 && months % 12 === 0) return { value: String(months / 12), unit: 'years' };
+  return { value: String(Math.max(1, months)), unit: 'months' };
 }
 
 export function MilestoneForm({ initial, onSave, onCancel }: MilestoneFormProps) {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [type, setType] = useState<MilestoneType>(initial?.type ?? 'dividend');
   const amount = useAmountInput(initial?.type === 'dividend' ? initial.dividendTarget : undefined);
-  const [dateTarget, setDateTarget] = useState(
-    initial?.type === 'date' ? initial.dateTarget ?? '' : '',
-  );
+  const initDur = initDuration(initial?.type === 'date' ? initial.dateTarget : undefined);
+  const [duration, setDuration] = useState(initDur.value);
+  const [durationUnit, setDurationUnit] = useState<DurationUnit>(initDur.unit);
   const [icon, setIcon] = useState<MilestoneIconName>(initial?.icon ?? 'trophy');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -34,8 +44,9 @@ export function MilestoneForm({ initial, onSave, onCancel }: MilestoneFormProps)
     if (type === 'dividend') {
       const amt = parseGerman(amount.value);
       if (isNaN(amt) || amt <= 0) e.dividendTarget = 'Bitte einen gültigen Betrag > 0 eingeben.';
-    } else if (!dateTarget) {
-      e.dateTarget = 'Bitte ein Datum auswählen.';
+    } else {
+      const n = parseInt(duration, 10);
+      if (isNaN(n) || n <= 0) e.dateTarget = 'Bitte einen Zeitraum > 0 eingeben.';
     }
     return e;
   }
@@ -47,7 +58,7 @@ export function MilestoneForm({ initial, onSave, onCancel }: MilestoneFormProps)
     const base = { id: initial?.id ?? newId(), title: title.trim(), icon };
     const saved: Milestone = type === 'dividend'
       ? { ...base, type: 'dividend', dividendTarget: parseGerman(amount.value) }
-      : { ...base, type: 'date', dateTarget };
+      : { ...base, type: 'date', dateTarget: dateFromDuration(parseInt(duration, 10), durationUnit) };
     onSave(saved);
   }
 
@@ -99,8 +110,8 @@ export function MilestoneForm({ initial, onSave, onCancel }: MilestoneFormProps)
       </div>
 
       <div>
-        <p className="text-xs text-white/70 mb-2">Zieltyp</p>
-        <div className="flex rounded-lg overflow-hidden border border-white/10" role="group" aria-label="Zieltyp">
+        <p className="text-xs text-white/70 mb-2">Ziel</p>
+        <div className="flex rounded-lg overflow-hidden border border-white/10" role="group" aria-label="Ziel">
           <button
             type="button"
             onClick={() => setType('dividend')}
@@ -109,7 +120,7 @@ export function MilestoneForm({ initial, onSave, onCancel }: MilestoneFormProps)
               type === 'dividend' ? 'bg-accent/20 text-accent font-semibold' : 'text-white/55 hover:text-white/80'
             }`}
           >
-            Dividenden-Ziel
+            Dividende
           </button>
           <button
             type="button"
@@ -119,26 +130,45 @@ export function MilestoneForm({ initial, onSave, onCancel }: MilestoneFormProps)
               type === 'date' ? 'bg-accent/20 text-accent font-semibold' : 'text-white/55 hover:text-white/80'
             }`}
           >
-            Zeitziel
+            Zeit
           </button>
         </div>
       </div>
 
       {type === 'date' && (
         <div>
-          <label htmlFor="milestone-date" className="block text-xs text-white/70 mb-1">Zieldatum</label>
-          <input
-            id="milestone-date"
-            type="date"
-            value={dateTarget}
-            min={todayIso()}
-            onChange={(e) => setDateTarget(e.target.value)}
-            className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-accent text-sm"
-            aria-describedby={errors.dateTarget ? 'milestone-date-error' : undefined}
-            aria-invalid={!!errors.dateTarget}
-          />
+          <label htmlFor="milestone-duration" className="block text-xs text-white/70 mb-1">Zeitraum</label>
+          <div className="flex gap-2">
+            <input
+              id="milestone-duration"
+              type="number"
+              inputMode="numeric"
+              min="1"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              placeholder="z. B. 6"
+              className="flex-1 bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/55 focus:outline-none focus:border-accent text-sm"
+              aria-describedby={errors.dateTarget ? 'milestone-duration-error' : undefined}
+              aria-invalid={!!errors.dateTarget}
+            />
+            <div className="flex rounded-lg overflow-hidden border border-white/10" role="group" aria-label="Einheit">
+              {(['months', 'years'] as DurationUnit[]).map((u) => (
+                <button
+                  key={u}
+                  type="button"
+                  onClick={() => setDurationUnit(u)}
+                  aria-pressed={durationUnit === u}
+                  className={`px-3 py-2 text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+                    durationUnit === u ? 'bg-accent/20 text-accent font-semibold' : 'text-white/55 hover:text-white/80'
+                  }`}
+                >
+                  {u === 'months' ? 'Monate' : 'Jahre'}
+                </button>
+              ))}
+            </div>
+          </div>
           {errors.dateTarget && (
-            <p id="milestone-date-error" role="alert" className="text-xs text-red-400 mt-1">{errors.dateTarget}</p>
+            <p id="milestone-duration-error" role="alert" className="text-xs text-red-400 mt-1">{errors.dateTarget}</p>
           )}
         </div>
       )}
