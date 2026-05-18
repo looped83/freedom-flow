@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { Goal, Milestone, Portfolio } from '../../types';
+import type { Goal, GoalResult, Milestone, Portfolio } from '../../types';
 import { GoalList } from '../goals/GoalList';
 import { MilestoneList } from '../milestones/MilestoneList';
 import { PortfolioForm } from '../portfolio/PortfolioForm';
@@ -9,6 +9,7 @@ type SetupTab = 'goals' | 'milestones' | 'portfolio';
 
 interface SetupPageProps {
   goals: Goal[];
+  goalResults: GoalResult[];
   milestones: Milestone[];
   portfolio: Portfolio;
   onAdd: (g: Goal) => void;
@@ -32,6 +33,7 @@ const SETUP_ICON = (
 
 export function SetupPage({
   goals,
+  goalResults,
   milestones,
   portfolio,
   onAdd,
@@ -86,7 +88,7 @@ export function SetupPage({
       {/* All three panels stay mounted — CSS hidden preserves state between sub-tab switches */}
       <div role="tabpanel">
         <div hidden={active !== 'goals'}>
-          <GoalList goals={goals} portfolio={portfolio} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} focusGoalId={focusGoalId} onFocusConsumed={onFocusConsumed} />
+          <GoalList goals={goals} goalResults={goalResults} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} focusGoalId={focusGoalId} onFocusConsumed={onFocusConsumed} />
         </div>
         <div hidden={active !== 'milestones'}>
           <MilestoneList

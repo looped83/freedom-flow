@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useReducer } from 'react';
-import type { AppState, Goal, Milestone, Portfolio } from '../types';
+import type { AppState, Goal, GoalResult, Milestone, Portfolio } from '../types';
 import { AUTO_EXPENSES_MS_ID, BONUS_GOAL_ID } from '../constants/defaultData';
 import { loadState, resetState, saveState } from '../utils/storage';
+import { computeGoalResults } from '../utils/calculations';
 
 type Action =
   | { type: 'SET_PORTFOLIO'; payload: Portfolio }
@@ -98,6 +99,8 @@ function reducer(state: AppState, action: Action): AppState {
   }
 }
 
+export type { GoalResult };
+
 export interface AppActions {
   setPortfolio: (p: Portfolio) => void;
   patchPortfolio: (partial: Partial<Portfolio>) => void;
@@ -135,5 +138,12 @@ export function useAppState() {
     reset:            ()   => dispatch({ type: 'RESET' }),
   }), []);
 
-  return { state, actions };
+  // Computed once here; deps are stable references that only change when goals or
+  // portfolio actually mutate — milestone-only actions leave both unchanged.
+  const goalResults = useMemo<GoalResult[]>(
+    () => computeGoalResults(state.goals, state.portfolio.monthlyIncome, state.portfolio),
+    [state.goals, state.portfolio],
+  );
+
+  return { state, actions, goalResults };
 }

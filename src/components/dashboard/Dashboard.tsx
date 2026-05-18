@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Goal, GoalResult, Milestone, Portfolio } from '../../types';
 import {
-  computeGoalResults,
   projectMonthlyDividendsAtYear,
   totalMonthlyCosts,
 } from '../../utils/calculations';
@@ -51,6 +50,7 @@ const FREEDOM_UNITS: { id: FreedomTimeUnit; label: string; full: string }[] = [
 interface DashboardProps {
   portfolio: Portfolio;
   goals: Goal[];
+  goalResults: GoalResult[];
   milestones: Milestone[];
   onIncomeChange: (v: number) => void;
   onTotalChange: (v: number) => void;
@@ -63,7 +63,7 @@ const DASHBOARD_ICON = (
   </svg>
 );
 
-export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTotalChange, onGoalClick }: DashboardProps) {
+export function Dashboard({ portfolio, goals, goalResults, milestones, onIncomeChange, onTotalChange, onGoalClick }: DashboardProps) {
   const [showAllGoals, setShowAllGoals] = useState(false);
   const [freedomUnit, setFreedomUnit] = useState<FreedomTimeUnit>('days');
 
@@ -73,30 +73,25 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTota
   const minExpenses  = useMemo(() => totalMonthlyCosts(goals.filter((g) => g.id !== BONUS_GOAL_ID)), [goals]);
   const financedTime = useMemo(() => calculateFinancedTime(monthly, total), [monthly, total]);
 
-  const allResults = useMemo(
-    () => computeGoalResults(goals, monthly, portfolio),
-    [goals, monthly, portfolio],
-  );
-
   const nextGoal = useMemo(() => {
     let best: GoalResult | null = null;
-    for (const g of allResults) {
+    for (const g of goalResults) {
       if (g.status === 'covered') continue;
       if (!best || g.monthlyAmount < best.monthlyAmount) best = g;
     }
     return best;
-  }, [allResults]);
+  }, [goalResults]);
 
   const { openGoals, achievedGoals } = useMemo(() => {
     const open: GoalResult[] = [];
     const done: GoalResult[] = [];
-    for (const g of allResults) {
+    for (const g of goalResults) {
       (g.status === 'covered' ? done : open).push(g);
     }
     open.sort((a, b) => b.monthlyAmount - a.monthlyAmount);
     done.sort((a, b) => b.monthlyAmount - a.monthlyAmount);
     return { openGoals: open, achievedGoals: done };
-  }, [allResults]);
+  }, [goalResults]);
 
   const visibleGoals = showAllGoals ? openGoals : openGoals.slice(0, MAX_VISIBLE_GOALS);
 
@@ -217,7 +212,7 @@ export function Dashboard({ portfolio, goals, milestones, onIncomeChange, onTota
         <div className="flex items-center justify-between gap-2">
           <h2 id="all-goals-title" className="text-sm font-semibold text-white flex items-center gap-2">
             <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{CARD_ICON}</span>
-            <span>Ausgaben<span className="text-white/55 font-normal ml-1.5">({achievedGoals.length}/{allResults.length})</span></span>
+            <span>Ausgaben<span className="text-white/55 font-normal ml-1.5">({achievedGoals.length}/{goalResults.length})</span></span>
           </h2>
           {openGoals.length > MAX_VISIBLE_GOALS && (
             <button
