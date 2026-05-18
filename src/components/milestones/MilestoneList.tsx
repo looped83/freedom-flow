@@ -47,7 +47,7 @@ export function MilestoneList({ milestones, goals, portfolio, onAdd, onUpdate, o
   const [editingId, setEditingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [filter, setFilter] = useState<MilestoneFilter>('all');
-  const [sort, setSort] = useState<{ type: SortType; dir: 'asc' | 'desc' }>({ type: 'status', dir: 'asc' });
+  const [sort, setSort] = useState<{ type: SortType; dir: 'asc' | 'desc' }>({ type: 'target', dir: 'desc' });
 
   const swipe = useSwipeToDelete(onDelete, { isLocked: (id) => editingId === id });
 
@@ -152,15 +152,6 @@ export function MilestoneList({ milestones, goals, portfolio, onAdd, onUpdate, o
             {sort.type === 'alpha' ? (sort.dir === 'asc' ? 'A–Z' : 'Z–A') : 'A–Z'}
           </button>
           <button
-            onClick={() => handleSortChange('target')}
-            aria-pressed={sort.type === 'target'}
-            className={`text-xs px-3 py-1.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
-              sort.type === 'target' ? 'bg-accent/20 text-accent font-semibold' : 'text-white/45 hover:text-white/70'
-            }`}
-          >
-            {sort.type === 'target' ? (sort.dir === 'desc' ? '↓ Ziel' : '↑ Ziel') : '↓↑ Ziel'}
-          </button>
-          <button
             onClick={() => handleSortChange('status')}
             aria-pressed={sort.type === 'status'}
             className={`text-xs px-3 py-1.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
@@ -168,6 +159,15 @@ export function MilestoneList({ milestones, goals, portfolio, onAdd, onUpdate, o
             }`}
           >
             Status
+          </button>
+          <button
+            onClick={() => handleSortChange('target')}
+            aria-pressed={sort.type === 'target'}
+            className={`text-xs px-3 py-1.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+              sort.type === 'target' ? 'bg-accent/20 text-accent font-semibold' : 'text-white/45 hover:text-white/70'
+            }`}
+          >
+            {sort.type === 'target' ? (sort.dir === 'desc' ? '↓ Ziel' : '↑ Ziel') : '↓↑ Ziel'}
           </button>
         </div>
       </div>
