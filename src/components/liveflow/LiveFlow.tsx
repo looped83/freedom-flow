@@ -68,7 +68,7 @@ function MiniHeroTile({ label, value, progressPct, progressAriaLabel }: MiniHero
   return (
     <div className="bg-accent-muted border border-accent/20 rounded-2xl p-4">
       <p className="text-sm font-bold text-white mb-2 min-h-10 leading-5">{label}</p>
-      <p className="text-sm font-bold text-accent tabular-nums leading-none whitespace-nowrap" aria-live="off">
+      <p className="text-base font-bold text-accent tabular-nums leading-none whitespace-nowrap" aria-live="off">
         {formatEuro(value)}
       </p>
       <div className="mt-3">
