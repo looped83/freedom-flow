@@ -2,7 +2,7 @@ import { Fragment, memo, useMemo, useState } from 'react';
 import type { TimelineEntry, Goal, Milestone, MilestoneResult, Portfolio } from '../../types';
 import { CategoryIcon } from '../goals/CategoryIcon';
 import { MilestoneIcon } from '../milestones/MilestoneIcon';
-import { buildFreedomTimeline, projectMonthlyDividendsAtYear, projectMonthlyDividendsYearsAgo } from '../../utils/calculations';
+import { buildFreedomTimeline, projectMonthlyDividendsAtYear, projectMonthlyDividendsYearsAgo, totalMonthlyCosts } from '../../utils/calculations';
 import { computeMilestoneResult, formatMilestoneDate, milestoneAchievedYear, milestoneSortKey } from '../../utils/milestones';
 import { CURRENT_YEAR } from '../../constants/defaultData';
 import { formatEuro } from '../../utils/formatting';
@@ -174,6 +174,13 @@ function TimelineSeparator({ label }: { label: string }) {
 export function FreedomTimeline({ portfolio, goals, milestones }: FreedomTimelineProps) {
   const baseEntries = useMemo(() => buildFreedomTimeline(goals, portfolio), [goals, portfolio]);
 
+  const totalExpenses = useMemo(() => totalMonthlyCosts(goals), [goals]);
+
+  const visibleMilestones = useMemo(
+    () => milestones.filter((m) => m.type !== 'dividend' || (m.dividendTarget ?? 0) <= totalExpenses),
+    [milestones, totalExpenses],
+  );
+
   const beyondHorizonGoals = useMemo(() => {
     const ids = new Set(baseEntries.flatMap((e) => e.newGoals.map((g) => g.id)));
     return goals.filter((g) => !ids.has(g.id));
@@ -183,7 +190,7 @@ export function FreedomTimeline({ portfolio, goals, milestones }: FreedomTimelin
   const milestonesByYear = useMemo(() => {
     const map = new Map<number, MilestoneResult[]>();
     const beyond: MilestoneResult[] = [];
-    for (const m of milestones) {
+    for (const m of visibleMilestones) {
       const year = milestoneAchievedYear(m, portfolio);
       const result = computeMilestoneResult(m, portfolio);
       if (year == null) {
@@ -199,7 +206,7 @@ export function FreedomTimeline({ portfolio, goals, milestones }: FreedomTimelin
       list.sort((a, b) => milestoneSortKey(b) - milestoneSortKey(a));
     }
     return { map, beyond };
-  }, [milestones, portfolio]);
+  }, [visibleMilestones, portfolio]);
 
   // Merge milestone-only years into the timeline so milestones always have a card.
   const allEntries = useMemo(() => {
