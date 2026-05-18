@@ -89,31 +89,20 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
       className="relative"
       aria-label={entry.isCurrentYear ? `Heute (${entry.year})` : `Jahr ${entry.year}`}
     >
-      <div className={`rounded-2xl p-4 relative ${
-        isHero
-          ? 'bg-accent-muted border-2 border-accent/40'
-          : 'bg-surface-1'
-      }`}>
+      <div
+        className={`rounded-2xl p-4 relative ${
+          isHero
+            ? 'bg-accent-muted border-2 border-accent/40'
+            : 'bg-surface-1'
+        } ${collapsible && hasContent ? 'cursor-pointer select-none' : ''}`}
+        onClick={collapsible && hasContent ? () => setCollapsed((c) => !c) : undefined}
+        role={collapsible && hasContent ? 'button' : undefined}
+        aria-expanded={collapsible && hasContent ? !collapsed : undefined}
+        aria-label={collapsible && hasContent ? (collapsed ? `${entry.year} ausklappen` : `${entry.year} einklappen`) : undefined}
+      >
 
-        {/* Chevron – absolute top-right, only for collapsible cards with content */}
-        {collapsible && hasContent && (
-          <button
-            onClick={() => setCollapsed((c) => !c)}
-            aria-expanded={!collapsed}
-            aria-label={collapsed ? `${entry.year} ausklappen` : `${entry.year} einklappen`}
-            className="absolute top-3 right-3 p-1 text-white/40 hover:text-white/70 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
-          >
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"
-              strokeLinecap="round" className={`w-3.5 h-3.5 transition-transform duration-200 ${collapsed ? '' : 'rotate-180'}`}
-              aria-hidden="true"
-            >
-              <polyline points="3 6 8 11 13 6" />
-            </svg>
-          </button>
-        )}
-
-        {/* Year badge + Dividende – single row */}
-        <div className={`flex items-center gap-2 ${hasContent && !collapsed ? 'mb-2' : ''} ${collapsible && hasContent ? 'pr-7' : ''}`}>
+        {/* Year badge + Dividieren – single row */}
+        <div className={`flex items-center gap-2 ${hasContent && !collapsed ? 'mb-2' : ''}`}>
           <span className={`inline-block text-xs font-bold px-2 py-0.5 rounded-md border flex-shrink-0 ${yearColor} ${
             entry.isCurrentYear
               ? 'border-orange-400/40 bg-orange-400/10'
@@ -125,10 +114,18 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
           }`}>
             {entry.year}
           </span>
-          <span className="text-xs font-bold text-white flex-1">Dividende</span>
+          <span className="text-xs font-bold text-white flex-1">Dividieren</span>
           <span className="text-sm font-bold text-green-400 tabular-nums">
             {formatEuro(entry.projectedMonthly)} / Mo.
           </span>
+          {collapsible && hasContent && (
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"
+              strokeLinecap="round" className={`w-3.5 h-3.5 flex-shrink-0 text-white/40 transition-transform duration-200 ${collapsed ? '' : 'rotate-180'}`}
+              aria-hidden="true"
+            >
+              <polyline points="3 6 8 11 13 6" />
+            </svg>
+          )}
         </div>
 
         {!collapsed && (
