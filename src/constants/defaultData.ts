@@ -53,6 +53,8 @@ export const DEFAULT_GOALS: Goal[] = [
   { id: id(), name: 'Gaming',                 monthlyAmount:  50.00, category: 'Gaming'         },
   { id: id(), name: 'Zahnarzt',               monthlyAmount:  50.00, category: 'Gesundheit'     },
   { id: id(), name: 'Auto',                   monthlyAmount: 297.00, category: 'Auto'           },
+  { id: id(), name: 'NextDNS',               monthlyAmount:   1.66, category: 'Kommunikation'  },
+  { id: id(), name: 'ddownload',             monthlyAmount:   3.33, category: 'Streaming'      },
 ];
 
 // Default milestones — even 250 €/month steps from 100 € all the way through

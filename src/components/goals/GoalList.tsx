@@ -77,7 +77,7 @@ export function GoalList({ goals, portfolio, onAdd, onUpdate, onDelete, focusGoa
 
   return (
     <section className="max-w-4xl mx-auto px-4 py-6" aria-labelledby="goals-heading">
-      <div className="mb-5 flex items-start justify-between gap-3">
+      <div className="mb-5 flex items-center justify-between gap-3">
         <div>
           <h2 id="goals-heading" className="text-xs text-white/55 mb-0.5 font-normal">Ausgaben / Monat</h2>
           <p className="text-xl font-bold text-white tabular-nums">{formatEuro(total)}</p>

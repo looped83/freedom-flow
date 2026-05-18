@@ -100,7 +100,7 @@ export function MilestoneList({ milestones, goals, portfolio, onAdd, onUpdate, o
 
   return (
     <section className="max-w-4xl mx-auto px-4 py-6" aria-labelledby="milestones-heading">
-      <div className="mb-5 flex items-start justify-between gap-3">
+      <div className="mb-5 flex items-center justify-between gap-3">
         <div>
           <h2 id="milestones-heading" className="text-xs text-white/55 mb-0.5 font-normal">Meilensteine</h2>
           <p className="text-xl font-bold text-white tabular-nums">
