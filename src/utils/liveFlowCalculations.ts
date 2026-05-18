@@ -1,6 +1,12 @@
+import type { Goal } from '../types';
+
 function sanitize(value: number): number {
   if (!Number.isFinite(value) || value < 0) return 0;
   return value;
+}
+
+export function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
 }
 
 export function calculateAnnualDividends(monthlyDividends: number): number {
@@ -96,6 +102,73 @@ const eurFmt = [2, 3, 4].map((d) =>
     maximumFractionDigits: d,
   }),
 );
+
+const DAYS_PER_MONTH = 30;
+
+export type FreedomTimeUnit = 'days' | 'hours' | 'minutes';
+
+export interface FinancedTime {
+  days: number;
+  hours: number;
+  minutes: number;
+}
+
+export function calculateFinancedTime(
+  monthlyDividends: number,
+  totalMonthlyExpenses: number,
+): FinancedTime {
+  const m = sanitize(monthlyDividends);
+  if (totalMonthlyExpenses <= 0 || m <= 0) return { days: 0, hours: 0, minutes: 0 };
+  const ratio = m / totalMonthlyExpenses;
+  const days = ratio * DAYS_PER_MONTH;
+  return { days, hours: days * 24, minutes: days * 24 * 60 };
+}
+
+const fmtTimeDec = new Intl.NumberFormat('de-DE', {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+const fmtTimeInt = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 });
+
+export function formatFreedomTime(value: number, unit: FreedomTimeUnit): string {
+  return unit === 'minutes'
+    ? fmtTimeInt.format(Math.round(Math.max(0, value)))
+    : fmtTimeDec.format(Math.max(0, value));
+}
+
+export interface NextGoalCoverage {
+  goal: Goal;
+  progress: number;
+  coveredAmount: number;
+  missingAmount: number;
+}
+
+export function getNextGoalCoverage(
+  goals: Goal[],
+  monthlyDividends: number,
+): NextGoalCoverage | null {
+  if (goals.length === 0) return null;
+  const sorted = [...goals].sort((a, b) => a.monthlyAmount - b.monthlyAmount);
+  let rem = sanitize(monthlyDividends);
+
+  for (const goal of sorted) {
+    if (rem >= goal.monthlyAmount) {
+      rem -= goal.monthlyAmount;
+    } else {
+      const covered = Math.max(0, rem);
+      const progress = goal.monthlyAmount > 0
+        ? clamp(covered / goal.monthlyAmount, 0, 1)
+        : 0;
+      return {
+        goal,
+        progress,
+        coveredAmount: covered,
+        missingAmount: goal.monthlyAmount - covered,
+      };
+    }
+  }
+  return null;
+}
 
 export function formatCurrencyForSmallAmounts(value: number): string {
   const v = sanitize(Number.isFinite(value) ? value : 0);
