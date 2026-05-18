@@ -68,7 +68,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
     function tick() {
       if (!document.hidden) setNow(new Date());
     }
-    const id = setInterval(tick, 1_000);
+    const id = setInterval(tick, 10_000);
     document.addEventListener('visibilitychange', tick);
     return () => {
       clearInterval(id);
@@ -76,18 +76,30 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
     };
   }, []);
 
-  const lifetimeTotal = calculateLifetimeDividends(
+  const dailyRate = calculateDividendRatePerDay(monthly);
+
+  // The sole changing value each tick — everything else is derived from this
+  // so all displayed numbers cross cent boundaries on the exact same render.
+  const earnedToday = calculateEarnedTodaySoFar(monthly, now);
+
+  // Midnight baseline: constant throughout the day, recomputed only when `now`
+  // crosses into a new date (which also updates `now` via the tick).
+  const startOfDay   = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const weekBase     = calculateEarnedThisWeekSoFar(monthly, startOfDay);
+  const monthBase    = calculateEarnedThisMonthSoFar(monthly, startOfDay);
+  const yearBase     = calculateEarnedThisYearSoFar(monthly, startOfDay);
+  const lifetimeBase = calculateLifetimeDividends(
     portfolio.lifetimeDividends,
     portfolio.lifetimeStartYear,
     monthly,
-    now,
+    startOfDay,
   );
 
-  const dailyRate     = calculateDividendRatePerDay(monthly);
-  const earnedToday   = calculateEarnedTodaySoFar(monthly, now);
-  const earnedWeek    = calculateEarnedThisWeekSoFar(monthly, now);
-  const earnedMonth   = calculateEarnedThisMonthSoFar(monthly, now);
-  const earnedYear    = calculateEarnedThisYearSoFar(monthly, now);
+  // All share earnedToday as their variable delta → always change together
+  const earnedWeek    = weekBase    + earnedToday;
+  const earnedMonth   = monthBase   + earnedToday;
+  const earnedYear    = yearBase    + earnedToday;
+  const lifetimeTotal = lifetimeBase + earnedToday;
   const dayProgress   = calculateDayProgress(now);
   const weekProgress  = calculateWeekProgress(now);
   const monthProgress = calculateMonthProgress(now);
