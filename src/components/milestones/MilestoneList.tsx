@@ -23,15 +23,8 @@ interface MilestoneListProps {
 
 function MilestoneSubtitle({ result }: { result: MilestoneResult }) {
   if (result.type === 'dividend') {
-    const target = result.dividendTarget ?? 0;
-    if (result.status === 'achieved') {
-      return <>Ziel: {formatEuro(target)} / Monat · Erreicht</>;
-    }
-    return (
-      <>
-        Ziel: {formatEuro(target)} / Monat · noch {formatEuro(result.missingMonthly)}
-      </>
-    );
+    if (result.status === 'achieved') return <>Erreicht</>;
+    return <>noch {formatEuro(result.missingMonthly)}</>;
   }
   if (!result.dateTarget) return <>Zeitziel</>;
   return (
