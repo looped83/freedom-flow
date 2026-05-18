@@ -234,9 +234,6 @@ export function LiveFlow({ portfolio, goals }: LiveFlowProps) {
           ))}
         </div>
 
-        <p className="text-xs text-white/35 mt-4 leading-relaxed">
-          Rechnerischer Durchschnittswert · Live berechnet alle 10 Sekunden
-        </p>
       </section>
 
       {/* ── Freedom Counter: Zurückgekaufte Zeit ── */}
