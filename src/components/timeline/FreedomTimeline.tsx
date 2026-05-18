@@ -86,7 +86,7 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
 
   return (
     <li
-      className="relative pl-16"
+      className="relative"
       aria-label={entry.isCurrentYear ? `Heute (${entry.year})` : `Jahr ${entry.year}`}
     >
       <div className={`rounded-2xl p-4 relative ${
@@ -120,7 +120,7 @@ const EntryCard = memo(function EntryCard({ entry, isHero, milestones }: { entry
         {/* Dividend row */}
         <div className={`flex items-center justify-between ${hasContent && !collapsed ? 'mb-2' : ''} ${collapsible && hasContent ? 'pr-7' : ''}`}>
           <span className="text-xs font-bold text-white">Dividende</span>
-          <span className="text-sm font-bold text-orange-400 tabular-nums">
+          <span className="text-sm font-bold text-green-400 tabular-nums">
             {formatEuro(entry.projectedMonthly)} / Mo.
           </span>
         </div>
@@ -242,7 +242,6 @@ export function FreedomTimeline({ portfolio, goals, milestones }: FreedomTimelin
         </div>
       ) : (
         <div className="relative">
-          <div className="absolute left-7 top-0 bottom-0 w-px bg-white/8" aria-hidden="true" />
           <ol className="space-y-5" aria-label="Freedom Timeline">
             {displayEntries.map((entry, idx) => {
               const isHero = idx === 0;
