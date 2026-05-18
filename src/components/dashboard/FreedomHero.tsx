@@ -137,7 +137,7 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3 w-full">
           {/* Dividenden – tappable to edit */}
-          <div className="text-center">
+          <div className="flex flex-col items-center">
             <p className="text-xs text-white/55 mb-1">Dividenden</p>
             {income.editing ? (
               <input
@@ -165,7 +165,7 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
           </div>
 
           {/* Ausgaben / Monat|Jahr – tappable to edit */}
-          <div className="text-center">
+          <div className="flex flex-col items-center">
             <p className="text-xs text-white/55 mb-1">Ausgaben</p>
             {expense.editing ? (
               <input
@@ -192,7 +192,7 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
             )}
           </div>
 
-          <div className="text-center">
+          <div className="flex flex-col items-center">
             <p className="text-xs text-white/55 mb-1">Offen</p>
             <p className="text-white/65 font-bold text-sm tabular-nums text-center">{formatEuro(missing * mul)}</p>
           </div>
