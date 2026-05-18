@@ -170,6 +170,23 @@ export function getNextGoalCoverage(
   return null;
 }
 
+export function calculateElapsedYears(startYear: number, now: Date): number {
+  const startOfStartYear = new Date(startYear, 0, 1);
+  const secondsElapsed = (now.getTime() - startOfStartYear.getTime()) / 1000;
+  return Math.max(0, secondsElapsed / (365.25 * 86_400));
+}
+
+export function calculateLifetimeDividends(
+  baseDividends: number,
+  startYear: number,
+  monthlyDividends: number,
+  now: Date,
+): number {
+  const annual = calculateAnnualDividends(monthlyDividends);
+  const yearsElapsed = calculateElapsedYears(startYear, now);
+  return sanitize(baseDividends) + annual * yearsElapsed;
+}
+
 export function formatCurrencyForSmallAmounts(value: number): string {
   const v = sanitize(Number.isFinite(value) ? value : 0);
   const idx = v >= 1 ? 0 : v >= 0.01 ? 1 : 2;

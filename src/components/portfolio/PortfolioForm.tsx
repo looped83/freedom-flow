@@ -8,6 +8,7 @@ const fmtDec = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 1, maximu
 function formatFieldValue(value: number, unit: string): string {
   if (unit === '€') return fmtInt.format(value);
   if (unit === '%') return fmtDec.format(value);
+  if (unit === 'Jahr') return fmtInt.format(value);
   return String(value);
 }
 
@@ -15,7 +16,7 @@ interface NumberFieldProps {
   fieldId: string;
   label: string;
   value: number;
-  unit: '€' | '%' | 'Jahre';
+  unit: '€' | '%' | 'Jahre' | 'Jahr';
   min: number;
   max: number;
   step: number;
@@ -89,7 +90,7 @@ function NumberField({ fieldId, label, value, unit, min, max, step, onChange }: 
 interface FieldConfig {
   id: keyof Portfolio;
   label: string;
-  unit: '€' | '%' | 'Jahre';
+  unit: '€' | '%' | 'Jahre' | 'Jahr';
   min: number;
   max: number;
   step: number;
@@ -103,6 +104,11 @@ const FIELDS: FieldConfig[] = [
   { id: 'dividendGrowth',label: 'Dividendenwachstum',    unit: '%',     min: 0, max: 15,        step: 0.5 },
   { id: 'priceReturn',   label: 'Kursrendite',           unit: '%',     min: 0, max: 50,        step: 0.5 },
   { id: 'horizonYears',  label: 'Anlagehorizont',        unit: 'Jahre', min: 1, max: 40,        step: 1   },
+];
+
+const LIFETIME_FIELDS: FieldConfig[] = [
+  { id: 'lifetimeDividends', label: 'Bereits erhaltene Dividenden', unit: '€',    min: 0,    max: 1_000_000, step: 1    },
+  { id: 'lifetimeStartYear', label: 'Jahr',                         unit: 'Jahr', min: 2000, max: 2040,      step: 1    },
 ];
 
 interface PortfolioFormProps {
@@ -161,6 +167,23 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
             onChange={(v) => handleChange(f.id, v)}
           />
         ))}
+
+        <div className="pt-4 border-t border-white/5 space-y-6">
+          <h3 className="text-sm font-semibold text-white/80">Lifetime-Dividenden</h3>
+          {LIFETIME_FIELDS.map((f) => (
+            <NumberField
+              key={f.id}
+              fieldId={`portfolio-${f.id}`}
+              label={f.label}
+              value={form[f.id]}
+              unit={f.unit}
+              min={f.min}
+              max={f.max}
+              step={f.step}
+              onChange={(v) => handleChange(f.id, v)}
+            />
+          ))}
+        </div>
 
         <button
           type="submit"
