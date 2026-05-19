@@ -73,9 +73,9 @@ export function SetupPage({
           aria-label="Setup-Bereiche"
         >
           {([
-            { id: 'goals',      label: 'Ausgaben'      },
-            { id: 'milestones', label: 'Meilensteine'  },
-            { id: 'portfolio',  label: 'Portfolio'     },
+            { id: 'goals',      label: 'Ausgaben'     },
+            { id: 'milestones', label: 'Meilensteine' },
+            { id: 'portfolio',  label: 'Dividenden'   },
           ] as { id: SetupTab; label: string }[]).map((t) => (
             <button
               key={t.id}

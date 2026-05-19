@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import type { Portfolio } from '../../types';
-import { formatEuro, liveFormatAmount, parseGerman } from '../../utils/formatting';
+import { liveFormatAmount, parseGerman } from '../../utils/formatting';
 
 const fmtInt = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 const fmtDec = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -89,53 +89,52 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
   return (
     <section className="max-w-4xl mx-auto px-4 py-6" aria-labelledby="portfolio-form-heading">
       <div className="mb-5">
-        <h2 id="portfolio-form-heading" className="text-lg font-bold text-white">Portfolio-Einstellungen</h2>
+        <h2 id="portfolio-form-heading" className="text-lg font-bold text-white">Dividenden</h2>
         <p className="text-sm text-white/65 mt-1">Zahl antippen zum Bearbeiten.</p>
       </div>
 
-      <h3 className="text-sm font-semibold text-accent mb-3">Portfolio</h3>
+      <h3 className="text-sm font-semibold text-accent mb-3">Details</h3>
 
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <div className="bg-surface-1 rounded-2xl p-5">
-          <p className="text-xs text-white/65 mb-1">Jährliche Dividenden</p>
-          <p className="text-xl font-bold text-accent tabular-nums">{formatEuro(annual)}</p>
-        </div>
-        <div className="bg-surface-1 rounded-2xl p-5">
-          <p className="text-xs text-white/65 mb-1">Monatliche Dividenden</p>
-          <p className="text-xl font-bold text-gold tabular-nums">{formatEuro(monthly)}</p>
-        </div>
-      </div>
-
-      <div className="space-y-3 mb-6">
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <TileField
+          fieldId="portfolio-annualIncome"
+          label="Jährliche Dividenden"
+          value={annual}
+          unit="€"
+          min={0} max={120_000} step={1}
+          valueClass="text-accent"
+          onChange={(v) => handleChange('monthlyIncome', v / 12)}
+        />
         <TileField
           fieldId="portfolio-monthlyIncome"
           label="Monatliche Dividenden"
-          value={portfolio.monthlyIncome}
+          value={monthly}
           unit="€"
           min={0} max={10_000} step={1}
           valueClass="text-gold"
           onChange={(v) => handleChange('monthlyIncome', v)}
         />
-        <div className="grid grid-cols-2 gap-3">
-          <TileField
-            fieldId="portfolio-dividendYield"
-            label="Dividendenrendite"
-            value={portfolio.dividendYield}
-            unit="%"
-            min={0} max={20} step={0.1}
-            valueClass="text-accent"
-            onChange={(v) => handleChange('dividendYield', v)}
-          />
-          <TileField
-            fieldId="portfolio-dividendGrowth"
-            label="Dividendenwachstum"
-            value={portfolio.dividendGrowth}
-            unit="%"
-            min={0} max={15} step={0.5}
-            valueClass="text-accent"
-            onChange={(v) => handleChange('dividendGrowth', v)}
-          />
-        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <TileField
+          fieldId="portfolio-dividendYield"
+          label="Dividendenrendite"
+          value={portfolio.dividendYield}
+          unit="%"
+          min={0} max={20} step={0.1}
+          valueClass="text-accent"
+          onChange={(v) => handleChange('dividendYield', v)}
+        />
+        <TileField
+          fieldId="portfolio-dividendGrowth"
+          label="Dividendenwachstum"
+          value={portfolio.dividendGrowth}
+          unit="%"
+          min={0} max={15} step={0.5}
+          valueClass="text-accent"
+          onChange={(v) => handleChange('dividendGrowth', v)}
+        />
       </div>
 
       <div className="pt-4 border-t border-white/5 space-y-3">
