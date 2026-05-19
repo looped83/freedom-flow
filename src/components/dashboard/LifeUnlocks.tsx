@@ -38,16 +38,16 @@ function subtitle(r: MilestoneResult): string {
   return '';
 }
 
-function MilestoneCard({ result }: { result: MilestoneResult }) {
+function MilestoneCard({ result, active }: { result: MilestoneResult; active?: boolean }) {
   return (
-    <div className="bg-surface-2 rounded-2xl p-4 flex gap-3 items-start">
-      <span className="flex-shrink-0 mt-0.5 text-white/60">
+    <div className={`rounded-2xl p-4 flex gap-3 items-start ${active ? 'bg-accent-muted border border-accent/20' : 'bg-surface-2'}`}>
+      <span className={`flex-shrink-0 mt-0.5 ${active ? 'text-accent' : 'text-white/60'}`}>
         <MilestoneIcon icon={result.icon} />
       </span>
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline justify-between gap-2 mb-0.5">
           <p className="text-white font-semibold text-sm leading-tight truncate">{result.title}</p>
-          <span className="text-xs text-gold font-bold flex-shrink-0 tabular-nums">
+          <span className={`text-xs font-bold flex-shrink-0 tabular-nums ${active ? 'text-accent' : 'text-gold'}`}>
             {result.progressPercent.toFixed(0)} %
           </span>
         </div>
@@ -55,7 +55,7 @@ function MilestoneCard({ result }: { result: MilestoneResult }) {
         <ProgressBar
           percent={result.progressPercent}
           label={`${result.title}: ${result.progressPercent.toFixed(0)} % erreicht`}
-          colorClass={barColor(result.progressPercent)}
+          colorClass={active ? 'bg-accent' : barColor(result.progressPercent)}
         />
       </div>
     </div>
@@ -71,11 +71,8 @@ export function LifeUnlocks({ milestoneResults }: LifeUnlocksProps) {
     for (const r of milestoneResults) {
       (r.status === 'achieved' ? achieved : notAchieved).push(r);
     }
-    achieved.sort((a, b) => milestoneSortKey(a) - milestoneSortKey(b));
-    notAchieved.sort((a, b) => {
-      if (a.progressPercent !== b.progressPercent) return b.progressPercent - a.progressPercent;
-      return milestoneSortKey(a) - milestoneSortKey(b);
-    });
+    achieved.sort((a, b) => milestoneSortKey(b) - milestoneSortKey(a));
+    notAchieved.sort((a, b) => milestoneSortKey(a) - milestoneSortKey(b));
     return { achieved, notAchieved };
   }, [milestoneResults]);
   const visibleCards = showAll ? notAchieved : notAchieved.slice(0, 3);
@@ -126,8 +123,8 @@ export function LifeUnlocks({ milestoneResults }: LifeUnlocksProps) {
 
       {visibleCards.length > 0 ? (
         <div className="space-y-2">
-          {visibleCards.map((r) => (
-            <MilestoneCard key={r.id} result={r} />
+          {visibleCards.map((r, idx) => (
+            <MilestoneCard key={r.id} result={r} active={idx === 0} />
           ))}
         </div>
       ) : (

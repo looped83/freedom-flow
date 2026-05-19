@@ -127,7 +127,7 @@ export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onI
             onClick={() => onGoalClick?.(nextGoal.id)}
             className="w-full bg-surface-2 rounded-xl px-4 py-3 flex items-center gap-3 text-left hover:bg-surface-3 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
           >
-            <span className="flex-shrink-0 text-white/60" aria-hidden="true">
+            <span className={`flex-shrink-0 ${nextGoal.id === BONUS_GOAL_ID ? 'text-orange-400' : 'text-white/60'}`} aria-hidden="true">
               <CategoryIcon category={nextGoal.category} />
             </span>
             <div className="flex-1 min-w-0">
@@ -247,7 +247,7 @@ export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onI
                     onClick={() => onGoalClick?.(g.id)}
                     className="w-full bg-surface-2 rounded-xl px-4 py-3 flex items-center gap-3 text-left hover:bg-surface-3 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
                   >
-                    <span className="flex-shrink-0 text-white/60" aria-hidden="true">
+                    <span className={`flex-shrink-0 ${g.id === BONUS_GOAL_ID ? 'text-orange-400' : 'text-white/60'}`} aria-hidden="true">
                       <CategoryIcon category={g.category} />
                     </span>
                     <div className="flex-1 min-w-0">

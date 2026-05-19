@@ -1,40 +1,39 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Portfolio } from '../../types';
 import { formatEuro, liveFormatAmount, parseGerman } from '../../utils/formatting';
 
 const fmtInt = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 const fmtDec = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
-function formatFieldValue(value: number, unit: string): string {
+function formatDisplay(value: number, unit: string): string {
   if (unit === '€') return fmtInt.format(value);
   if (unit === '%') return fmtDec.format(value);
-  if (unit === 'Jahr') return String(value);
   return String(value);
 }
 
-interface NumberFieldProps {
+interface TileFieldProps {
   fieldId: string;
   label: string;
   value: number;
-  unit: '€' | '%' | 'Jahre' | 'Jahr';
+  unit: '€' | '%' | 'Jahr';
   min: number;
   max: number;
   step: number;
-  valueClassName?: string;
+  valueClass: string;
   onChange: (v: number) => void;
 }
 
-function NumberField({ fieldId, label, value, unit, min, max, step, valueClassName, onChange }: NumberFieldProps) {
+function TileField({ fieldId, label, value, unit, min, max, step, valueClass, onChange }: TileFieldProps) {
   const [raw, setRaw] = useState('');
   const [focused, setFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const display = focused ? raw : formatDisplay(value, unit);
 
   function handleFocus() {
     setFocused(true);
-    setRaw(formatFieldValue(value, unit));
-  }
-
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setRaw(unit === '€' ? liveFormatAmount(e.target.value) : e.target.value);
+    setRaw(formatDisplay(value, unit));
+    requestAnimationFrame(() => inputRef.current?.select());
   }
 
   function commit(input: string) {
@@ -46,63 +45,32 @@ function NumberField({ fieldId, label, value, unit, min, max, step, valueClassNa
     }
   }
 
-  const displayValue = focused ? raw : formatFieldValue(value, unit);
-  const inputId = `${fieldId}-input`;
-
   return (
-    <div>
-      <div className="flex justify-between items-center mb-2">
-        <label htmlFor={inputId} className="text-sm text-white/80 font-medium">
-          {label}
-        </label>
-        <div className="flex items-center gap-1.5">
-          <input
-            id={inputId}
-            type="text"
-            inputMode={unit === 'Jahr' ? 'numeric' : 'decimal'}
-            style={{ fontSize: '16px' }}
-            value={displayValue}
-            onFocus={handleFocus}
-            onChange={handleChange}
-            onBlur={(e) => commit(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter')  e.currentTarget.blur();
-              if (e.key === 'Escape') setFocused(false);
-            }}
-            aria-label={`${label} direkt eingeben`}
-            className={`w-24 text-right text-sm font-bold ${valueClassName ?? 'text-white'} bg-surface-2 border border-white/10 rounded-lg px-2 py-1 focus:outline-none focus:border-accent tabular-nums`}
-          />
-          <span className="text-sm text-white/65 w-8 flex-shrink-0">{unit}</span>
-        </div>
+    <div className="bg-surface-1 rounded-2xl p-4">
+      <p className="text-xs text-white/55 mb-2">{label}</p>
+      <div className="flex items-baseline gap-1.5">
+        <input
+          id={`${fieldId}-input`}
+          ref={inputRef}
+          type="text"
+          inputMode={unit === 'Jahr' ? 'numeric' : 'decimal'}
+          style={{ fontSize: '16px' }}
+          value={display}
+          onFocus={handleFocus}
+          onChange={(e) => setRaw(unit === '€' ? liveFormatAmount(e.target.value) : e.target.value)}
+          onBlur={(e) => commit(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') e.currentTarget.blur();
+            if (e.key === 'Escape') setFocused(false);
+          }}
+          aria-label={`${label} eingeben`}
+          className={`flex-1 min-w-0 bg-transparent font-bold text-xl tabular-nums text-right focus:outline-none border-b border-transparent focus:border-accent transition-colors ${valueClass}`}
+        />
+        <span className="text-sm text-white/55 flex-shrink-0">{unit}</span>
       </div>
     </div>
   );
 }
-
-interface FieldConfig {
-  id: keyof Portfolio;
-  label: string;
-  unit: '€' | '%' | 'Jahre' | 'Jahr';
-  min: number;
-  max: number;
-  step: number;
-  valueClassName?: string;
-}
-
-const FIELDS: FieldConfig[] = [
-  { id: 'monthlyIncome', label: 'Monatliche Dividenden', unit: '€',     min: 0, max: 10_000,    step: 1   },
-  { id: 'value',         label: 'Portfolio-Wert',        unit: '€',     min: 0, max: 2_000_000, step: 100 },
-  { id: 'dividendYield', label: 'Dividendenrendite',     unit: '%',     min: 0, max: 20,        step: 0.1 },
-  { id: 'monthlySavings',label: 'Monatliche Sparrate',   unit: '€',     min: 0, max: 5_000,     step: 50  },
-  { id: 'dividendGrowth',label: 'Dividendenwachstum',    unit: '%',     min: 0, max: 15,        step: 0.5 },
-  { id: 'priceReturn',   label: 'Kursrendite',           unit: '%',     min: 0, max: 50,        step: 0.5 },
-  { id: 'horizonYears',  label: 'Anlagehorizont',        unit: 'Jahre', min: 1, max: 40,        step: 1   },
-];
-
-const LIFETIME_FIELDS: FieldConfig[] = [
-  { id: 'lifetimeStartYear', label: 'Jahr',               unit: 'Jahr', min: 2000, max: 2040, step: 1, valueClassName: 'text-accent' },
-  { id: 'lifetimeDividends', label: 'Erhaltene Dividende', unit: '€',   min: 0, max: 1_000_000, step: 1, valueClassName: 'text-accent' },
-];
 
 interface PortfolioFormProps {
   portfolio: Portfolio;
@@ -111,36 +79,23 @@ interface PortfolioFormProps {
 }
 
 export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps) {
-  const [form, setForm] = useState<Portfolio>({ ...portfolio });
-  const [saved, setSaved] = useState(false);
-  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => () => { if (savedTimer.current) clearTimeout(savedTimer.current); }, []);
-
   function handleChange(field: keyof Portfolio, value: number) {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    onSave({ ...portfolio, [field]: value });
   }
 
-  function handleSubmit(ev: React.FormEvent) {
-    ev.preventDefault();
-    onSave(form);
-    setSaved(true);
-    if (savedTimer.current) clearTimeout(savedTimer.current);
-    savedTimer.current = setTimeout(() => setSaved(false), 2000);
-  }
-
-  const monthly = form.monthlyIncome;
+  const monthly = portfolio.monthlyIncome;
   const annual = monthly * 12;
 
   return (
     <section className="max-w-4xl mx-auto px-4 py-6" aria-labelledby="portfolio-form-heading">
       <div className="mb-5">
         <h2 id="portfolio-form-heading" className="text-lg font-bold text-white">Portfolio-Einstellungen</h2>
-        <p className="text-sm text-white/65 mt-1">Schieberegler oder Zahl direkt eingeben.</p>
+        <p className="text-sm text-white/65 mt-1">Zahl antippen zum Bearbeiten.</p>
       </div>
 
       <h3 className="text-sm font-semibold text-accent mb-3">Portfolio</h3>
-      <div className="grid grid-cols-2 gap-3 mb-6">
+
+      <div className="grid grid-cols-2 gap-3 mb-3">
         <div className="bg-surface-1 rounded-2xl p-5">
           <p className="text-xs text-white/65 mb-1">Jährliche Dividenden</p>
           <p className="text-xl font-bold text-accent tabular-nums">{formatEuro(annual)}</p>
@@ -151,47 +106,61 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6" aria-label="Portfolio-Daten bearbeiten">
-        {FIELDS.map((f) => (
-          <NumberField
-            key={f.id}
-            fieldId={`portfolio-${f.id}`}
-            label={f.label}
-            value={form[f.id]}
-            unit={f.unit}
-            min={f.min}
-            max={f.max}
-            step={f.step}
-            onChange={(v) => handleChange(f.id, v)}
+      <div className="space-y-3 mb-6">
+        <TileField
+          fieldId="portfolio-monthlyIncome"
+          label="Monatliche Dividenden"
+          value={portfolio.monthlyIncome}
+          unit="€"
+          min={0} max={10_000} step={1}
+          valueClass="text-gold"
+          onChange={(v) => handleChange('monthlyIncome', v)}
+        />
+        <div className="grid grid-cols-2 gap-3">
+          <TileField
+            fieldId="portfolio-dividendYield"
+            label="Dividendenrendite"
+            value={portfolio.dividendYield}
+            unit="%"
+            min={0} max={20} step={0.1}
+            valueClass="text-accent"
+            onChange={(v) => handleChange('dividendYield', v)}
           />
-        ))}
-
-        <div className="pt-4 border-t border-white/5 space-y-6">
-          <h3 className="text-sm font-semibold text-accent">Lifetime-Dividenden</h3>
-          {LIFETIME_FIELDS.map((f) => (
-            <NumberField
-              key={f.id}
-              fieldId={`portfolio-${f.id}`}
-              label={f.label}
-              value={form[f.id]}
-              unit={f.unit}
-              min={f.min}
-              max={f.max}
-              step={f.step}
-
-              valueClassName={f.valueClassName}
-              onChange={(v) => handleChange(f.id, v)}
-            />
-          ))}
+          <TileField
+            fieldId="portfolio-dividendGrowth"
+            label="Dividendenwachstum"
+            value={portfolio.dividendGrowth}
+            unit="%"
+            min={0} max={15} step={0.5}
+            valueClass="text-accent"
+            onChange={(v) => handleChange('dividendGrowth', v)}
+          />
         </div>
+      </div>
 
-        <button
-          type="submit"
-          className="w-full bg-accent text-surface font-semibold py-3 rounded-xl hover:bg-accent-dim transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent text-sm"
-        >
-          {saved ? '✓ Gespeichert' : 'Änderungen speichern'}
-        </button>
-      </form>
+      <div className="pt-4 border-t border-white/5 space-y-3">
+        <h3 className="text-sm font-semibold text-accent mb-3">Lifetime-Dividenden</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <TileField
+            fieldId="portfolio-lifetimeStartYear"
+            label="Seit Jahr"
+            value={portfolio.lifetimeStartYear}
+            unit="Jahr"
+            min={2000} max={2040} step={1}
+            valueClass="text-accent"
+            onChange={(v) => handleChange('lifetimeStartYear', v)}
+          />
+          <TileField
+            fieldId="portfolio-lifetimeDividends"
+            label="Erhaltene Dividende"
+            value={portfolio.lifetimeDividends}
+            unit="€"
+            min={0} max={1_000_000} step={1}
+            valueClass="text-accent"
+            onChange={(v) => handleChange('lifetimeDividends', v)}
+          />
+        </div>
+      </div>
 
       <div className="mt-8 pt-6 border-t border-white/5">
         <button
