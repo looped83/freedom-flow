@@ -38,6 +38,7 @@ export default function App() {
   }, []);
 
   const handleGoalClick = useCallback((id: string) => {
+    window.scrollTo({ top: 0 });
     setFocusGoalId(id);
     setTab('setup');
     setVisitedTabs((prev) => prev.has('setup') ? prev : new Set([...prev, 'setup']));

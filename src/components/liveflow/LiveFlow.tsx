@@ -297,20 +297,10 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
         </div>
       </section>
 
-      <div className="pb-2 space-y-2">
+      <div className="pb-2">
         <p className="text-center text-xs text-white/50">
           Zuletzt aktualisiert:&nbsp;{formatTime(now)}
         </p>
-        <div
-          role="progressbar"
-          aria-label="Nächste Aktualisierung in 10 Sekunden"
-          aria-valuenow={0}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          className="h-0.5 bg-white/10 rounded-full overflow-hidden"
-        >
-          <div key={String(now.getTime())} className="h-full bg-accent/40 rounded-full lf-countdown-bar" />
-        </div>
       </div>
 
     </main>

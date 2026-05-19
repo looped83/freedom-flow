@@ -6,6 +6,7 @@ import { PortfolioForm } from '../portfolio/PortfolioForm';
 import { PageHeader } from '../layout/PageHeader';
 
 type SetupTab = 'goals' | 'milestones' | 'portfolio';
+type TabKeys = Record<SetupTab, number>;
 
 interface SetupPageProps {
   goals: Goal[];
@@ -48,6 +49,14 @@ export function SetupPage({
   onFocusConsumed,
 }: SetupPageProps) {
   const [active, setActive] = useState<SetupTab>('goals');
+  const [tabKeys, setTabKeys] = useState<TabKeys>({ goals: 0, milestones: 0, portfolio: 0 });
+
+  function changeTab(next: SetupTab) {
+    if (next !== active) {
+      setTabKeys((prev) => ({ ...prev, [active]: prev[active] + 1 }));
+    }
+    setActive(next);
+  }
 
   // When navigating here via a goal click, always surface the Goals sub-tab.
   useEffect(() => {
@@ -72,7 +81,7 @@ export function SetupPage({
               key={t.id}
               role="tab"
               aria-selected={active === t.id}
-              onClick={() => setActive(t.id)}
+              onClick={() => changeTab(t.id)}
               className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
                 active === t.id
                   ? 'bg-surface-1 text-white shadow-sm'
@@ -85,13 +94,13 @@ export function SetupPage({
         </div>
       </div>
 
-      {/* All three panels stay mounted — CSS hidden preserves state between sub-tab switches */}
       <div role="tabpanel">
         <div hidden={active !== 'goals'}>
-          <GoalList goals={goals} goalResults={goalResults} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} focusGoalId={focusGoalId} onFocusConsumed={onFocusConsumed} />
+          <GoalList key={tabKeys.goals} goals={goals} goalResults={goalResults} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} focusGoalId={focusGoalId} onFocusConsumed={onFocusConsumed} />
         </div>
         <div hidden={active !== 'milestones'}>
           <MilestoneList
+            key={tabKeys.milestones}
             milestoneResults={visibleMilestoneResults}
             onAdd={onAddMilestone}
             onUpdate={onUpdateMilestone}
@@ -99,7 +108,7 @@ export function SetupPage({
           />
         </div>
         <div hidden={active !== 'portfolio'}>
-          <PortfolioForm portfolio={portfolio} onSave={onSavePortfolio} onReset={onReset} />
+          <PortfolioForm key={tabKeys.portfolio} portfolio={portfolio} onSave={onSavePortfolio} onReset={onReset} />
         </div>
       </div>
     </main>
