@@ -93,7 +93,7 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
         <p className="text-sm text-white/65 mt-1">Zahl antippen zum Bearbeiten.</p>
       </div>
 
-      <h3 className="text-sm font-semibold text-accent mb-3">Details</h3>
+      <h3 className="text-sm font-semibold text-white mb-3">Details</h3>
 
       <div className="grid grid-cols-2 gap-3 mb-6">
         <TileField
@@ -138,7 +138,7 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
       </div>
 
       <div className="pt-4 border-t border-white/5 space-y-3">
-        <h3 className="text-sm font-semibold text-accent mb-3">Lifetime-Dividenden</h3>
+        <h3 className="text-sm font-semibold text-white mb-3">Lifetime-Dividenden</h3>
         <div className="grid grid-cols-2 gap-3">
           <TileField
             fieldId="portfolio-lifetimeStartYear"
