@@ -88,7 +88,7 @@ export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onI
     for (const g of goalResults) {
       (g.status === 'covered' ? done : open).push(g);
     }
-    open.sort((a, b) => b.monthlyAmount - a.monthlyAmount);
+    open.sort((a, b) => a.monthlyAmount - b.monthlyAmount);
     done.sort((a, b) => b.monthlyAmount - a.monthlyAmount);
     return { openGoals: open, achievedGoals: done };
   }, [goalResults]);
@@ -239,15 +239,22 @@ export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onI
           <p className="text-sm text-white/55 px-1">Alle Ausgaben gedeckt! 🎉</p>
         ) : (
           <ul className="space-y-2" role="list">
-            {visibleGoals.map((g) => {
-              const barColor = g.status === 'partial' ? 'bg-gold' : 'bg-white/20';
+            {visibleGoals.map((g, idx) => {
+              const isActive = idx === 0;
+              const barColor = isActive ? 'bg-accent' : g.status === 'partial' ? 'bg-gold' : 'bg-white/20';
+              const iconClass = g.id === BONUS_GOAL_ID ? 'text-orange-400' : isActive ? 'text-accent' : 'text-white/60';
+              const pctClass = isActive ? 'text-accent' : g.status === 'partial' ? 'text-gold' : 'text-white/55';
               return (
                 <li key={g.id}>
                   <button
                     onClick={() => onGoalClick?.(g.id)}
-                    className="w-full bg-surface-2 rounded-xl px-4 py-3 flex items-center gap-3 text-left hover:bg-surface-3 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                    className={`w-full rounded-2xl px-4 py-3 flex items-center gap-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+                      isActive
+                        ? 'bg-accent-muted border border-accent/20 hover:bg-accent/20'
+                        : 'bg-surface-2 hover:bg-surface-3'
+                    }`}
                   >
-                    <span className={`flex-shrink-0 ${g.id === BONUS_GOAL_ID ? 'text-orange-400' : 'text-white/60'}`} aria-hidden="true">
+                    <span className={`flex-shrink-0 ${iconClass}`} aria-hidden="true">
                       <CategoryIcon category={g.category} />
                     </span>
                     <div className="flex-1 min-w-0">
@@ -264,9 +271,7 @@ export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onI
                       />
                     </div>
                     <div className="flex-shrink-0 text-right min-w-[2.5rem]">
-                      <span className={`text-xs font-bold ${
-                        g.status === 'partial' ? 'text-gold' : 'text-white/55'
-                      }`}>
+                      <span className={`text-xs font-bold ${pctClass}`}>
                         {formatPercent(g.coveragePercent, 0)}
                       </span>
                       {g.achievedYear != null && (
