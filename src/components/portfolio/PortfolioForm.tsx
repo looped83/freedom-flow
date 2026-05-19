@@ -111,7 +111,7 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
           value={monthly}
           unit="€"
           min={0} max={10_000} step={1}
-          valueClass="text-gold"
+          valueClass="text-accent"
           onChange={(v) => handleChange('monthlyIncome', v)}
         />
       </div>
