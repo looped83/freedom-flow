@@ -11,12 +11,17 @@ import {
   formatFreedomTime,
   type FreedomTimeUnit,
 } from '../../utils/liveFlowCalculations';
+import {
+  milestoneSortKey,
+  formatMilestoneDate,
+  formatDaysRemaining,
+} from '../../utils/milestones';
 import { PageHeader } from '../layout/PageHeader';
 import { ProgressBar } from './ProgressBar';
 import { FreedomHero } from './FreedomHero';
-import { LifeUnlocks } from './LifeUnlocks';
 import { AchievedCarousel } from './AchievedCarousel';
 import { CategoryIcon } from '../goals/CategoryIcon';
+import { MilestoneIcon } from '../milestones/MilestoneIcon';
 
 const TARGET_ICON = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
@@ -33,6 +38,11 @@ const CARD_ICON = (
     <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
   </svg>
 );
+const FLAG_ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
+    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
+  </svg>
+);
 const CHECK_CIRCLE_ICON = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
@@ -40,12 +50,62 @@ const CHECK_CIRCLE_ICON = (
 );
 
 const MAX_VISIBLE_GOALS = 5;
+const MAX_VISIBLE_MILESTONES = 3;
 
 const FREEDOM_UNITS: { id: FreedomTimeUnit; label: string; full: string }[] = [
   { id: 'days',    label: 'Tage',  full: 'Tage'     },
   { id: 'hours',   label: 'Std.',  full: 'Stunden'  },
   { id: 'minutes', label: 'Min.',  full: 'Minuten'  },
 ];
+
+function msBc(pct: number): string {
+  if (pct >= 80) return 'bg-accent';
+  if (pct >= 40) return 'bg-gold';
+  return 'bg-white/30';
+}
+
+function msSubtitle(r: MilestoneResult): string {
+  if (r.status === 'achieved') return 'Erreicht!';
+  if (r.type === 'dividend') return `Noch ${formatEuro(r.missingMonthly)} / Monat`;
+  if (r.dateTarget) {
+    const datePart = formatMilestoneDate(r.dateTarget);
+    if (r.daysRemaining == null) return datePart;
+    return `${datePart} · ${formatDaysRemaining(r.daysRemaining)}`;
+  }
+  return '';
+}
+
+function MilestoneCard({ result, active, onClick }: { result: MilestoneResult; active?: boolean; onClick?: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full text-left rounded-2xl p-4 flex gap-3 items-start transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${active ? 'bg-accent-muted border border-accent/20' : 'bg-surface-2'}`}
+    >
+      <span className={`flex-shrink-0 mt-0.5 ${active ? 'text-accent' : 'text-white/60'}`}>
+        <MilestoneIcon icon={result.icon} />
+      </span>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-baseline justify-between gap-2 mb-0.5">
+          <p className="text-white font-semibold text-sm leading-tight truncate">{result.title}</p>
+          <span className={`text-xs font-bold tabular-nums flex-shrink-0 ${active ? 'text-accent' : 'text-gold'}`}>
+            {result.progressPercent.toFixed(0)} %
+          </span>
+        </div>
+        <div className="flex items-baseline justify-between gap-2 mb-2">
+          <p className="text-xs text-white/50 truncate">{msSubtitle(result)}</p>
+          {result.achievedYear != null && (
+            <span className="text-xs text-white/55 flex-shrink-0 tabular-nums">{result.achievedYear}</span>
+          )}
+        </div>
+        <ProgressBar
+          percent={result.progressPercent}
+          label={`${result.title}: ${result.progressPercent.toFixed(0)} % erreicht`}
+          colorClass={active ? 'bg-accent' : msBc(result.progressPercent)}
+        />
+      </div>
+    </button>
+  );
+}
 
 interface DashboardProps {
   portfolio: Portfolio;
@@ -66,6 +126,8 @@ const DASHBOARD_ICON = (
 
 export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onIncomeChange, onTotalChange, onGoalClick, onMilestoneClick }: DashboardProps) {
   const [showAllGoals, setShowAllGoals] = useState(false);
+  const [showAllMilestones, setShowAllMilestones] = useState(false);
+  const [goalsOrMilestones, setGoalsOrMilestones] = useState<'goals' | 'milestones'>('goals');
   const [freedomUnit, setFreedomUnit] = useState<FreedomTimeUnit>('days');
 
   const monthly = portfolio.monthlyIncome;
@@ -94,13 +156,31 @@ export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onI
     return { openGoals: open, achievedGoals: done };
   }, [goalResults]);
 
-  const visibleGoals = showAllGoals ? openGoals : openGoals.slice(0, MAX_VISIBLE_GOALS);
+  const { achievedMilestones, notAchievedMilestones } = useMemo(() => {
+    const achieved: MilestoneResult[] = [];
+    const notAchieved: MilestoneResult[] = [];
+    for (const r of milestoneResults) {
+      (r.status === 'achieved' ? achieved : notAchieved).push(r);
+    }
+    achieved.sort((a, b) => milestoneSortKey(b) - milestoneSortKey(a));
+    notAchieved.sort((a, b) => milestoneSortKey(a) - milestoneSortKey(b));
+    return { achievedMilestones: achieved, notAchievedMilestones: notAchieved };
+  }, [milestoneResults]);
+
+  const visibleGoals      = showAllGoals      ? openGoals            : openGoals.slice(0, MAX_VISIBLE_GOALS);
+  const visibleMilestones = showAllMilestones ? notAchievedMilestones : notAchievedMilestones.slice(0, MAX_VISIBLE_MILESTONES);
 
   const achievedCarouselItems = useMemo(() => achievedGoals.map((g) => ({
     id: g.id,
     title: g.name,
     icon: <CategoryIcon category={g.category} className="w-7 h-7" />,
   })), [achievedGoals]);
+
+  const milestoneCarouselItems = useMemo(() => achievedMilestones.map((m) => ({
+    id: m.id,
+    title: m.title,
+    icon: <MilestoneIcon icon={m.icon} className="w-7 h-7" />,
+  })), [achievedMilestones]);
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
@@ -209,89 +289,159 @@ export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onI
         )}
       </section>
 
-      {/* Meilensteine */}
-      <section className="bg-surface-1 rounded-2xl p-5 border border-white/5">
-        <LifeUnlocks milestoneResults={milestoneResults} onMilestoneClick={onMilestoneClick} />
-      </section>
+      {/* Ausgaben / Meilensteine – zusammengeführt */}
+      <section className="bg-surface-1 rounded-2xl p-5 border border-white/5 space-y-3" aria-labelledby="goals-ms-title">
 
-      {/* Ausgaben – open list + achieved carousel */}
-      <section className="bg-surface-1 rounded-2xl p-5 border border-white/5 space-y-3" aria-labelledby="all-goals-title">
+        {/* Header */}
         <div className="flex items-center justify-between gap-2">
-          <h2 id="all-goals-title" className="text-sm font-semibold text-white flex items-center gap-2">
-            <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{CARD_ICON}</span>
-            <span>Ausgaben<span className="text-white/55 font-normal ml-1.5">({achievedGoals.length}/{goalResults.length})</span></span>
+          <h2 id="goals-ms-title" className="text-sm font-semibold text-white flex items-center gap-2">
+            <span className="text-accent/70 flex-shrink-0" aria-hidden="true">
+              {goalsOrMilestones === 'goals' ? CARD_ICON : FLAG_ICON}
+            </span>
+            <span>
+              {goalsOrMilestones === 'goals' ? 'Ausgaben' : 'Meilensteine'}
+              <span className="text-white/55 font-normal ml-1.5">
+                ({goalsOrMilestones === 'goals'
+                  ? `${achievedGoals.length}/${goalResults.length}`
+                  : `${achievedMilestones.length}/${milestoneResults.length}`
+                })
+              </span>
+            </span>
           </h2>
-          {openGoals.length > MAX_VISIBLE_GOALS && (
-            <button
-              onClick={() => setShowAllGoals((v) => !v)}
-              aria-expanded={showAllGoals}
-              className={`text-xs px-3 py-1 rounded-lg border border-white/10 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
-                showAllGoals
-                  ? 'bg-accent/20 text-accent font-semibold'
-                  : 'text-white/55 hover:text-white/80'
-              }`}
+          <div className="flex items-center gap-2">
+            {goalsOrMilestones === 'goals' && openGoals.length > MAX_VISIBLE_GOALS && (
+              <button
+                onClick={() => setShowAllGoals((v) => !v)}
+                aria-expanded={showAllGoals}
+                className={`text-xs px-3 py-1 rounded-lg border border-white/10 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+                  showAllGoals ? 'bg-accent/20 text-accent font-semibold' : 'text-white/55 hover:text-white/80'
+                }`}
+              >
+                {showAllGoals ? '↑ Weniger' : `+${openGoals.length - MAX_VISIBLE_GOALS} weitere`}
+              </button>
+            )}
+            {goalsOrMilestones === 'milestones' && notAchievedMilestones.length > MAX_VISIBLE_MILESTONES && (
+              <button
+                onClick={() => setShowAllMilestones((v) => !v)}
+                aria-expanded={showAllMilestones}
+                className={`text-xs px-3 py-1 rounded-lg border border-white/10 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+                  showAllMilestones ? 'bg-accent/20 text-accent font-semibold' : 'text-white/55 hover:text-white/80'
+                }`}
+              >
+                {showAllMilestones ? '↑ Weniger' : `+${notAchievedMilestones.length - MAX_VISIBLE_MILESTONES} weitere`}
+              </button>
+            )}
+            <div
+              className="flex rounded-lg overflow-hidden border border-white/10"
+              role="group"
+              aria-label="Ansicht wählen"
             >
-              {showAllGoals ? '↑ Weniger' : `+${openGoals.length - MAX_VISIBLE_GOALS} weitere`}
-            </button>
-          )}
+              {(['goals', 'milestones'] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setGoalsOrMilestones(v)}
+                  aria-pressed={goalsOrMilestones === v}
+                  className={`text-xs px-3 py-1 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+                    goalsOrMilestones === v
+                      ? 'bg-accent/20 text-accent font-semibold'
+                      : 'text-white/55 hover:text-white/80'
+                  }`}
+                >
+                  {v === 'goals' ? 'Ausgaben' : 'Meilensteine'}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {openGoals.length === 0 ? (
-          <p className="text-sm text-white/55 px-1">Alle Ausgaben gedeckt! 🎉</p>
-        ) : (
-          <ul className="space-y-2" role="list">
-            {visibleGoals.map((g, idx) => {
-              const isActive = idx === 0;
-              const barColor = isActive ? 'bg-accent' : g.status === 'partial' ? 'bg-gold' : 'bg-white/20';
-              const iconClass = g.id === BONUS_GOAL_ID ? 'text-orange-400' : isActive ? 'text-accent' : 'text-white/60';
-              const pctClass = isActive ? 'text-accent' : g.status === 'partial' ? 'text-gold' : 'text-white/55';
-              return (
-                <li key={g.id}>
-                  <button
-                    onClick={() => onGoalClick?.(g.id)}
-                    className={`w-full rounded-2xl px-4 py-3 flex items-center gap-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
-                      isActive
-                        ? 'bg-accent-muted border border-accent/20 hover:bg-accent/20'
-                        : 'bg-surface-2 hover:bg-surface-3'
-                    }`}
-                  >
-                    <span className={`flex-shrink-0 ${iconClass}`} aria-hidden="true">
-                      <CategoryIcon category={g.category} />
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-baseline mb-1 gap-2">
-                        <span className="text-sm text-white font-medium truncate pr-2 min-w-0">{g.name}</span>
-                        <span className="text-xs text-white/55 flex-shrink-0 tabular-nums">
-                          {formatEuro(g.coveredAmount)} / {formatEuro(g.monthlyAmount)}
+        {/* Ausgaben */}
+        {goalsOrMilestones === 'goals' && (
+          <>
+            {openGoals.length === 0 ? (
+              <p className="text-sm text-white/55 px-1">Alle Ausgaben gedeckt! 🎉</p>
+            ) : (
+              <ul className="space-y-2" role="list">
+                {visibleGoals.map((g, idx) => {
+                  const isActive = idx === 0;
+                  const barColor = isActive ? 'bg-accent' : g.status === 'partial' ? 'bg-gold' : 'bg-white/20';
+                  const iconClass = g.id === BONUS_GOAL_ID ? 'text-orange-400' : isActive ? 'text-accent' : 'text-white/60';
+                  const pctClass = isActive ? 'text-accent' : g.status === 'partial' ? 'text-gold' : 'text-white/55';
+                  return (
+                    <li key={g.id}>
+                      <button
+                        onClick={() => onGoalClick?.(g.id)}
+                        className={`w-full rounded-2xl px-4 py-3 flex items-center gap-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+                          isActive
+                            ? 'bg-accent-muted border border-accent/20 hover:bg-accent/20'
+                            : 'bg-surface-2 hover:bg-surface-3'
+                        }`}
+                      >
+                        <span className={`flex-shrink-0 ${iconClass}`} aria-hidden="true">
+                          <CategoryIcon category={g.category} />
                         </span>
-                      </div>
-                      <ProgressBar
-                        percent={g.coveragePercent}
-                        label={`${g.name}: ${formatPercent(g.coveragePercent)} gedeckt`}
-                        colorClass={barColor}
-                      />
-                    </div>
-                    <div className="flex-shrink-0 text-right min-w-[2.5rem]">
-                      <span className={`text-xs font-bold ${pctClass}`}>
-                        {formatPercent(g.coveragePercent, 0)}
-                      </span>
-                      {g.achievedYear != null && (
-                        <p className="text-xs text-white/55">{g.achievedYear}</p>
-                      )}
-                    </div>
-                    <span className="sr-only">. In Setup öffnen.</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-baseline mb-1 gap-2">
+                            <span className="text-sm text-white font-medium truncate pr-2 min-w-0">{g.name}</span>
+                            <span className="text-xs text-white/55 flex-shrink-0 tabular-nums">
+                              {formatEuro(g.coveredAmount)} / {formatEuro(g.monthlyAmount)}
+                            </span>
+                          </div>
+                          <ProgressBar
+                            percent={g.coveragePercent}
+                            label={`${g.name}: ${formatPercent(g.coveragePercent)} gedeckt`}
+                            colorClass={barColor}
+                          />
+                        </div>
+                        <div className="flex-shrink-0 text-right min-w-[2.5rem]">
+                          <span className={`text-xs font-bold ${pctClass}`}>
+                            {formatPercent(g.coveragePercent, 0)}
+                          </span>
+                          {g.achievedYear != null && (
+                            <p className="text-xs text-white/55">{g.achievedYear}</p>
+                          )}
+                        </div>
+                        <span className="sr-only">. In Setup öffnen.</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            <AchievedCarousel
+              heading="Erreicht"
+              headingIcon={CHECK_CIRCLE_ICON}
+              items={achievedCarouselItems}
+            />
+          </>
         )}
 
-        <AchievedCarousel
-          heading="Erreicht"
-          headingIcon={CHECK_CIRCLE_ICON}
-          items={achievedCarouselItems}
-        />
+        {/* Meilensteine */}
+        {goalsOrMilestones === 'milestones' && (
+          <>
+            {milestoneResults.length === 0 ? (
+              <p className="text-sm text-white/55 px-1">Noch keine Meilensteine. Lege deine ersten in Setup → Meilensteine an.</p>
+            ) : visibleMilestones.length === 0 ? (
+              <p className="text-sm text-white/55 px-1">Alle Meilensteine erreicht! 🎉</p>
+            ) : (
+              <div className="space-y-2">
+                {visibleMilestones.map((r, idx) => (
+                  <MilestoneCard
+                    key={r.id}
+                    result={r}
+                    active={idx === 0}
+                    onClick={onMilestoneClick ? () => onMilestoneClick!(r.id) : undefined}
+                  />
+                ))}
+              </div>
+            )}
+            <AchievedCarousel
+              heading="Erreicht"
+              headingIcon={CHECK_CIRCLE_ICON}
+              items={milestoneCarouselItems}
+            />
+          </>
+        )}
+
       </section>
     </main>
   );
