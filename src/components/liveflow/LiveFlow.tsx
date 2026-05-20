@@ -164,9 +164,9 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
         <RefreshRing nowMs={now.getTime()} />
 
         {/* Top: Heute verdient */}
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-3">
           <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{SUN_ICON}</span>
-          <p className="text-sm font-bold text-white">Heute verdient</p>
+          <p className="text-sm font-semibold text-white">Heute verdient</p>
         </div>
         <p
           id="lf-hero-heading"
@@ -244,7 +244,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
       >
         <RefreshRing nowMs={now.getTime()} />
 
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-3">
           <span className="text-accent/70 flex-shrink-0" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
               <path d="M6 3h12l4 6-10 13L2 9l4-6z"/>
@@ -252,7 +252,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
               <path d="M8.5 3 6 9m9-6 2.5 6M12 3v6"/>
             </svg>
           </span>
-          <p className="text-sm font-bold text-white">Lifetime Dividenden</p>
+          <p className="text-sm font-semibold text-white">Lifetime Dividenden</p>
         </div>
         <p
           id="lf-lifetime-heading"
