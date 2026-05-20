@@ -4,9 +4,10 @@ import { liveFormatAmount, parseGerman } from '../../utils/formatting';
 
 const fmtInt = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 const fmtDec = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const fmtDec2 = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-function formatDisplay(value: number, unit: string): string {
-  if (unit === '€') return fmtInt.format(value);
+function formatDisplay(value: number, unit: string, decimals?: number): string {
+  if (unit === '€') return decimals === 2 ? fmtDec2.format(value) : fmtInt.format(value);
   if (unit === '%') return fmtDec.format(value);
   return String(value);
 }
@@ -20,19 +21,20 @@ interface TileFieldProps {
   max: number;
   step: number;
   valueClass: string;
+  decimals?: number;
   onChange: (v: number) => void;
 }
 
-function TileField({ fieldId, label, value, unit, min, max, step, valueClass, onChange }: TileFieldProps) {
+function TileField({ fieldId, label, value, unit, min, max, step, valueClass, decimals, onChange }: TileFieldProps) {
   const [raw, setRaw] = useState('');
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const display = focused ? raw : formatDisplay(value, unit);
+  const display = focused ? raw : formatDisplay(value, unit, decimals);
 
   function handleFocus() {
     setFocused(true);
-    setRaw(formatDisplay(value, unit));
+    setRaw(formatDisplay(value, unit, decimals));
     requestAnimationFrame(() => inputRef.current?.select());
   }
 
@@ -101,7 +103,8 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
           label="Jährliche Dividenden"
           value={annual}
           unit="€"
-          min={0} max={120_000} step={1}
+          min={0} max={120_000} step={0.01}
+          decimals={2}
           valueClass="text-accent"
           onChange={(v) => handleChange('monthlyIncome', v / 12)}
         />
@@ -110,7 +113,8 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
           label="Monatliche Dividenden"
           value={monthly}
           unit="€"
-          min={0} max={10_000} step={1}
+          min={0} max={10_000} step={0.01}
+          decimals={2}
           valueClass="text-accent"
           onChange={(v) => handleChange('monthlyIncome', v)}
         />
