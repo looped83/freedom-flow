@@ -298,40 +298,9 @@ export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onI
             <span className="text-accent/70 flex-shrink-0" aria-hidden="true">
               {goalsOrMilestones === 'goals' ? CARD_ICON : FLAG_ICON}
             </span>
-            <span>
-              {goalsOrMilestones === 'goals' ? 'Ausgaben' : 'Meilensteine'}
-              <span className="text-white/55 font-normal ml-1.5">
-                ({goalsOrMilestones === 'goals'
-                  ? `${achievedGoals.length}/${goalResults.length}`
-                  : `${achievedMilestones.length}/${milestoneResults.length}`
-                })
-              </span>
-            </span>
+            {goalsOrMilestones === 'goals' ? 'Ausgaben' : 'Meilensteine'}
           </h2>
-          <div className="flex items-center gap-2">
-            {goalsOrMilestones === 'goals' && openGoals.length > MAX_VISIBLE_GOALS && (
-              <button
-                onClick={() => setShowAllGoals((v) => !v)}
-                aria-expanded={showAllGoals}
-                className={`text-xs px-3 py-1 rounded-lg border border-white/10 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
-                  showAllGoals ? 'bg-accent/20 text-accent font-semibold' : 'text-white/55 hover:text-white/80'
-                }`}
-              >
-                {showAllGoals ? '↑ Weniger' : `+${openGoals.length - MAX_VISIBLE_GOALS} weitere`}
-              </button>
-            )}
-            {goalsOrMilestones === 'milestones' && notAchievedMilestones.length > MAX_VISIBLE_MILESTONES && (
-              <button
-                onClick={() => setShowAllMilestones((v) => !v)}
-                aria-expanded={showAllMilestones}
-                className={`text-xs px-3 py-1 rounded-lg border border-white/10 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
-                  showAllMilestones ? 'bg-accent/20 text-accent font-semibold' : 'text-white/55 hover:text-white/80'
-                }`}
-              >
-                {showAllMilestones ? '↑ Weniger' : `+${notAchievedMilestones.length - MAX_VISIBLE_MILESTONES} weitere`}
-              </button>
-            )}
-            <div
+          <div
               className="flex rounded-lg overflow-hidden border border-white/10"
               role="group"
               aria-label="Ansicht wählen"
@@ -351,7 +320,6 @@ export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onI
                 </button>
               ))}
             </div>
-          </div>
         </div>
 
         {/* Ausgaben */}
@@ -407,6 +375,17 @@ export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onI
                 })}
               </ul>
             )}
+            {openGoals.length > MAX_VISIBLE_GOALS && (
+              <button
+                onClick={() => setShowAllGoals((v) => !v)}
+                aria-expanded={showAllGoals}
+                className={`w-full text-xs py-1.5 rounded-lg border border-white/10 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+                  showAllGoals ? 'bg-accent/20 text-accent font-semibold' : 'text-white/55 hover:text-white/80'
+                }`}
+              >
+                {showAllGoals ? '↑ Weniger' : `+${openGoals.length - MAX_VISIBLE_GOALS} weitere`}
+              </button>
+            )}
             <AchievedCarousel
               heading="Erreicht"
               headingIcon={CHECK_CIRCLE_ICON}
@@ -433,6 +412,17 @@ export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onI
                   />
                 ))}
               </div>
+            )}
+            {notAchievedMilestones.length > MAX_VISIBLE_MILESTONES && (
+              <button
+                onClick={() => setShowAllMilestones((v) => !v)}
+                aria-expanded={showAllMilestones}
+                className={`w-full text-xs py-1.5 rounded-lg border border-white/10 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+                  showAllMilestones ? 'bg-accent/20 text-accent font-semibold' : 'text-white/55 hover:text-white/80'
+                }`}
+              >
+                {showAllMilestones ? '↑ Weniger' : `+${notAchievedMilestones.length - MAX_VISIBLE_MILESTONES} weitere`}
+              </button>
             )}
             <AchievedCarousel
               heading="Erreicht"
