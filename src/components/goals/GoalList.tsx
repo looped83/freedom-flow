@@ -8,8 +8,7 @@ import { useSwipeToDelete } from '../../hooks/useSwipeToDelete';
 import { BONUS_GOAL_ID } from '../../constants/defaultData';
 import { IconChevron, IconCheck, IconClose, IconTrash } from '../ui/Icons';
 import { GoalForm } from './GoalForm';
-
-const deCollator = new Intl.Collator('de');
+import { deCollator } from '../../utils/locale';
 
 type GoalFilter = 'all' | 'covered' | 'open';
 type SortType  = 'alpha' | 'amount';

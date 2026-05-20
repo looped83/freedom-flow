@@ -16,11 +16,6 @@ export function totalMonthlyCosts(goals: Goal[]): number {
   return sum;
 }
 
-export function freeDaysPerMonth(monthly: number, total: number): number {
-  if (total <= 0) return 0;
-  return Math.min((monthly / total) * 30, 30);
-}
-
 export function freedomPercent(monthly: number, total: number): number {
   if (total <= 0) return 100;
   return Math.min(100, (monthly / total) * 100);

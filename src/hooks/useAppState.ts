@@ -3,7 +3,7 @@ import type { AppState, Goal, GoalResult, Milestone, MilestoneResult, Portfolio 
 import { AUTO_EXPENSES_MS_ID, BONUS_GOAL_ID } from '../constants/defaultData';
 import { loadState, resetState, saveState } from '../utils/storage';
 import { computeGoalResults } from '../utils/calculations';
-import { computeMilestoneResults, filterMilestonesByExpenses } from '../utils/milestones';
+import { computeMilestoneResults } from '../utils/milestones';
 
 type Action =
   | { type: 'SET_PORTFOLIO'; payload: Portfolio }
@@ -139,24 +139,30 @@ export function useAppState() {
     reset:            ()   => dispatch({ type: 'RESET' }),
   }), []);
 
-  // Computed once here; deps are stable references that only change when goals or
-  // portfolio actually mutate — milestone-only actions leave both unchanged.
+  const { monthlyIncome, dividendGrowth, dividendYield, monthlySavings } = state.portfolio;
+
+  // Computed once here; deps are the specific portfolio scalars that affect
+  // projections — unrelated fields (lifetimeDividends, horizonYears, etc.)
+  // changing won't cause an unnecessary recompute.
   const goalResults = useMemo<GoalResult[]>(
-    () => computeGoalResults(state.goals, state.portfolio.monthlyIncome, state.portfolio),
-    [state.goals, state.portfolio],
+    () => computeGoalResults(state.goals, monthlyIncome, state.portfolio),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state.goals, monthlyIncome, dividendGrowth, dividendYield, monthlySavings],
   );
 
   // All milestones evaluated (for Dashboard/LifeUnlocks).
   const milestoneResults = useMemo<MilestoneResult[]>(
     () => computeMilestoneResults(state.milestones, state.portfolio),
-    [state.milestones, state.portfolio],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state.milestones, monthlyIncome, dividendGrowth, dividendYield, monthlySavings],
   );
 
-  // Expense-filtered milestones evaluated (for Timeline, MilestoneList).
-  const visibleMilestoneResults = useMemo<MilestoneResult[]>(
-    () => computeMilestoneResults(filterMilestonesByExpenses(state.milestones, state.goals), state.portfolio),
-    [state.milestones, state.goals, state.portfolio],
-  );
+  // Expense-filtered view (for Timeline, MilestoneList): filter the already-computed
+  // milestoneResults instead of running computeMilestoneResults a second time.
+  const visibleMilestoneResults = useMemo<MilestoneResult[]>(() => {
+    const total = state.goals.reduce((s, g) => s + g.monthlyAmount, 0);
+    return milestoneResults.filter((r) => r.type !== 'dividend' || (r.dividendTarget ?? 0) <= total);
+  }, [milestoneResults, state.goals]);
 
   return { state, actions, goalResults, milestoneResults, visibleMilestoneResults };
 }
