@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Goal, GoalResult, MilestoneResult, Portfolio } from '../../types';
 import {
-  projectMonthlyDividendsAtYear,
   totalMonthlyCosts,
 } from '../../utils/calculations';
 import { BONUS_GOAL_ID } from '../../constants/defaultData';
@@ -68,7 +67,6 @@ export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onI
   const [freedomUnit, setFreedomUnit] = useState<FreedomTimeUnit>('days');
 
   const monthly = portfolio.monthlyIncome;
-  const projectedMonthly = useMemo(() => projectMonthlyDividendsAtYear(portfolio, 1), [portfolio]);
   const total        = useMemo(() => totalMonthlyCosts(goals), [goals]);
   const minExpenses  = useMemo(() => totalMonthlyCosts(goals.filter((g) => g.id !== BONUS_GOAL_ID)), [goals]);
   const financedTime = useMemo(() => calculateFinancedTime(monthly, total), [monthly, total]);
@@ -109,7 +107,6 @@ export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onI
       {/* FreedomHero – ring, stats, inline income edit */}
       <FreedomHero
         monthly={monthly}
-        projectedMonthly={projectedMonthly}
         total={total}
         minExpenses={minExpenses}
         onIncomeChange={onIncomeChange}
