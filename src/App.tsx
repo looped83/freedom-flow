@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useAppState } from './hooks/useAppState';
 import { Header } from './components/layout/Header';
 import { TabNav, type Tab } from './components/layout/TabNav';
@@ -30,7 +30,17 @@ export default function App() {
   const [visitedTabs, setVisitedTabs] = useState<Set<Tab>>(() => new Set<Tab>());
   const [focusGoalId, setFocusGoalId] = useState<string | null>(null);
   const [focusMilestoneId, setFocusMilestoneId] = useState<string | null>(null);
+  const [setupResetKey, setSetupResetKey] = useState(0);
+  const prevTabRef = useRef<Tab>(tab);
   const { state, actions, goalResults, milestoneResults, visibleMilestoneResults } = useAppState();
+
+  // Remount SetupPage when navigating away so nothing stays expanded on return.
+  useEffect(() => {
+    if (prevTabRef.current === 'setup' && tab !== 'setup') {
+      setSetupResetKey((k) => k + 1);
+    }
+    prevTabRef.current = tab;
+  }, [tab]);
 
   const handleTabChange = useCallback((next: Tab) => {
     setTab(next);
@@ -101,6 +111,7 @@ export default function App() {
         {visitedTabs.has('setup') && (
           <div hidden={tab !== 'setup'}>
             <SetupPage
+              key={setupResetKey}
               goals={state.goals}
               goalResults={goalResults}
               visibleMilestoneResults={visibleMilestoneResults}
