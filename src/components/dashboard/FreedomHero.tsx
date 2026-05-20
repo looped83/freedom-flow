@@ -4,6 +4,7 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
 import { formatEuro } from '../../utils/formatting';
 import { freedomPercent, missingForFreedom } from '../../utils/calculations';
 import { useInlineNumberEdit } from '../../hooks/useInlineNumberEdit';
+import { CURRENT_YEAR } from '../../constants/defaultData';
 
 const WAVE_ICON = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
@@ -140,10 +141,16 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
             fill="white" fontSize="28" fontWeight="700" fontFamily="inherit">
             {(showProjected ? projPct : pct).toFixed(1)} %
           </text>
-          <text x="100" y="117" textAnchor="middle" dominantBaseline="middle"
+          <text x="100" y={showProjected ? 112 : 117} textAnchor="middle" dominantBaseline="middle"
             fill="rgba(255,255,255,0.6)" fontSize="12" fontFamily="inherit">
             {showProjected ? 'Prognose' : 'finanziell frei'}
           </text>
+          {showProjected && (
+            <text x="100" y="128" textAnchor="middle" dominantBaseline="middle"
+              fill="rgba(255,255,255,0.6)" fontSize="12" fontFamily="inherit">
+              {CURRENT_YEAR + 1}
+            </text>
+          )}
         </svg>
       </div>
 
