@@ -29,6 +29,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('dashboard');
   const [visitedTabs, setVisitedTabs] = useState<Set<Tab>>(() => new Set<Tab>());
   const [focusGoalId, setFocusGoalId] = useState<string | null>(null);
+  const [focusMilestoneId, setFocusMilestoneId] = useState<string | null>(null);
   const { state, actions, goalResults, milestoneResults, visibleMilestoneResults } = useAppState();
 
   const handleTabChange = useCallback((next: Tab) => {
@@ -40,6 +41,13 @@ export default function App() {
   const handleGoalClick = useCallback((id: string) => {
     window.scrollTo({ top: 0 });
     setFocusGoalId(id);
+    setTab('setup');
+    setVisitedTabs((prev) => prev.has('setup') ? prev : new Set([...prev, 'setup']));
+  }, []);
+
+  const handleMilestoneClick = useCallback((id: string) => {
+    window.scrollTo({ top: 0 });
+    setFocusMilestoneId(id);
     setTab('setup');
     setVisitedTabs((prev) => prev.has('setup') ? prev : new Set([...prev, 'setup']));
   }, []);
@@ -69,6 +77,7 @@ export default function App() {
           onIncomeChange={handleIncomeChange}
           onTotalChange={actions.setTotalExpenses}
           onGoalClick={handleGoalClick}
+          onMilestoneClick={handleMilestoneClick}
         />
       </div>
 
@@ -106,6 +115,8 @@ export default function App() {
               onReset={handleReset}
               focusGoalId={focusGoalId}
               onFocusConsumed={() => setFocusGoalId(null)}
+              focusMilestoneId={focusMilestoneId}
+              onFocusMilestoneConsumed={() => setFocusMilestoneId(null)}
             />
           </div>
         )}
