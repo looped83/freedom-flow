@@ -35,7 +35,6 @@ function TileField({ fieldId, label, value, unit, min, max, step, valueClass, de
   function handleFocus() {
     setFocused(true);
     setRaw(formatDisplay(value, unit, decimals));
-    requestAnimationFrame(() => inputRef.current?.select());
   }
 
   function commit(input: string) {
