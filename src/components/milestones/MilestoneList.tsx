@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Milestone, MilestoneResult } from '../../types';
 import { formatEuro } from '../../utils/formatting';
 import { formatDaysRemaining, formatMilestoneDate, milestoneSortKey } from '../../utils/milestones';
@@ -17,6 +17,8 @@ interface MilestoneListProps {
   onAdd: (m: Milestone) => void;
   onUpdate: (m: Milestone) => void;
   onDelete: (id: string) => void;
+  focusMilestoneId?: string | null;
+  onFocusConsumed?: () => void;
 }
 
 function MilestoneSubtitle({ result }: { result: MilestoneResult }) {
@@ -40,12 +42,25 @@ function MilestoneRightValue({ result }: { result: MilestoneResult }) {
   return null;
 }
 
-export function MilestoneList({ milestoneResults, onAdd, onUpdate, onDelete }: MilestoneListProps) {
+export function MilestoneList({ milestoneResults, onAdd, onUpdate, onDelete, focusMilestoneId, onFocusConsumed }: MilestoneListProps) {
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [filter, setFilter] = useState<MilestoneFilter>('all');
   const [sort, setSort] = useState<{ type: SortType; dir: 'asc' | 'desc' }>({ type: 'target', dir: 'desc' });
+
+  const liRefs = useRef<Map<string, HTMLLIElement>>(new Map());
+
+  useEffect(() => {
+    if (!focusMilestoneId) return;
+    const capturedId = focusMilestoneId;
+    setEditingId(capturedId);
+    const timer = setTimeout(() => {
+      liRefs.current.get(capturedId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      onFocusConsumed?.();
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [focusMilestoneId, onFocusConsumed]);
 
   const swipe = useSwipeToDelete(onDelete, { isLocked: (id) => editingId === id });
 
@@ -189,6 +204,7 @@ export function MilestoneList({ milestoneResults, onAdd, onUpdate, onDelete }: M
             <li
               key={m.id}
               className="rounded-xl relative overflow-hidden"
+              ref={(el) => { if (el) liRefs.current.set(m.id, el); else liRefs.current.delete(m.id); }}
             >
               <div
                 aria-hidden="true"

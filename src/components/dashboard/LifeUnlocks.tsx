@@ -19,6 +19,7 @@ const AWARD_ICON = (
 
 interface LifeUnlocksProps {
   milestoneResults: MilestoneResult[];
+  onMilestoneClick?: (id: string) => void;
 }
 
 function barColor(progressPct: number): string {
@@ -38,9 +39,12 @@ function subtitle(r: MilestoneResult): string {
   return '';
 }
 
-function MilestoneCard({ result, active }: { result: MilestoneResult; active?: boolean }) {
+function MilestoneCard({ result, active, onClick }: { result: MilestoneResult; active?: boolean; onClick?: () => void }) {
   return (
-    <div className={`rounded-2xl p-4 flex gap-3 items-start ${active ? 'bg-accent-muted border border-accent/20' : 'bg-surface-2'}`}>
+    <button
+      onClick={onClick}
+      className={`w-full text-left rounded-2xl p-4 flex gap-3 items-start transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${active ? 'bg-accent-muted border border-accent/20' : 'bg-surface-2'}`}
+    >
       <span className={`flex-shrink-0 mt-0.5 ${active ? 'text-accent' : 'text-white/60'}`}>
         <MilestoneIcon icon={result.icon} />
       </span>
@@ -63,11 +67,11 @@ function MilestoneCard({ result, active }: { result: MilestoneResult; active?: b
           colorClass={active ? 'bg-accent' : barColor(result.progressPercent)}
         />
       </div>
-    </div>
+    </button>
   );
 }
 
-export function LifeUnlocks({ milestoneResults }: LifeUnlocksProps) {
+export function LifeUnlocks({ milestoneResults, onMilestoneClick }: LifeUnlocksProps) {
   const [showAll, setShowAll] = useState(false);
 
   const { achieved, notAchieved } = useMemo(() => {
@@ -129,7 +133,7 @@ export function LifeUnlocks({ milestoneResults }: LifeUnlocksProps) {
       {visibleCards.length > 0 ? (
         <div className="space-y-2">
           {visibleCards.map((r, idx) => (
-            <MilestoneCard key={r.id} result={r} active={idx === 0} />
+            <MilestoneCard key={r.id} result={r} active={idx === 0} onClick={onMilestoneClick ? () => onMilestoneClick(r.id) : undefined} />
           ))}
         </div>
       ) : (

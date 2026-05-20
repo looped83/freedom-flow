@@ -23,6 +23,8 @@ interface SetupPageProps {
   onReset: () => void;
   focusGoalId?: string | null;
   onFocusConsumed?: () => void;
+  focusMilestoneId?: string | null;
+  onFocusMilestoneConsumed?: () => void;
 }
 
 const SETUP_ICON = (
@@ -47,6 +49,8 @@ export function SetupPage({
   onReset,
   focusGoalId,
   onFocusConsumed,
+  focusMilestoneId,
+  onFocusMilestoneConsumed,
 }: SetupPageProps) {
   const [active, setActive] = useState<SetupTab>('goals');
   const [tabKeys, setTabKeys] = useState<TabKeys>({ goals: 0, milestones: 0, portfolio: 0 });
@@ -62,6 +66,11 @@ export function SetupPage({
   useEffect(() => {
     if (focusGoalId) setActive('goals');
   }, [focusGoalId]);
+
+  // When navigating here via a milestone click, always surface the Milestones sub-tab.
+  useEffect(() => {
+    if (focusMilestoneId) setActive('milestones');
+  }, [focusMilestoneId]);
 
   return (
     <main className="max-w-4xl mx-auto">
@@ -105,6 +114,8 @@ export function SetupPage({
             onAdd={onAddMilestone}
             onUpdate={onUpdateMilestone}
             onDelete={onDeleteMilestone}
+            focusMilestoneId={focusMilestoneId}
+            onFocusConsumed={onFocusMilestoneConsumed}
           />
         </div>
         <div hidden={active !== 'portfolio'}>

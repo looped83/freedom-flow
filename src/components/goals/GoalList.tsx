@@ -35,10 +35,11 @@ export function GoalList({ goals, goalResults, onAdd, onUpdate, onDelete, focusG
 
   useEffect(() => {
     if (!focusGoalId) return;
-    setEditingId(focusGoalId);
-    onFocusConsumed?.();
+    const capturedId = focusGoalId;
+    setEditingId(capturedId);
     const timer = setTimeout(() => {
-      liRefs.current.get(focusGoalId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      liRefs.current.get(capturedId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      onFocusConsumed?.();
     }, 350);
     return () => clearTimeout(timer);
   }, [focusGoalId, onFocusConsumed]);

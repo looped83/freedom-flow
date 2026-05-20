@@ -55,6 +55,7 @@ interface DashboardProps {
   onIncomeChange: (v: number) => void;
   onTotalChange: (v: number) => void;
   onGoalClick?: (id: string) => void;
+  onMilestoneClick?: (id: string) => void;
 }
 
 const DASHBOARD_ICON = (
@@ -63,7 +64,7 @@ const DASHBOARD_ICON = (
   </svg>
 );
 
-export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onIncomeChange, onTotalChange, onGoalClick }: DashboardProps) {
+export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onIncomeChange, onTotalChange, onGoalClick, onMilestoneClick }: DashboardProps) {
   const [showAllGoals, setShowAllGoals] = useState(false);
   const [freedomUnit, setFreedomUnit] = useState<FreedomTimeUnit>('days');
 
@@ -210,7 +211,7 @@ export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onI
 
       {/* Meilensteine */}
       <section className="bg-surface-1 rounded-2xl p-5 border border-white/5">
-        <LifeUnlocks milestoneResults={milestoneResults} />
+        <LifeUnlocks milestoneResults={milestoneResults} onMilestoneClick={onMilestoneClick} />
       </section>
 
       {/* Ausgaben – open list + achieved carousel */}
