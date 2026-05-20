@@ -19,10 +19,12 @@ function chunks<T>(arr: T[], n: number): T[][] {
   return result;
 }
 
+const MAX_CAROUSEL_ITEMS = 8;
+
 export function AchievedCarousel({ heading, items, ariaLabel, headingIcon }: AchievedCarouselProps) {
   const [activeIdx, setActiveIdx] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const slides = useMemo(() => chunks(items, 2), [items]);
+  const slides = useMemo(() => chunks(items.slice(0, MAX_CAROUSEL_ITEMS), 2), [items]);
 
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
