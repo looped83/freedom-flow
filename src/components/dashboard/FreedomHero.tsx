@@ -171,7 +171,7 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
             <button
               onClick={income.startEdit}
               aria-label={`Dividenden: ${formatEuro(monthly * mul)}, tippen zum Bearbeiten`}
-              className="p-0 w-full text-left text-sm font-bold text-accent tabular-nums leading-none whitespace-nowrap hover:opacity-75 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
+              className="block p-0 w-full text-left text-sm font-bold text-accent tabular-nums leading-none whitespace-nowrap hover:opacity-75 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
             >
               {formatEuro(monthly * mul)}
             </button>
@@ -199,7 +199,7 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
             <button
               onClick={expense.startEdit}
               aria-label={`Ausgaben: ${formatEuro(total * mul)}, tippen zum Bearbeiten`}
-              className="p-0 w-full text-left text-sm font-bold text-accent tabular-nums leading-none whitespace-nowrap hover:opacity-75 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
+              className="block p-0 w-full text-left text-sm font-bold text-accent tabular-nums leading-none whitespace-nowrap hover:opacity-75 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
             >
               {formatEuro(total * mul)}
             </button>
@@ -209,7 +209,7 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
         {/* Offen – display only */}
         <div className="bg-white/5 rounded-xl p-3">
           <p className="text-xs text-white/60 mb-1.5">Offen</p>
-          <p className="text-sm font-bold text-orange-400 tabular-nums leading-none whitespace-nowrap">
+          <p className="text-sm font-bold text-gold tabular-nums leading-none whitespace-nowrap">
             {formatEuro(missing * mul)}
           </p>
         </div>
