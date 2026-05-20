@@ -151,14 +151,14 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
   const yearPct       = Math.round(yearProgress * 100);
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+    <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
 
       <PageHeader icon={LIVEFLOW_ICON} title="Live Flow" right={LIVE_BADGE} />
 
       {/* ── Hero: Heute + Woche/Monat/Jahr ── */}
       <section
         aria-labelledby="lf-hero-heading"
-        className="relative rounded-2xl p-6 border border-accent/20 bg-accent-muted"
+        className="relative rounded-2xl p-5 border border-accent/20 bg-accent-muted"
       >
         {/* decorative live indicator ring */}
         <RefreshRing nowMs={now.getTime()} />
