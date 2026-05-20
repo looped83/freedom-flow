@@ -12,6 +12,15 @@ UI-Verbesserungen rund um Dashboard, Setup und FreedomHero. Alle Änderungen sin
 
 | Hash | Beschreibung |
 |------|-------------|
+| `3be53f8` | Dashboard: Kachel-Titel 'Ziele' mit Stern-Icon |
+| `2a84dde` | Dashboard: Anzahl aus Header entfernt, Mehr-Button unter die Kacheln verschoben |
+| `85c19f7` | Dashboard: Meilensteine + Ausgaben in eine Kachel mit Switch zusammengeführt |
+| `a75e69f` | Dashboard: 'Erreicht' statt 'Erreichte Meilensteine/Ausgaben', einheitliches Check-Icon |
+| `640815b` | LiveFlow: RefreshRing als Inline-Flex-Item – Header-Höhe identisch zu FreedomHero |
+| `26299bd` | LiveFlow: p-5 und space-y-4 – Label-Position an Dashboard angleichen |
+| `4b49d31` | LiveFlow: Header-Stil an FreedomHero angleichen (mb-3, font-semibold) |
+| `3f912ce` | LiveFlow: Ring absolut in rechter oberer Ecke positioniert |
+| `ea20d29` | LiveFlow: Ring etwas kleiner (32→26px), 'Seit Jahr' aus Lifetime entfernt |
 | `0106ebb` | fix: SetupPage beim Verlassen remounten → beim Zurückkehren nichts ausgeklappt |
 | `3c571af` | feat: Klick auf Ziel/Meilenstein navigiert zu Setup und klappt die Kachel auf |
 | `3b0822c` | FreedomHero: Prognose-Jahr zeigt CURRENT_YEAR (Ende des laufenden Jahres) |
@@ -41,13 +50,17 @@ UI-Verbesserungen rund um Dashboard, Setup und FreedomHero. Alle Änderungen sin
 - `key={setupResetKey}` auf `<SetupPage>`
 
 ### `src/components/dashboard/Dashboard.tsx`
-- Prop `onMilestoneClick?: (id: string) => void` ergänzt
-- Wird an `<LifeUnlocks>` weitergegeben
-
-### `src/components/dashboard/LifeUnlocks.tsx`
-- Prop `onMilestoneClick?: (id: string) => void` ergänzt
-- `MilestoneCard` ist jetzt ein `<button>` mit `onClick` → Klick navigiert zu Setup/Meilensteine
-- `achievedYear` wird in der Subtitle-Zeile (inline neben offenem Betrag) angezeigt
+- **`LifeUnlocks` entfernt** – Meilenstein-Logik vollständig nach Dashboard eingebettet
+- `LifeUnlocks.tsx` gelöscht (war separate Komponente)
+- Neue State-Variablen: `goalsOrMilestones` ('goals' | 'milestones'), `showAllMilestones`
+- Milestone-Sortierung/Filterung inline via `milestoneSortKey`
+- **Zusammengeführte Kachel „Ziele"** mit Stern-Icon (`GOALS_ICON`):
+  - Toggle oben rechts: `[Ausgaben | Meilensteine]` (Ausgaben ist Standard)
+  - Kein Zähler im Header (Anzahl entfernt)
+  - „+N weitere"-Button erscheint unter den Kacheln (nicht im Header)
+  - Jeder Tab zeigt eigene Liste + `AchievedCarousel` mit „Erreicht" und Check-Icon
+- `MilestoneCard`-Komponente als modulweite Funktion in Dashboard definiert
+- `onMilestoneClick` Prop weitergegeben
 
 ### `src/components/dashboard/FreedomHero.tsx`
 - Optik: `bg-accent-muted border border-accent/20` (wie LiveFlow-Hero)
@@ -76,6 +89,13 @@ UI-Verbesserungen rund um Dashboard, Setup und FreedomHero. Alle Änderungen sin
   - Jährliche Dividenden → speichert `monthlyIncome = v / 12`
   - Monatliche Dividenden → speichert `monthlyIncome = v`
 - Sektionsüberschriften „Details" und „Lifetime-Dividenden" in `text-white`
+
+### `src/components/liveflow/LiveFlow.tsx`
+- `RefreshRing` SVG: 32×32 → 26×26 (Radius 13→10, Umfang 81.68→62.83)
+- Ring ist Inline-Flex-Item in `flex items-center justify-between`-Header (wie FreedomHero's Toggle) – stellt gleiche Header-Zeilenhöhe sicher, kein Positions-Sprung beim Tab-Wechsel
+- `p-6` → `p-5`, `space-y-6` → `space-y-4` – exaktes Layout-Matching mit Dashboard
+- „Seit {lifetimeStartYear}" aus Lifetime-Dividenden-Kachel entfernt
+- Header-Labels: `font-bold` → `font-semibold`, `mb-2` → `mb-3`
 
 ---
 
