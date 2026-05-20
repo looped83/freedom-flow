@@ -67,24 +67,24 @@ const LIVE_BADGE = (
   </div>
 );
 
-// r=13 → circumference = 2π·13 ≈ 81.68
+// r=10 → circumference = 2π·10 ≈ 62.83
 function RefreshRing({ nowMs }: { nowMs: number }) {
   return (
     <svg
-      width="32" height="32" viewBox="0 0 32 32"
+      width="26" height="26" viewBox="0 0 26 26"
       className="flex-shrink-0 mt-0.5"
       style={{ transform: 'rotate(-90deg)' }}
       aria-hidden="true"
     >
-      <circle cx="16" cy="16" r="13" fill="none" stroke="rgba(74,222,128,0.15)" strokeWidth="2" />
+      <circle cx="13" cy="13" r="10" fill="none" stroke="rgba(74,222,128,0.15)" strokeWidth="2" />
       <circle
         key={String(nowMs)}
-        cx="16" cy="16" r="13"
+        cx="13" cy="13" r="10"
         fill="none"
         stroke="#4ade80"
         strokeWidth="2"
         strokeLinecap="round"
-        strokeDasharray="81.68"
+        strokeDasharray="62.83"
         className="lf-ring-fill"
       />
     </svg>
@@ -266,7 +266,6 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
             >
               {formatEuro(lifetimeTotal)}
             </p>
-            <p className="text-xs text-white/50 mt-2">Seit {portfolio.lifetimeStartYear}</p>
           </div>
 
           <RefreshRing nowMs={now.getTime()} />
