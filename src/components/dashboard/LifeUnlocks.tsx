@@ -11,9 +11,9 @@ const FLAG_ICON = (
     <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
   </svg>
 );
-const AWARD_ICON = (
+const CHECK_CIRCLE_ICON = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
-    <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
   </svg>
 );
 
@@ -141,8 +141,8 @@ export function LifeUnlocks({ milestoneResults, onMilestoneClick }: LifeUnlocksP
       )}
 
       <AchievedCarousel
-        heading="Erreichte Meilensteine"
-        headingIcon={AWARD_ICON}
+        heading="Erreicht"
+        headingIcon={CHECK_CIRCLE_ICON}
         items={carouselItems}
       />
     </section>
