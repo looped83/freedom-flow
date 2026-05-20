@@ -22,4 +22,13 @@ function deferCss(): Plugin {
 export default defineConfig({
   plugins: [react(), deferCss()],
   base: '/freedom-flow/',
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+        },
+      },
+    },
+  },
 })
