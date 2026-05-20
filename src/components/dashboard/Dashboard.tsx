@@ -33,14 +33,9 @@ const CLOCK_ICON = (
     <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
   </svg>
 );
-const CARD_ICON = (
+const GOALS_ICON = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
-    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
-  </svg>
-);
-const FLAG_ICON = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
-    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
   </svg>
 );
 const CHECK_CIRCLE_ICON = (
@@ -295,10 +290,8 @@ export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onI
         {/* Header */}
         <div className="flex items-center justify-between gap-2">
           <h2 id="goals-ms-title" className="text-sm font-semibold text-white flex items-center gap-2">
-            <span className="text-accent/70 flex-shrink-0" aria-hidden="true">
-              {goalsOrMilestones === 'goals' ? CARD_ICON : FLAG_ICON}
-            </span>
-            {goalsOrMilestones === 'goals' ? 'Ausgaben' : 'Meilensteine'}
+            <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{GOALS_ICON}</span>
+            Ziele
           </h2>
           <div
               className="flex rounded-lg overflow-hidden border border-white/10"
