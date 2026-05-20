@@ -148,7 +148,7 @@ export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onI
           {showProjected && (
             <text x="100" y="128" textAnchor="middle" dominantBaseline="middle"
               fill="rgba(255,255,255,0.6)" fontSize="12" fontFamily="inherit">
-              {CURRENT_YEAR + 1}
+              {CURRENT_YEAR}
             </text>
           )}
         </svg>
