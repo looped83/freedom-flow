@@ -158,7 +158,8 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
             label="Erhaltene Dividende"
             value={portfolio.lifetimeDividends}
             unit="€"
-            min={0} max={1_000_000} step={1}
+            min={0} max={1_000_000} step={0.01}
+            decimals={2}
             valueClass="text-accent"
             onChange={(v) => handleChange('lifetimeDividends', v)}
           />
