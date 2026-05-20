@@ -1,4 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 import { formatEuro } from '../../utils/formatting';
 import { freedomPercent, missingForFreedom } from '../../utils/calculations';
 import { useInlineNumberEdit } from '../../hooks/useInlineNumberEdit';
@@ -11,21 +13,29 @@ const WAVE_ICON = (
 
 interface FreedomHeroProps {
   monthly: number;
+  projectedMonthly: number;
   total: number;
   minExpenses: number;
   onIncomeChange: (v: number) => void;
   onTotalChange: (v: number) => void;
 }
 
+const R = 80;
+const CIRCUMFERENCE = 2 * Math.PI * R;
 const heroId = 'freedom-hero-heading';
 
-export function FreedomHero({ monthly, total, minExpenses, onIncomeChange, onTotalChange }: FreedomHeroProps) {
+export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onIncomeChange, onTotalChange }: FreedomHeroProps) {
   const [view, setView] = useState<'month' | 'year'>('month');
   const mul = view === 'year' ? 12 : 1;
 
-  const pct     = freedomPercent(monthly, total);
-  const missing = missingForFreedom(monthly, total);
-  const barPct  = Math.min(pct, 100);
+  const pct          = freedomPercent(monthly, total);
+  const projPct      = freedomPercent(projectedMonthly, total);
+  const missing      = missingForFreedom(monthly, total);
+  const dashOffset   = CIRCUMFERENCE * (1 - Math.min(pct, 100) / 100);
+  const projDashOffset = CIRCUMFERENCE * (1 - Math.min(projPct, 100) / 100);
+
+  const circleRef = useRef<SVGCircleElement>(null);
+  const [showProjected, setShowProjected] = useState(false);
 
   const commitIncome  = useCallback((v: number) => onIncomeChange(v / mul), [onIncomeChange, mul]);
   const commitExpense = useCallback((v: number) => onTotalChange(v / mul),  [onTotalChange,  mul]);
@@ -33,12 +43,29 @@ export function FreedomHero({ monthly, total, minExpenses, onIncomeChange, onTot
   const income  = useInlineNumberEdit(monthly * mul, commitIncome);
   const expense = useInlineNumberEdit(total * mul,   commitExpense, { min: minExpenses * mul });
 
+  useEffect(() => {
+    const el = circleRef.current;
+    if (!el) return;
+    if (prefersReducedMotion) {
+      el.style.strokeDashoffset = String(dashOffset);
+      return;
+    }
+    el.style.transition = 'none';
+    el.style.strokeDashoffset = String(CIRCUMFERENCE);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        el.style.transition = 'stroke-dashoffset 0.8s ease-out';
+        el.style.strokeDashoffset = String(dashOffset);
+      });
+    });
+  }, [dashOffset]);
+
   return (
     <section className="rounded-2xl p-5 bg-accent-muted border border-accent/20" aria-labelledby={heroId}>
       <h2 id={heroId} className="sr-only">Finanzielle Freiheit</h2>
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{WAVE_ICON}</span>
           <p className="text-sm font-semibold text-white">Freedom Flow</p>
@@ -59,34 +86,69 @@ export function FreedomHero({ monthly, total, minExpenses, onIncomeChange, onTot
         </div>
       </div>
 
-      {/* Big percentage */}
-      <p
-        className="text-5xl font-bold text-accent tabular-nums leading-none"
-        aria-label={`${pct.toFixed(1)} % finanziell frei`}
-      >
-        {pct.toFixed(1)}&thinsp;%
-      </p>
-      <p className="text-xs text-white/50 mt-1.5">finanziell frei</p>
-
-      {/* Progress bar */}
-      <div className="mt-4">
-        <div
-          role="progressbar"
-          aria-label={`Freiheitsgrad: ${Math.round(barPct)} von 100 Prozent`}
-          aria-valuenow={Math.round(barPct)}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          className="h-1.5 bg-white/10 rounded-full overflow-hidden"
+      {/* SVG Ring */}
+      <div className="flex justify-center">
+        <svg
+          viewBox="0 0 200 200"
+          width="200"
+          height="200"
+          role="img"
+          aria-label={`${pct.toFixed(1)} % finanziell frei`}
         >
-          <div
-            className="h-full bg-accent rounded-full transition-[width] duration-700"
-            style={{ width: `${barPct}%` }}
+          {/* Track */}
+          <circle cx="100" cy="100" r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="14" />
+          {/* Projected year-end arc */}
+          {projPct > pct && (
+            <circle
+              cx="100" cy="100" r={R}
+              fill="none" stroke="rgba(74,222,128,0.22)" strokeWidth="14"
+              strokeLinecap="round"
+              strokeDasharray={CIRCUMFERENCE}
+              strokeDashoffset={projDashOffset}
+              transform="rotate(-90 100 100)"
+              role="button"
+              tabIndex={0}
+              aria-label={`Prognose anzeigen: ${projPct.toFixed(1)} % in einem Jahr`}
+              aria-pressed={showProjected}
+              style={{ cursor: 'pointer', outline: 'none' }}
+              onClick={() => setShowProjected(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowProjected(true); }
+              }}
+            />
+          )}
+          {/* Current arc */}
+          <circle
+            ref={circleRef}
+            cx="100" cy="100" r={R}
+            fill="none" stroke="#4ade80" strokeWidth="14"
+            strokeLinecap="round"
+            strokeDasharray={CIRCUMFERENCE}
+            strokeDashoffset={CIRCUMFERENCE}
+            transform="rotate(-90 100 100)"
+            role={showProjected ? 'button' : undefined}
+            tabIndex={showProjected ? 0 : undefined}
+            aria-label={showProjected ? `Aktuelle ${pct.toFixed(1)} % anzeigen` : undefined}
+            aria-pressed={showProjected ? false : undefined}
+            style={{ cursor: showProjected ? 'pointer' : 'default', outline: 'none' }}
+            onClick={() => setShowProjected(false)}
+            onKeyDown={showProjected ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowProjected(false); }
+            } : undefined}
           />
-        </div>
+          <text x="100" y="93" textAnchor="middle" dominantBaseline="middle"
+            fill="white" fontSize="28" fontWeight="700" fontFamily="inherit">
+            {(showProjected ? projPct : pct).toFixed(1)} %
+          </text>
+          <text x="100" y="117" textAnchor="middle" dominantBaseline="middle"
+            fill="rgba(255,255,255,0.6)" fontSize="12" fontFamily="inherit">
+            {showProjected ? 'Prognose' : 'finanziell frei'}
+          </text>
+        </svg>
       </div>
 
       {/* Mini tiles: Dividenden · Ausgaben · Offen */}
-      <div className="mt-5 pt-4 border-t border-accent/15 grid grid-cols-3 gap-3">
+      <div className="mt-4 pt-4 border-t border-accent/15 grid grid-cols-3 gap-3">
 
         {/* Dividenden – editable */}
         <div className="bg-white/5 rounded-xl p-3">
