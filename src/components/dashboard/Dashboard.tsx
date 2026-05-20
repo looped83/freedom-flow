@@ -288,7 +288,7 @@ export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onI
         )}
 
         <AchievedCarousel
-          heading="Erreichte Ausgaben"
+          heading="Erreicht"
           headingIcon={CHECK_CIRCLE_ICON}
           items={achievedCarouselItems}
         />
