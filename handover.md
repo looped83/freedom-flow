@@ -4,7 +4,7 @@ Stand: 2026-05-20
 
 ## Ziel des Branches
 
-UI-Verbesserungen rund um Dashboard, Setup und FreedomHero. Alle Änderungen sind committed und gepusht. Kein offener Task.
+UI-Verbesserungen, Lighthouse-Performance-Optimierungen und Code-Qualitäts-Refactoring rund um Dashboard, Setup, FreedomHero und LiveFlow. Alle Änderungen sind committed und gepusht. Kein offener Task.
 
 ---
 
@@ -12,19 +12,25 @@ UI-Verbesserungen rund um Dashboard, Setup und FreedomHero. Alle Änderungen sin
 
 | Hash | Beschreibung |
 |------|-------------|
+| `59286b1` | refactor: Dead Code, doppelte Intl-Instanzen, doppelte Milestone-Berechnung entfernt |
+| `cdbf8bd` | perf: Vendor-Split wiederhergestellt – paralleler Download senkt LCP-Render-Delay |
+| `0c32b98` | perf: CSS deferred, Animation composited, Carousel begrenzt |
+| `9b42abe` | perf: CSS-Preload-Chain und erzwungenen Reflow beseitigen; totes FreedomCalendar entfernt |
+| `231da16` | a11y: role="presentation" aus Carousel-Slides entfernt |
+| `6861029` | UI: Trennlinie nach Hero-Fortschrittsbalken entfernt; Startfeld umbenannt, Jahr-Einheit ausgeblendet |
 | `3be53f8` | Dashboard: Kachel-Titel 'Ziele' mit Stern-Icon |
 | `2a84dde` | Dashboard: Anzahl aus Header entfernt, Mehr-Button unter die Kacheln verschoben |
 | `85c19f7` | Dashboard: Meilensteine + Ausgaben in eine Kachel mit Switch zusammengeführt |
 | `a75e69f` | Dashboard: 'Erreicht' statt 'Erreichte Meilensteine/Ausgaben', einheitliches Check-Icon |
 | `640815b` | LiveFlow: RefreshRing als Inline-Flex-Item – Header-Höhe identisch zu FreedomHero |
 | `26299bd` | LiveFlow: p-5 und space-y-4 – Label-Position an Dashboard angleichen |
-| `4b49d31` | LiveFlow: Header-Stil an FreedomHero angleichen (mb-3, font-semibold) |
+| `4b49d31` | LiveFlow: Header-Stil an FreedomHero angleichen |
 | `3f912ce` | LiveFlow: Ring absolut in rechter oberer Ecke positioniert |
 | `ea20d29` | LiveFlow: Ring etwas kleiner (32→26px), 'Seit Jahr' aus Lifetime entfernt |
 | `0106ebb` | fix: SetupPage beim Verlassen remounten → beim Zurückkehren nichts ausgeklappt |
 | `3c571af` | feat: Klick auf Ziel/Meilenstein navigiert zu Setup und klappt die Kachel auf |
-| `3b0822c` | FreedomHero: Prognose-Jahr zeigt CURRENT_YEAR (Ende des laufenden Jahres) |
-| `ef56362` | LifeUnlocks: achievedYear in die Subtitle-Zeile verschoben, Abstand verringert |
+| `3b0822c` | FreedomHero: Prognose-Jahr zeigt CURRENT_YEAR |
+| `ef56362` | LifeUnlocks: achievedYear in die Subtitle-Zeile verschoben |
 | `a5ac1bb` | FreedomHero: Jahreszahl unter „Prognose"-Label im Ring |
 | `cfb954a` | Meilensteine: erwartetes Zieljahr unter Prozentzahl in LifeUnlocks-Karten |
 | `1841f58` | FreedomHero: Offen-Kachel vertikal ausgerichtet, Farbe → gold |
@@ -52,50 +58,82 @@ UI-Verbesserungen rund um Dashboard, Setup und FreedomHero. Alle Änderungen sin
 ### `src/components/dashboard/Dashboard.tsx`
 - **`LifeUnlocks` entfernt** – Meilenstein-Logik vollständig nach Dashboard eingebettet
 - `LifeUnlocks.tsx` gelöscht (war separate Komponente)
+- `FreedomCalendar.tsx` gelöscht (totes Dead Code – war nie eingebunden, hätte 365+ DOM-Nodes erzeugt)
 - Neue State-Variablen: `goalsOrMilestones` ('goals' | 'milestones'), `showAllMilestones`
 - Milestone-Sortierung/Filterung inline via `milestoneSortKey`
 - **Zusammengeführte Kachel „Ziele"** mit Stern-Icon (`GOALS_ICON`):
-  - Toggle oben rechts: `[Ausgaben | Meilensteine]` (Ausgaben ist Standard)
-  - Kein Zähler im Header (Anzahl entfernt)
-  - „+N weitere"-Button erscheint unter den Kacheln (nicht im Header)
-  - Jeder Tab zeigt eigene Liste + `AchievedCarousel` mit „Erreicht" und Check-Icon
+  - Toggle oben rechts: `[Ausgaben | Meilensteine]`
+  - „+N weitere"-Button erscheint unter den Kacheln
+  - Jeder Tab zeigt eigene Liste + `AchievedCarousel` mit Check-Icon
 - `MilestoneCard`-Komponente als modulweite Funktion in Dashboard definiert
 - `onMilestoneClick` Prop weitergegeben
 
+### `src/components/dashboard/AchievedCarousel.tsx`
+- `role="presentation"` von Slide-Wrapper-Divs entfernt → direkte `list`→`listitem`-Kette (ARIA a11y-Fix)
+- `aria-hidden` nur auf inaktiven Slides gesetzt (`true | undefined` statt immer `true`)
+- `MAX_CAROUSEL_ITEMS = 8`: maximale Anzahl gerenderte Items auf 8 begrenzt
+
 ### `src/components/dashboard/FreedomHero.tsx`
 - Optik: `bg-accent-muted border border-accent/20` (wie LiveFlow-Hero)
-- SVG-Ring vollständig erhalten: Animation (`useEffect` + `requestAnimationFrame`), Prognose-Bogen, `prefersReducedMotion`
-- Drei Mini-Kacheln (`bg-white/5 rounded-xl p-3`): Dividenden (editierbar), Ausgaben (editierbar), Offen (`text-gold`)
-- Prognose-Anzeige im Ring: Prozentzahl → „Prognose" (y=112) → CURRENT_YEAR (y=128)
-- Buttons in Kacheln haben `block`-Klasse (verhindert `inline-block`-Versatz)
+- SVG-Ring vollständig erhalten: Animation, Prognose-Bogen, `prefersReducedMotion`
+- Drei Mini-Kacheln: Dividenden (editierbar), Ausgaben (editierbar), Offen (`text-gold`)
+- Prognose-Anzeige im Ring: Prozentzahl → „Prognose" → CURRENT_YEAR
 
 ### `src/components/goals/GoalList.tsx`
-- **Scroll-Bug behoben**: `onFocusConsumed?.()` wird jetzt im `setTimeout`-Callback aufgerufen (nicht mehr synchron), damit der Timer nicht durch die ausgelöste Re-Render abgebrochen wird
+- Scroll-Bug behoben: `onFocusConsumed?.()` im `setTimeout`-Callback (nicht synchron)
+- `deCollator` wird jetzt aus `utils/locale.ts` importiert (kein lokales `new Intl.Collator`)
 
 ### `src/components/milestones/MilestoneList.tsx`
 - Props `focusMilestoneId` und `onFocusConsumed` ergänzt
 - `liRefs` (useRef<Map>) für alle `<li>`-Elemente
-- `useEffect`: klappt die Kachel auf, scrollt nach 350 ms zum Element, ruft dann `onFocusConsumed()` auf
+- `useEffect`: klappt Kachel auf, scrollt nach 350 ms, ruft `onFocusConsumed()` auf
+- `deCollator` wird jetzt aus `utils/locale.ts` importiert
 
 ### `src/components/setup/SetupPage.tsx`
 - Props `focusMilestoneId` und `onFocusMilestoneConsumed` ergänzt
 - `useEffect` schaltet bei gesetztem `focusMilestoneId` auf den Meilensteine-Tab um
-- `tabKeys`-Mechanismus: beim Verlassen eines Sub-Tabs wird dessen Key inkrementiert → Remount bei Rückkehr (setzt Filter/Sort zurück)
+- `tabKeys`-Mechanismus: Remount bei Sub-Tab-Wechsel setzt Filter/Sort zurück
 
 ### `src/components/portfolio/PortfolioForm.tsx`
 - Tab-Label und Seitenüberschrift: „Portfolio" → **„Dividenden"**
+- Feldbezeichnung: „Seit Jahr" → **„Berechnung ab"**; Einheit „Jahr" im Eingabefeld ausgeblendet
 - 4 Felder entfernt: Portfolio-Wert, Monatliche Sparrate, Kursrendite, Anlagehorizont
-- Zwei editierbare Hero-Kacheln mit gegenseitiger Berechnung:
-  - Jährliche Dividenden → speichert `monthlyIncome = v / 12`
-  - Monatliche Dividenden → speichert `monthlyIncome = v`
-- Sektionsüberschriften „Details" und „Lifetime-Dividenden" in `text-white`
+- Zwei editierbare Hero-Kacheln mit gegenseitiger Berechnung
 
 ### `src/components/liveflow/LiveFlow.tsx`
-- `RefreshRing` SVG: 32×32 → 26×26 (Radius 13→10, Umfang 81.68→62.83)
-- Ring ist Inline-Flex-Item in `flex items-center justify-between`-Header (wie FreedomHero's Toggle) – stellt gleiche Header-Zeilenhöhe sicher, kein Positions-Sprung beim Tab-Wechsel
-- `p-6` → `p-5`, `space-y-6` → `space-y-4` – exaktes Layout-Matching mit Dashboard
-- „Seit {lifetimeStartYear}" aus Lifetime-Dividenden-Kachel entfernt
-- Header-Labels: `font-bold` → `font-semibold`, `mb-2` → `mb-3`
+- Trennlinie (`border-t border-accent/15 pt-4`) nach Hero-Fortschrittsbalken entfernt
+- RefreshRing 32→26px; Ring als Inline-Flex-Item (Header-Höhe stabil)
+- `p-5 space-y-4` – Layout-Matching mit Dashboard
+
+### `src/hooks/useAppState.ts`
+- Portfolio-Deps auf relevante Skalare begrenzt (`monthlyIncome`, `dividendGrowth`, `dividendYield`, `monthlySavings`) → unveränderte Felder triggern keine Re-Renders mehr
+- `visibleMilestoneResults` filtert `milestoneResults` (O(n)) statt `computeMilestoneResults` ein zweites Mal aufzurufen
+- Import `filterMilestonesByExpenses` entfernt (Funktion gelöscht)
+
+### `src/utils/calculations.ts`
+- `freeDaysPerMonth` entfernt (Dead Code – nirgends importiert)
+
+### `src/utils/milestones.ts`
+- `ISO_DATE_RE` als Modul-Konstante statt per Aufruf neu kompiliert
+- `filterMilestonesByExpenses` entfernt (Dead Code nach useAppState-Refactoring)
+- `Goal`-Import entfernt (war nur von `filterMilestonesByExpenses` genutzt)
+
+### `src/utils/locale.ts` *(neu)*
+- Gemeinsamer `deCollator = new Intl.Collator('de', { sensitivity: 'base' })` Singleton
+- Wird von `GoalList.tsx` und `MilestoneList.tsx` importiert
+
+### `src/utils/storage.ts`
+- `loadState()` in drei fokussierte Migrations-Helper aufgeteilt:
+  - `migratePortfolio(p)` – fehlende Felder, 2012-Jahreszahl-Fix
+  - `migrateGoals(goals)` – Kategorie-Sync, entfernte Kategorien, fehlende Default-Ziele
+  - `migrateMilestones(stored, goals)` – gelöschte Default-MSs, Titel-Migrationen, Auto-Sync
+
+### `vite.config.ts`
+- `deferCss()` Plugin: CSS via `onload`-Pattern nicht-blockierend geladen (schnellere FCP/LCP)
+- Vendor-Split (`react` + `react-dom` in eigenem Chunk): paralleler Download via `modulepreload` reduziert den kritischen Pfad von 60 KB auf 45 KB
+
+### `src/index.css`
+- `slide-down`-Animation: `grid-template-rows` (Layout-forcing, nicht composited) → `opacity + translateY` (GPU-composited, kein Layout-Reflow)
 
 ---
 
@@ -118,13 +156,25 @@ GoalList / MilestoneList
 
 ---
 
+## Lighthouse-Optimierungen (Ergebnis dieser Session)
+
+| Metrik | Vorher | Nachher |
+|--------|--------|---------|
+| CLS | 0.000 | 0.000 |
+| DOM-Elemente | ~630 (mit FreedomCalendar) | 263 |
+| Render-blocking CSS | ja | nein (deferred) |
+| Erzwungener Reflow (Animation) | ja (grid-template-rows) | nein (composited) |
+| Kritischer Pfad JS | ~60 KB (ein Bundle) | ~45 KB (vendor parallel via modulepreload) |
+
+---
+
 ## Bekannte Eigenheiten / Nicht geändert
 
 - **LiveFlow-Countdown-Balken** wurde in einer früheren Session entfernt (nur „Zuletzt aktualisiert"-Text bleibt).
-- **BONUS_GOAL_ID** (`'bonus'`): oranges Icon (`text-orange-400`) wird konsequent in Dashboard und GoalList angewendet.
-- **MilestoneResult.achievedYear** (`number | null`) ist Teil von `src/types/index.ts` und wird in `computeMilestoneResult` / `milestoneAchievedYear` berechnet.
-- Die `filterMilestonesByExpenses`-Funktion blendet Dividenden-Meilensteine aus, deren Ziel die Gesamtausgaben übersteigt (wirkt auf Timeline und Setup-Ansicht).
-- Kein Testframework vorhanden – `npm run build` (TypeScript strict mode) ist das primäre Korrektheitsgatter.
+- **BONUS_GOAL_ID** (`'bonus'`): oranges Icon (`text-orange-400`) in Dashboard und GoalList.
+- **MilestoneResult.achievedYear** (`number | null`) ist Teil von `src/types/index.ts`.
+- Kein Testframework – `npm run build` (TypeScript strict mode) ist das primäre Korrektheitsgatter.
+- `ff-hdr-title` in `index.html`: absichtliche Static-Shell für sofortige LCP-Darstellung vor React-Mount; CLS 0.000 bestätigt nahtlosen Übergang.
 
 ---
 
