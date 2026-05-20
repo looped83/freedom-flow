@@ -72,7 +72,7 @@ function RefreshRing({ nowMs }: { nowMs: number }) {
   return (
     <svg
       width="26" height="26" viewBox="0 0 26 26"
-      className="flex-shrink-0 mt-0.5"
+      className="absolute top-4 right-4"
       style={{ transform: 'rotate(-90deg)' }}
       aria-hidden="true"
     >
@@ -158,28 +158,24 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
       {/* ── Hero: Heute + Woche/Monat/Jahr ── */}
       <section
         aria-labelledby="lf-hero-heading"
-        className="rounded-2xl p-6 border border-accent/20 bg-accent-muted"
+        className="relative rounded-2xl p-6 border border-accent/20 bg-accent-muted"
       >
-        {/* Top: Heute verdient */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{SUN_ICON}</span>
-              <p className="text-sm font-bold text-white">Heute verdient</p>
-            </div>
-            <p
-              id="lf-hero-heading"
-              className="text-5xl font-bold text-accent tabular-nums leading-none"
-              aria-live="off"
-              aria-atomic="true"
-            >
-              {formatEuro(earnedToday)}
-            </p>
-          </div>
+        {/* decorative live indicator ring */}
+        <RefreshRing nowMs={now.getTime()} />
 
-          {/* decorative live indicator ring */}
-          <RefreshRing nowMs={now.getTime()} />
+        {/* Top: Heute verdient */}
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{SUN_ICON}</span>
+          <p className="text-sm font-bold text-white">Heute verdient</p>
         </div>
+        <p
+          id="lf-hero-heading"
+          className="text-5xl font-bold text-accent tabular-nums leading-none"
+          aria-live="off"
+          aria-atomic="true"
+        >
+          {formatEuro(earnedToday)}
+        </p>
 
         {/* Day progress */}
         <div className="mt-4 space-y-1.5">
@@ -244,32 +240,28 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
       {/* ── Lifetime Dividenden ── */}
       <section
         aria-labelledby="lf-lifetime-heading"
-        className="rounded-2xl p-6 border border-accent/20 bg-accent-muted"
+        className="relative rounded-2xl p-6 border border-accent/20 bg-accent-muted"
       >
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-accent/70 flex-shrink-0" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                  <path d="M6 3h12l4 6-10 13L2 9l4-6z"/>
-                  <path d="M2 9h20"/>
-                  <path d="M8.5 3 6 9m9-6 2.5 6M12 3v6"/>
-                </svg>
-              </span>
-              <p className="text-sm font-bold text-white">Lifetime Dividenden</p>
-            </div>
-            <p
-              id="lf-lifetime-heading"
-              className="text-5xl font-bold text-accent tabular-nums leading-none"
-              aria-live="off"
-              aria-atomic="true"
-            >
-              {formatEuro(lifetimeTotal)}
-            </p>
-          </div>
+        <RefreshRing nowMs={now.getTime()} />
 
-          <RefreshRing nowMs={now.getTime()} />
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-accent/70 flex-shrink-0" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+              <path d="M6 3h12l4 6-10 13L2 9l4-6z"/>
+              <path d="M2 9h20"/>
+              <path d="M8.5 3 6 9m9-6 2.5 6M12 3v6"/>
+            </svg>
+          </span>
+          <p className="text-sm font-bold text-white">Lifetime Dividenden</p>
         </div>
+        <p
+          id="lf-lifetime-heading"
+          className="text-5xl font-bold text-accent tabular-nums leading-none"
+          aria-live="off"
+          aria-atomic="true"
+        >
+          {formatEuro(lifetimeTotal)}
+        </p>
       </section>
 
       {/* ── Cashflow ── */}
