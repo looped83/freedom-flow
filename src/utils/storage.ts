@@ -1,8 +1,86 @@
-import type { AppState, Goal } from '../types';
+import type { AppState, Goal, Milestone, Portfolio } from '../types';
 import { AUTO_EXPENSES_MS_ID, DEFAULT_GOALS, DEFAULT_MILESTONES, DEFAULT_PORTFOLIO } from '../constants/defaultData';
 
 const STORAGE_KEY   = 'dividend-goal-tracker-v1';
 const DEFAULTS_KEY  = 'dividend-goal-tracker-defaults-v1';
+
+// ── Migration helpers ────────────────────────────────────────────────────────
+
+function migratePortfolio(p: Portfolio): Portfolio {
+  let out = p;
+  if (out.monthlyIncome === undefined) {
+    out = { ...out, monthlyIncome: (out.value * out.dividendYield) / 100 / 12 };
+  }
+  if (out.lifetimeDividends === undefined) {
+    out = { ...out, lifetimeDividends: DEFAULT_PORTFOLIO.lifetimeDividends };
+  }
+  if (out.lifetimeStartYear === undefined || out.lifetimeStartYear === 2012) {
+    out = { ...out, lifetimeStartYear: DEFAULT_PORTFOLIO.lifetimeStartYear };
+  }
+  return out;
+}
+
+const REMOVED_CATEGORY_MAP: Partial<Record<string, Goal['category']>> = {
+  Medizin: 'Gesundheit',
+};
+
+function migrateGoals(goals: Goal[]): Goal[] {
+  const defaultById = new Map(DEFAULT_GOALS.map((g) => [g.id, g]));
+
+  // Sync category from code-level defaults; remap removed categories.
+  let out = goals.map((g) => {
+    const def = defaultById.get(g.id);
+    const category = REMOVED_CATEGORY_MAP[def ? def.category : g.category]
+      ?? (def ? def.category : g.category);
+    return { ...g, category } as Goal;
+  });
+
+  // Inject new default goals not yet in stored data.
+  const storedIds = new Set(out.map((g) => g.id));
+  const missing = DEFAULT_GOALS.filter((g) => !storedIds.has(g.id));
+  if (missing.length > 0) out = [...out, ...missing];
+
+  return out;
+}
+
+const REMOVED_DEFAULT_MS_IDS = new Set([
+  'ms-4', 'ms-5', 'ms-6', 'ms-7', 'ms-8', 'ms-9', 'ms-10', 'ms-11', 'ms-12',
+  'ms-16', 'ms-17',
+  'ms-18', 'ms-19', 'ms-20', 'ms-21', 'ms-22',
+]);
+
+const MS_TITLE_MIGRATIONS: Record<string, { from: string; to: string }> = {
+  'ms-1': { from: 'Erste 100 € / Monat', to: '100 € / Monat' },
+};
+
+function migrateMilestones(stored: Milestone[] | undefined, goals: Goal[]): Milestone[] {
+  let out: Milestone[];
+
+  if (!Array.isArray(stored)) {
+    out = DEFAULT_MILESTONES.map((m) => ({ ...m }));
+  } else {
+    out = stored.filter((m) => !REMOVED_DEFAULT_MS_IDS.has(m.id));
+
+    out = out.map((m) => {
+      const rename = MS_TITLE_MIGRATIONS[m.id];
+      return rename && m.title === rename.from ? { ...m, title: rename.to } : m;
+    });
+
+    const storedIds = new Set(out.map((m) => m.id));
+    const missing = DEFAULT_MILESTONES.filter((m) => !storedIds.has(m.id));
+    if (missing.length > 0) out = [...out, ...missing];
+  }
+
+  // Keep the auto-managed expenses milestone in sync with the actual goal sum.
+  const total = goals.reduce((s, g) => s + g.monthlyAmount, 0);
+  return out.map((m) =>
+    m.id === AUTO_EXPENSES_MS_ID && m.type === 'dividend' && m.dividendTarget !== total
+      ? { ...m, dividendTarget: total }
+      : m,
+  );
+}
+
+// ── Public API ───────────────────────────────────────────────────────────────
 
 export function loadState(): AppState {
   try {
@@ -10,71 +88,12 @@ export function loadState(): AppState {
     if (!raw) return getDefaultState();
     const parsed = JSON.parse(raw) as AppState;
     if (!parsed.portfolio || !Array.isArray(parsed.goals)) return getDefaultState();
-    // Migration: add monthlyIncome if missing from old data
-    if (parsed.portfolio.monthlyIncome === undefined) {
-      parsed.portfolio.monthlyIncome =
-        (parsed.portfolio.value * parsed.portfolio.dividendYield) / 100 / 12;
-    }
-    // Migration: add lifetime dividend fields if missing from old data
-    if (parsed.portfolio.lifetimeDividends === undefined) {
-      parsed.portfolio.lifetimeDividends = DEFAULT_PORTFOLIO.lifetimeDividends;
-    }
-    if (parsed.portfolio.lifetimeStartYear === undefined) {
-      parsed.portfolio.lifetimeStartYear = DEFAULT_PORTFOLIO.lifetimeStartYear;
-    }
-    // Migration: update old default year 2012 to current default 2026
-    if (parsed.portfolio.lifetimeStartYear === 2012) {
-      parsed.portfolio.lifetimeStartYear = 2026;
-    }
-    // Migration: sync category of default goals so code-level changes take effect
-    const defaultById = new Map(DEFAULT_GOALS.map((g) => [g.id, g]));
-    parsed.goals = parsed.goals.map((g) => {
-      const def = defaultById.get(g.id);
-      const base = def ? { ...g, category: def.category } : g;
-      // Migration: removed categories → remap to nearest replacement
-      if ((base.category as string) === 'Medizin') return { ...base, category: 'Gesundheit' } as Goal;
-      return base;
-    });
-    // Migration: add new default goals not yet in stored data
-    const storedIds = new Set(parsed.goals.map((g) => g.id));
-    const missing = DEFAULT_GOALS.filter((g) => !storedIds.has(g.id));
-    if (missing.length > 0) parsed.goals = [...parsed.goals, ...missing];
-    // Migration: initialise / extend milestones list
-    if (!Array.isArray((parsed as Partial<AppState>).milestones)) {
-      parsed.milestones = DEFAULT_MILESTONES.map((m) => ({ ...m }));
-    } else {
-      // Drop former default milestones that have since been removed
-      // (themed/category targets, date targets, the static "Alle Fixkosten frei"
-      // landmark — now replaced by the auto-managed AUTO_EXPENSES_MS_ID — and
-      // the 2×/3×/5×/10.000 multiples).
-      const REMOVED_DEFAULT_MS_IDS = new Set([
-        'ms-4', 'ms-5', 'ms-6', 'ms-7', 'ms-8', 'ms-9', 'ms-10', 'ms-11', 'ms-12',
-        'ms-16', 'ms-17',
-        'ms-18', 'ms-19', 'ms-20', 'ms-21', 'ms-22',
-      ]);
-      parsed.milestones = parsed.milestones.filter((m) => !REMOVED_DEFAULT_MS_IDS.has(m.id));
-      // Title migrations — only applied if the stored title still matches the
-      // previous default verbatim, so user-edited titles are preserved.
-      const TITLE_MIGRATIONS: Record<string, { from: string; to: string }> = {
-        'ms-1': { from: 'Erste 100 € / Monat', to: '100 € / Monat' },
-      };
-      parsed.milestones = parsed.milestones.map((m) => {
-        const rename = TITLE_MIGRATIONS[m.id];
-        return rename && m.title === rename.from ? { ...m, title: rename.to } : m;
-      });
-      const storedMsIds = new Set(parsed.milestones.map((m) => m.id));
-      const missingMs = DEFAULT_MILESTONES.filter((m) => !storedMsIds.has(m.id));
-      if (missingMs.length > 0) parsed.milestones = [...parsed.milestones, ...missingMs];
-    }
-    // Migration: keep the auto-managed expenses milestone in sync with the
-    // actual goal sum (in case persisted state drifted).
-    const totalNow = parsed.goals.reduce((s, g) => s + g.monthlyAmount, 0);
-    parsed.milestones = parsed.milestones.map((m) =>
-      m.id === AUTO_EXPENSES_MS_ID && m.type === 'dividend' && m.dividendTarget !== totalNow
-        ? { ...m, dividendTarget: totalNow }
-        : m,
-    );
-    return parsed;
+
+    const portfolio  = migratePortfolio(parsed.portfolio);
+    const goals      = migrateGoals(parsed.goals);
+    const milestones = migrateMilestones((parsed as Partial<AppState>).milestones, goals);
+
+    return { portfolio, goals, milestones };
   } catch {
     return getDefaultState();
   }

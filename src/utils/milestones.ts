@@ -1,11 +1,12 @@
-import type { Goal, Milestone, MilestoneResult, Portfolio } from '../types';
+import type { Milestone, MilestoneResult, Portfolio } from '../types';
 import { CURRENT_YEAR } from '../constants/defaultData';
 import { projectMonthlyDividendsAtYear, projectMonthlyDividendsYearsAgo } from './calculations';
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
+const ISO_DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 function parseIsoDate(iso: string): Date | null {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  const m = ISO_DATE_RE.exec(iso);
   if (!m) return null;
   const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
   return isNaN(d.getTime()) ? null : d;
@@ -129,7 +130,3 @@ export function milestoneAchievedYear(milestone: Milestone, portfolio: Portfolio
   return d ? d.getFullYear() : null;
 }
 
-export function filterMilestonesByExpenses(milestones: Milestone[], goals: Goal[]): Milestone[] {
-  const total = goals.reduce((s, g) => s + g.monthlyAmount, 0);
-  return milestones.filter((m) => m.type !== 'dividend' || (m.dividendTarget ?? 0) <= total);
-}

@@ -6,8 +6,7 @@ import { useSwipeToDelete } from '../../hooks/useSwipeToDelete';
 import { IconChevron, IconCheck, IconClose, IconTrash } from '../ui/Icons';
 import { MilestoneIcon } from './MilestoneIcon';
 import { MilestoneForm } from './MilestoneForm';
-
-const deCollator = new Intl.Collator('de');
+import { deCollator } from '../../utils/locale';
 
 type MilestoneFilter = 'all' | 'achieved' | 'open';
 type SortType = 'alpha' | 'target' | 'status';
