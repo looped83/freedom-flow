@@ -203,7 +203,7 @@ export function LiveFlow({ portfolio }: LiveFlowProps) {
         </div>
 
         {/* Mini tiles: Woche · Monat · Jahr */}
-        <div className="mt-5 pt-4 border-t border-accent/15 grid grid-cols-3 gap-3">
+        <div className="mt-5 grid grid-cols-3 gap-3">
           {([
             { label: 'Woche', value: earnedWeek,  pct: weekPct,  aria: `Wochenverlauf: ${weekPct} %`  },
             { label: 'Monat', value: earnedMonth, pct: monthPct, aria: `Monatsverlauf: ${monthPct} %` },

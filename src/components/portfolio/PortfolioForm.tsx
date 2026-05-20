@@ -66,7 +66,7 @@ function TileField({ fieldId, label, value, unit, min, max, step, valueClass, on
           aria-label={`${label} eingeben`}
           className={`flex-1 min-w-0 bg-transparent font-bold text-xl tabular-nums text-right focus:outline-none border-b border-transparent focus:border-accent transition-colors ${valueClass}`}
         />
-        <span className="text-sm text-white/55 flex-shrink-0">{unit}</span>
+        {unit !== 'Jahr' && <span className="text-sm text-white/55 flex-shrink-0">{unit}</span>}
       </div>
     </div>
   );
@@ -142,7 +142,7 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
         <div className="grid grid-cols-2 gap-3">
           <TileField
             fieldId="portfolio-lifetimeStartYear"
-            label="Seit Jahr"
+            label="Berechnung ab"
             value={portfolio.lifetimeStartYear}
             unit="Jahr"
             min={2000} max={2040} step={1}
