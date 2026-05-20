@@ -45,11 +45,16 @@ function MilestoneCard({ result, active }: { result: MilestoneResult; active?: b
         <MilestoneIcon icon={result.icon} />
       </span>
       <div className="flex-1 min-w-0">
-        <div className="flex items-baseline justify-between gap-2 mb-0.5">
+        <div className="flex items-start justify-between gap-2 mb-0.5">
           <p className="text-white font-semibold text-sm leading-tight truncate">{result.title}</p>
-          <span className={`text-xs font-bold flex-shrink-0 tabular-nums ${active ? 'text-accent' : 'text-gold'}`}>
-            {result.progressPercent.toFixed(0)} %
-          </span>
+          <div className="flex-shrink-0 text-right">
+            <span className={`text-xs font-bold tabular-nums ${active ? 'text-accent' : 'text-gold'}`}>
+              {result.progressPercent.toFixed(0)} %
+            </span>
+            {result.achievedYear != null && (
+              <p className="text-xs text-white/55">{result.achievedYear}</p>
+            )}
+          </div>
         </div>
         <p className="text-xs text-white/50 mb-2 truncate">{subtitle(result)}</p>
         <ProgressBar

@@ -98,6 +98,8 @@ export interface MilestoneResult extends Milestone {
   missingMonthly: number;
   /** Whole days remaining (only for date milestones; negative if past) */
   daysRemaining: number | null;
+  /** Calendar year the milestone is (or was) reached; null if beyond lookahead */
+  achievedYear: number | null;
 }
 
 export interface AppState {

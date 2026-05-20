@@ -35,6 +35,7 @@ export function computeMilestoneResult(milestone: Milestone, portfolio: Portfoli
       progressPercent: progress,
       missingMonthly: Math.max(0, target - current),
       daysRemaining: null,
+      achievedYear: milestoneAchievedYear(milestone, portfolio),
     };
   }
   const target = milestone.dateTarget ? parseIsoDate(milestone.dateTarget) : null;
@@ -45,6 +46,7 @@ export function computeMilestoneResult(milestone: Milestone, portfolio: Portfoli
       progressPercent: 0,
       missingMonthly: 0,
       daysRemaining: null,
+      achievedYear: null,
     };
   }
   const today = startOfToday();
@@ -56,6 +58,7 @@ export function computeMilestoneResult(milestone: Milestone, portfolio: Portfoli
     progressPercent: achieved ? 100 : 0,
     missingMonthly: 0,
     daysRemaining,
+    achievedYear: milestoneAchievedYear(milestone, portfolio),
   };
 }
 
