@@ -1,33 +1,49 @@
-const euroFormatter = new Intl.NumberFormat('de-DE', {
-  style: 'currency',
-  currency: 'EUR',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
+// German locale throughout. Intl.NumberFormat construction is expensive, so
+// each (decimals, currency) combination is built once and cached.
+const formatters = new Map<number, Intl.NumberFormat>();
 
-const euroFormatterCompact = new Intl.NumberFormat('de-DE', {
-  style: 'currency',
-  currency: 'EUR',
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-});
+function numberFormat(decimals: number, currency: boolean): Intl.NumberFormat {
+  const key = decimals * 2 + (currency ? 1 : 0);
+  let f = formatters.get(key);
+  if (!f) {
+    f = new Intl.NumberFormat('de-DE', {
+      ...(currency && { style: 'currency', currency: 'EUR' }),
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    });
+    formatters.set(key, f);
+  }
+  return f;
+}
 
-const decimalFormatter = new Intl.NumberFormat('de-DE', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
+/** "1.234,56 €" */
+export const formatEuro = (value: number, decimals = 2): string => numberFormat(decimals, true).format(value);
 
-export const formatEuro = (value: number): string => euroFormatter.format(value);
-export const formatEuroCompact = (value: number): string => euroFormatterCompact.format(value);
-export const formatDecimal = (value: number): string => decimalFormatter.format(value);
+/** "1.234,5" */
+export const formatNumber = (value: number, decimals = 0): string => numberFormat(decimals, false).format(value);
 
-export const formatPercent = (value: number, decimals = 1): string =>
-  `${value.toFixed(decimals).replace('.', ',')} %`;
+/** "1.234,56" — the editable form of a euro amount. */
+export const formatDecimal = (value: number): string => formatNumber(value, 2);
 
-export const formatDays = (days: number): string => {
-  const rounded = Math.round(days * 10) / 10;
-  return `${rounded.toFixed(1).replace('.', ',')}`;
-};
+/** "37,4 %" */
+export const formatPercent = (value: number, decimals = 1): string => `${formatNumber(value, decimals)} %`;
+
+/** Euro amount with enough decimals that tiny rates never read as 0,00 €. */
+export function formatEuroAdaptive(value: number): string {
+  const v = Number.isFinite(value) && value > 0 ? value : 0;
+  return formatEuro(v, v >= 1 || v === 0 ? 2 : v >= 0.01 ? 3 : 4);
+}
+
+/** One-line goal / milestone status shared by Dashboard and Setup:
+ *  "Erreicht" · "Noch 104,83 € · ab 2027" · "297,00 € · ab 2028". */
+export function formatProgressStatus({
+  achieved, missing, full, year, showFull = true,
+}: { achieved: boolean; missing: number; full: number; year: number | null; showFull?: boolean }): string {
+  if (achieved) return 'Erreicht';
+  const amount = full <= 0 ? '' : missing < full ? `Noch ${formatEuro(missing)}` : showFull ? formatEuro(full) : '';
+  const when = year != null ? `ab ${year}` : 'außerhalb des Horizonts';
+  return amount ? `${amount} · ${when}` : when;
+}
 
 /** Generate a short unique id, locally scoped to the user's session. */
 export function newId(): string {
@@ -57,4 +73,3 @@ export function parseGerman(raw: string): number {
   }
   return parseFloat(s);
 }
-

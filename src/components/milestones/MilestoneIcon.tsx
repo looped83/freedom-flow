@@ -1,6 +1,8 @@
+import type { ReactNode } from 'react';
 import type { MilestoneIconName } from '../../types';
+import { Svg } from '../ui/Icons';
 
-const PATHS: Record<MilestoneIconName, React.ReactNode> = {
+const PATHS: Record<MilestoneIconName, ReactNode> = {
   trophy: (
     <>
       <path d="M8 21h8"/>
@@ -135,18 +137,5 @@ interface MilestoneIconProps {
 }
 
 export function MilestoneIcon({ icon, className = 'w-5 h-5' }: MilestoneIconProps) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      {PATHS[icon]}
-    </svg>
-  );
+  return <Svg className={className}>{PATHS[icon]}</Svg>;
 }

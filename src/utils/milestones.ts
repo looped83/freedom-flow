@@ -1,8 +1,7 @@
-import type { Milestone, MilestoneResult, Portfolio } from '../types';
-import { CURRENT_YEAR } from '../constants/defaultData';
-import { projectMonthlyDividendsAtYear, projectMonthlyDividendsYearsAgo } from './calculations';
+import type { Milestone, MilestoneResult, ProjectionInput } from '../types';
+import { AUTO_EXPENSES_MS_ID, CURRENT_YEAR } from '../constants/defaultData';
+import { MAX_YEARS, projectMonthlyDividendsAtYear, projectMonthlyDividendsYearsAgo } from './calculations';
 
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
 const ISO_DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 function parseIsoDate(iso: string): Date | null {
@@ -24,10 +23,22 @@ function meetsTarget(current: number, target: number): boolean {
   return Math.round(current * 100) >= Math.round(target * 100);
 }
 
-export function computeMilestoneResult(milestone: Milestone, portfolio: Portfolio): MilestoneResult {
+/** Re-align the auto-managed "Alle Ausgaben / Monat" milestone with the
+ *  current expense total. Returns the same array if nothing changed (or the
+ *  user deleted that milestone). */
+export function syncAutoMilestone(milestones: Milestone[], total: number): Milestone[] {
+  const idx = milestones.findIndex((m) => m.id === AUTO_EXPENSES_MS_ID);
+  const ms = milestones[idx];
+  if (!ms || ms.type !== 'dividend' || ms.dividendTarget === total) return milestones;
+  const out = milestones.slice();
+  out[idx] = { ...ms, dividendTarget: total };
+  return out;
+}
+
+function computeMilestoneResult(milestone: Milestone, p: ProjectionInput): MilestoneResult {
   if (milestone.type === 'dividend') {
     const target = milestone.dividendTarget ?? 0;
-    const current = portfolio.monthlyIncome;
+    const current = p.monthlyIncome;
     const achieved = target > 0 && meetsTarget(current, target);
     const progress = target > 0 ? Math.min(100, (current / target) * 100) : 0;
     return {
@@ -35,8 +46,7 @@ export function computeMilestoneResult(milestone: Milestone, portfolio: Portfoli
       status: achieved ? 'achieved' : 'open',
       progressPercent: progress,
       missingMonthly: Math.max(0, target - current),
-      daysRemaining: null,
-      achievedYear: milestoneAchievedYear(milestone, portfolio),
+      achievedYear: milestoneAchievedYear(milestone, p),
     };
   }
   const target = milestone.dateTarget ? parseIsoDate(milestone.dateTarget) : null;
@@ -46,25 +56,21 @@ export function computeMilestoneResult(milestone: Milestone, portfolio: Portfoli
       status: 'open',
       progressPercent: 0,
       missingMonthly: 0,
-      daysRemaining: null,
       achievedYear: null,
     };
   }
-  const today = startOfToday();
-  const daysRemaining = Math.round((target.getTime() - today.getTime()) / MS_PER_DAY);
-  const achieved = daysRemaining <= 0;
+  const achieved = target.getTime() <= startOfToday().getTime();
   return {
     ...milestone,
     status: achieved ? 'achieved' : 'open',
     progressPercent: achieved ? 100 : 0,
     missingMonthly: 0,
-    daysRemaining,
-    achievedYear: milestoneAchievedYear(milestone, portfolio),
+    achievedYear: milestoneAchievedYear(milestone, p),
   };
 }
 
-export function computeMilestoneResults(milestones: Milestone[], portfolio: Portfolio): MilestoneResult[] {
-  return milestones.map((m) => computeMilestoneResult(m, portfolio));
+export function computeMilestoneResults(milestones: Milestone[], p: ProjectionInput): MilestoneResult[] {
+  return milestones.map((m) => computeMilestoneResult(m, p));
 }
 
 /** Numeric key for sorting milestones by their target (€ amount or date as
@@ -85,19 +91,9 @@ export function formatMilestoneDate(iso: string): string {
   return d ? dateFormatter.format(d) : iso;
 }
 
-export function formatDaysRemaining(days: number): string {
-  if (days === 0) return 'Heute';
-  if (days > 0) return days === 1 ? 'noch 1 Tag' : `noch ${days} Tage`;
-  const abs = Math.abs(days);
-  return abs === 1 ? 'vor 1 Tag' : `vor ${abs} Tagen`;
-}
-
-const MAX_LOOKAHEAD_YEARS = 50;
-const MAX_LOOKBACK_YEARS = 50;
-
 /**
  * Calendar year in which a milestone is (or was) reached, or null if not within
- * `MAX_LOOKAHEAD_YEARS` ahead / `MAX_LOOKBACK_YEARS` behind today.
+ * `horizonYears` ahead / `MAX_YEARS` behind today.
  *
  *  - dividend milestones, currently achieved: walk the compound model backwards
  *    and place the milestone in the first past year where projected income drops
@@ -106,22 +102,22 @@ const MAX_LOOKBACK_YEARS = 50;
  *    income meets the target.
  *  - date milestones: the calendar year of the target date.
  */
-export function milestoneAchievedYear(milestone: Milestone, portfolio: Portfolio): number | null {
+function milestoneAchievedYear(milestone: Milestone, p: ProjectionInput): number | null {
   if (milestone.type === 'dividend') {
     const target = milestone.dividendTarget ?? 0;
     if (target <= 0) return null;
-    if (meetsTarget(portfolio.monthlyIncome, target)) {
+    if (meetsTarget(p.monthlyIncome, target)) {
       // Already achieved — find when it was first reached by reversing growth.
-      for (let y = 1; y <= MAX_LOOKBACK_YEARS; y++) {
-        if (!meetsTarget(projectMonthlyDividendsYearsAgo(portfolio, y), target)) {
+      for (let y = 1; y <= MAX_YEARS; y++) {
+        if (!meetsTarget(projectMonthlyDividendsYearsAgo(p, y), target)) {
           return CURRENT_YEAR - (y - 1);
         }
       }
       // Has been achieved for longer than the lookback window — clamp.
-      return CURRENT_YEAR - MAX_LOOKBACK_YEARS;
+      return CURRENT_YEAR - MAX_YEARS;
     }
-    for (let y = 1; y <= MAX_LOOKAHEAD_YEARS; y++) {
-      if (meetsTarget(projectMonthlyDividendsAtYear(portfolio, y), target)) return CURRENT_YEAR + y;
+    for (let y = 1; y <= p.horizonYears; y++) {
+      if (meetsTarget(projectMonthlyDividendsAtYear(p, y), target)) return CURRENT_YEAR + y;
     }
     return null;
   }

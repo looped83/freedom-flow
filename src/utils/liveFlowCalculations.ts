@@ -1,154 +1,57 @@
+const MS_PER_YEAR = 365.25 * 86_400_000;
+
 function sanitize(value: number): number {
-  if (!Number.isFinite(value) || value < 0) return 0;
-  return value;
+  return Number.isFinite(value) && value > 0 ? value : 0;
 }
 
 export function calculateAnnualDividends(monthlyDividends: number): number {
   return sanitize(monthlyDividends) * 12;
 }
 
-export function calculateDividendRatePerMinute(monthlyDividends: number): number {
-  return calculateAnnualDividends(monthlyDividends) / 525_600;
+export interface PeriodStat {
+  /** Expected dividends for the whole period. */
+  total: number;
+  /** Elapsed share of the period, 0–1. */
+  progress: number;
+  /** Dividends "earned" so far = total × progress. */
+  earned: number;
 }
 
-export function calculateDividendRatePerHour(monthlyDividends: number): number {
-  return calculateAnnualDividends(monthlyDividends) / 8_760;
-}
-
-export function calculateDividendRatePerDay(monthlyDividends: number): number {
-  return calculateAnnualDividends(monthlyDividends) / 365;
-}
-
-export function calculateDividendRatePerWeek(monthlyDividends: number): number {
-  return calculateAnnualDividends(monthlyDividends) / 52;
-}
-
-export function calculateEarnedTodaySoFar(monthlyDividends: number, now: Date): number {
-  const daily = calculateDividendRatePerDay(monthlyDividends);
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const secondsElapsed = (now.getTime() - startOfDay.getTime()) / 1000;
-  return daily * (secondsElapsed / 86_400);
-}
-
-export function calculateDayProgress(now: Date): number {
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const secondsElapsed = (now.getTime() - startOfDay.getTime()) / 1000;
-  return Math.min(secondsElapsed / 86_400, 1);
-}
-
-export function calculateWeekProgress(now: Date): number {
-  const dayOfWeek = now.getDay();
-  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  return Math.min((daysSinceMonday + calculateDayProgress(now)) / 7, 1);
-}
-
-export function calculateMonthProgress(now: Date): number {
-  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  return Math.min((now.getDate() - 1 + calculateDayProgress(now)) / daysInMonth, 1);
-}
-
-export function calculateEarnedThisWeekSoFar(monthlyDividends: number, now: Date): number {
-  const daily = calculateDividendRatePerDay(monthlyDividends);
-  const dayOfWeek = now.getDay(); // 0 = Sun
-  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday);
-  const secondsElapsed = (now.getTime() - startOfWeek.getTime()) / 1000;
-  return daily * (secondsElapsed / 86_400);
-}
-
-export function calculateEarnedThisMonthSoFar(monthlyDividends: number, now: Date): number {
-  const daily = calculateDividendRatePerDay(monthlyDividends);
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const secondsElapsed = (now.getTime() - startOfMonth.getTime()) / 1000;
-  return daily * (secondsElapsed / 86_400);
-}
-
-export function calculateEarnedThisYearSoFar(monthlyDividends: number, now: Date): number {
-  const daily = calculateDividendRatePerDay(monthlyDividends);
-  const startOfYear = new Date(now.getFullYear(), 0, 1);
-  const secondsElapsed = (now.getTime() - startOfYear.getTime()) / 1000;
-  return daily * (secondsElapsed / 86_400);
-}
-
-export function calculateYearProgress(now: Date): number {
-  const startOfYear = new Date(now.getFullYear(), 0, 1);
-  const startOfNextYear = new Date(now.getFullYear() + 1, 0, 1);
-  const totalSeconds = (startOfNextYear.getTime() - startOfYear.getTime()) / 1000;
-  const elapsedSeconds = (now.getTime() - startOfYear.getTime()) / 1000;
-  return Math.min(elapsedSeconds / totalSeconds, 1);
-}
+export type PeriodId = 'day' | 'week' | 'month' | 'year';
 
 /**
- * Format a currency value with adaptive decimal places so small amounts
- * never display as 0,00 €.
- *   ≥ 1      → 2 decimals  (e.g. 26,56 €)
- *   0.01–1   → 3 decimals  (e.g. 0,137 €)
- *   < 0.01   → 4 decimals  (e.g. 0,0184 €)
- *
- * Formatters are constructed once at module load — creating an
- * `Intl.NumberFormat` is expensive, so reuse matters in the LiveFlow tick.
+ * Dividends earned so far in the calendar day, week (Mon–Sun), month and
+ * year containing `now`. Each period uses its natural rate (annual / 365,
+ * / 52, / 12, annual), so `earned` never exceeds `total`.
  */
-const eurFmt = [2, 3, 4].map((d) =>
-  new Intl.NumberFormat('de-DE', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: d,
-    maximumFractionDigits: d,
-  }),
-);
+export function calculatePeriodStats(monthlyDividends: number, now: Date): Record<PeriodId, PeriodStat> {
+  const annual = calculateAnnualDividends(monthlyDividends);
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const d = now.getDate();
+  const sinceMonday = (now.getDay() + 6) % 7;
+  const t = now.getTime();
 
-const DAYS_PER_MONTH = 30;
+  const stat = (total: number, start: Date, end: Date): PeriodStat => {
+    const progress = Math.min(1, Math.max(0, (t - start.getTime()) / (end.getTime() - start.getTime())));
+    return { total, progress, earned: total * progress };
+  };
 
-export type FreedomTimeUnit = 'days' | 'hours' | 'minutes';
-
-export interface FinancedTime {
-  days: number;
-  hours: number;
-  minutes: number;
+  return {
+    day:   stat(annual / 365, new Date(y, m, d),               new Date(y, m, d + 1)),
+    week:  stat(annual / 52,  new Date(y, m, d - sinceMonday), new Date(y, m, d - sinceMonday + 7)),
+    month: stat(annual / 12,  new Date(y, m, 1),               new Date(y, m + 1, 1)),
+    year:  stat(annual,       new Date(y, 0, 1),               new Date(y + 1, 0, 1)),
+  };
 }
 
-export function calculateFinancedTime(
-  monthlyDividends: number,
-  totalMonthlyExpenses: number,
-): FinancedTime {
-  const m = sanitize(monthlyDividends);
-  if (totalMonthlyExpenses <= 0 || m <= 0) return { days: 0, hours: 0, minutes: 0 };
-  const ratio = m / totalMonthlyExpenses;
-  const days = ratio * DAYS_PER_MONTH;
-  return { days, hours: days * 24, minutes: days * 24 * 60 };
-}
-
-const fmtTimeDec = new Intl.NumberFormat('de-DE', {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
-const fmtTimeInt = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 });
-
-export function formatFreedomTime(value: number, unit: FreedomTimeUnit): string {
-  return unit === 'minutes'
-    ? fmtTimeInt.format(Math.round(Math.max(0, value)))
-    : fmtTimeDec.format(Math.max(0, value));
-}
-
-export function calculateElapsedYears(startYear: number, now: Date): number {
-  const startOfStartYear = new Date(startYear, 0, 1);
-  const secondsElapsed = (now.getTime() - startOfStartYear.getTime()) / 1000;
-  return Math.max(0, secondsElapsed / (365.25 * 86_400));
-}
-
+/** Lifetime total: recorded base plus the annual rate since Jan 1 of `startYear`. */
 export function calculateLifetimeDividends(
   baseDividends: number,
   startYear: number,
   monthlyDividends: number,
   now: Date,
 ): number {
-  const annual = calculateAnnualDividends(monthlyDividends);
-  const yearsElapsed = calculateElapsedYears(startYear, now);
-  return sanitize(baseDividends) + annual * yearsElapsed;
-}
-
-export function formatCurrencyForSmallAmounts(value: number): string {
-  const v = sanitize(Number.isFinite(value) ? value : 0);
-  const idx = v >= 1 ? 0 : v >= 0.01 ? 1 : 2;
-  return eurFmt[idx].format(v);
+  const yearsElapsed = Math.max(0, (now.getTime() - new Date(startYear, 0, 1).getTime()) / MS_PER_YEAR);
+  return sanitize(baseDividends) + calculateAnnualDividends(monthlyDividends) * yearsElapsed;
 }

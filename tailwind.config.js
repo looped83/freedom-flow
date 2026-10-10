@@ -23,10 +23,6 @@ export default {
           DEFAULT: '#fbbf24',
           muted: 'rgba(251,191,36,0.12)',
         },
-        blue: {
-          accent: '#60a5fa',
-          muted: 'rgba(96,165,250,0.12)',
-        },
       },
     },
   },
