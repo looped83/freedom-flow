@@ -19,7 +19,7 @@ interface SetupPageProps {
   onAddMilestone: (m: Milestone) => void;
   onUpdateMilestone: (m: Milestone) => void;
   onDeleteMilestone: (id: string) => void;
-  onSavePortfolio: (p: Portfolio) => void;
+  onPatchPortfolio: (partial: Partial<Portfolio>) => void;
   onReset: () => void;
   focusGoalId?: string | null;
   onFocusConsumed?: () => void;
@@ -45,7 +45,7 @@ export function SetupPage({
   onAddMilestone,
   onUpdateMilestone,
   onDeleteMilestone,
-  onSavePortfolio,
+  onPatchPortfolio,
   onReset,
   focusGoalId,
   onFocusConsumed,
@@ -119,7 +119,7 @@ export function SetupPage({
           />
         </div>
         <div hidden={active !== 'portfolio'}>
-          <PortfolioForm key={tabKeys.portfolio} portfolio={portfolio} onSave={onSavePortfolio} onReset={onReset} />
+          <PortfolioForm key={tabKeys.portfolio} portfolio={portfolio} onPatch={onPatchPortfolio} onReset={onReset} />
         </div>
       </div>
     </main>

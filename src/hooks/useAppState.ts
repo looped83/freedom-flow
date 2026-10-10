@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useReducer } from 'react';
-import type { AppState, Goal, GoalResult, Milestone, MilestoneResult, Portfolio } from '../types';
-import { AUTO_EXPENSES_MS_ID, BONUS_GOAL_ID } from '../constants/defaultData';
-import { loadState, resetState, saveState } from '../utils/storage';
-import { computeGoalResults } from '../utils/calculations';
-import { computeMilestoneResults } from '../utils/milestones';
+import type { AppState, Goal, GoalResult, Milestone, MilestoneResult, Portfolio, ProjectionInput } from '../types';
+import { BONUS_GOAL_ID } from '../constants/defaultData';
+import { getDefaultState, loadState, saveState } from '../utils/storage';
+import { computeGoalResults, totalMonthlyCosts } from '../utils/calculations';
+import { computeMilestoneResults, syncAutoMilestone } from '../utils/milestones';
 
 type Action =
-  | { type: 'SET_PORTFOLIO'; payload: Portfolio }
   | { type: 'PATCH_PORTFOLIO'; payload: Partial<Portfolio> }
   | { type: 'ADD_GOAL'; payload: Goal }
   | { type: 'UPDATE_GOAL'; payload: Goal }
@@ -17,24 +16,9 @@ type Action =
   | { type: 'DELETE_MILESTONE'; id: string }
   | { type: 'RESET' };
 
-function sumGoals(goals: Goal[]): number {
-  let s = 0;
-  for (const g of goals) s += g.monthlyAmount;
-  return s;
-}
-
-/** Re-align the auto-managed "Alle Ausgaben / Monat" milestone with the
- *  current goal sum. Does nothing if the user deleted that milestone. */
-function syncAutoMilestone(state: AppState): AppState {
-  const total = sumGoals(state.goals);
-  const ms = state.milestones.find((m) => m.id === AUTO_EXPENSES_MS_ID);
-  if (!ms || ms.type !== 'dividend' || ms.dividendTarget === total) return state;
-  return {
-    ...state,
-    milestones: state.milestones.map((m) =>
-      m.id === AUTO_EXPENSES_MS_ID ? { ...m, dividendTarget: total } : m,
-    ),
-  };
+/** Apply a goal change and keep the auto-managed expenses milestone in sync. */
+function withGoals(state: AppState, goals: Goal[]): AppState {
+  return { ...state, goals, milestones: syncAutoMilestone(state.milestones, totalMonthlyCosts(goals)) };
 }
 
 /** Adjust or create the Bonus goal so that the goal sum matches `desired`.
@@ -42,11 +26,10 @@ function syncAutoMilestone(state: AppState): AppState {
  *  the desired total is silently rejected ("Eingabe ignorieren"). */
 function applyDesiredTotal(state: AppState, desired: number): AppState {
   const withoutBonus = state.goals.filter((g) => g.id !== BONUS_GOAL_ID);
-  const baseSum = sumGoals(withoutBonus);
+  const baseSum = totalMonthlyCosts(withoutBonus);
 
   if (desired <= baseSum) {
-    if (withoutBonus.length === state.goals.length) return state; // no Bonus to remove
-    return { ...state, goals: withoutBonus };
+    return withoutBonus.length === state.goals.length ? state : withGoals(state, withoutBonus);
   }
 
   const bonusAmount = desired - baseSum;
@@ -59,29 +42,26 @@ function applyDesiredTotal(state: AppState, desired: number): AppState {
     monthlyAmount: bonusAmount,
     category: 'Geschenke',
   };
-  return {
-    ...state,
-    goals: existing
+  return withGoals(
+    state,
+    existing
       ? state.goals.map((g) => (g.id === BONUS_GOAL_ID ? bonus : g))
       : [...state.goals, bonus],
-  };
+  );
 }
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
-    case 'SET_PORTFOLIO':
-      return { ...state, portfolio: action.payload };
+    case 'PATCH_PORTFOLIO':
+      return { ...state, portfolio: { ...state.portfolio, ...action.payload } };
     case 'ADD_GOAL':
-      return syncAutoMilestone({ ...state, goals: [...state.goals, action.payload] });
+      return withGoals(state, [...state.goals, action.payload]);
     case 'UPDATE_GOAL':
-      return syncAutoMilestone({
-        ...state,
-        goals: state.goals.map((g) => (g.id === action.payload.id ? action.payload : g)),
-      });
+      return withGoals(state, state.goals.map((g) => (g.id === action.payload.id ? action.payload : g)));
     case 'DELETE_GOAL':
-      return syncAutoMilestone({ ...state, goals: state.goals.filter((g) => g.id !== action.id) });
+      return withGoals(state, state.goals.filter((g) => g.id !== action.id));
     case 'SET_TOTAL_EXPENSES':
-      return syncAutoMilestone(applyDesiredTotal(state, action.payload));
+      return applyDesiredTotal(state, action.payload);
     case 'ADD_MILESTONE':
       return { ...state, milestones: [...state.milestones, action.payload] };
     case 'UPDATE_MILESTONE':
@@ -91,19 +71,14 @@ function reducer(state: AppState, action: Action): AppState {
       };
     case 'DELETE_MILESTONE':
       return { ...state, milestones: state.milestones.filter((m) => m.id !== action.id) };
-    case 'PATCH_PORTFOLIO':
-      return { ...state, portfolio: { ...state.portfolio, ...action.payload } };
     case 'RESET':
-      return resetState();
+      return getDefaultState();
     default:
       return state;
   }
 }
 
-export type { GoalResult, MilestoneResult };
-
 export interface AppActions {
-  setPortfolio: (p: Portfolio) => void;
   patchPortfolio: (partial: Partial<Portfolio>) => void;
   addGoal: (g: Goal) => void;
   updateGoal: (g: Goal) => void;
@@ -127,7 +102,6 @@ export function useAppState() {
   // actions object can be built once. A stable reference unlocks React.memo
   // on every child that takes individual actions as props.
   const actions = useMemo<AppActions>(() => ({
-    setPortfolio:     (p)  => dispatch({ type: 'SET_PORTFOLIO',      payload: p  }),
     patchPortfolio:   (partial) => dispatch({ type: 'PATCH_PORTFOLIO', payload: partial }),
     addGoal:          (g)  => dispatch({ type: 'ADD_GOAL',           payload: g  }),
     updateGoal:       (g)  => dispatch({ type: 'UPDATE_GOAL',        payload: g  }),
@@ -139,30 +113,32 @@ export function useAppState() {
     reset:            ()   => dispatch({ type: 'RESET' }),
   }), []);
 
-  const { monthlyIncome, dividendGrowth, dividendYield, monthlySavings } = state.portfolio;
+  // Only the scalars that drive projections — editing lifetime fields does
+  // not invalidate goal/milestone results or the timeline.
+  const { monthlyIncome, dividendYield, dividendGrowth, monthlySavings, horizonYears } = state.portfolio;
+  const projection = useMemo<ProjectionInput>(
+    () => ({ monthlyIncome, dividendYield, dividendGrowth, monthlySavings, horizonYears }),
+    [monthlyIncome, dividendYield, dividendGrowth, monthlySavings, horizonYears],
+  );
 
-  // Computed once here; deps are the specific portfolio scalars that affect
-  // projections — unrelated fields (lifetimeDividends, horizonYears, etc.)
-  // changing won't cause an unnecessary recompute.
+  const totalExpenses = useMemo(() => totalMonthlyCosts(state.goals), [state.goals]);
+
   const goalResults = useMemo<GoalResult[]>(
-    () => computeGoalResults(state.goals, monthlyIncome, state.portfolio),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.goals, monthlyIncome, dividendGrowth, dividendYield, monthlySavings],
+    () => computeGoalResults(state.goals, projection),
+    [state.goals, projection],
   );
 
-  // All milestones evaluated (for Dashboard/LifeUnlocks).
+  // All milestones evaluated (Dashboard).
   const milestoneResults = useMemo<MilestoneResult[]>(
-    () => computeMilestoneResults(state.milestones, state.portfolio),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.milestones, monthlyIncome, dividendGrowth, dividendYield, monthlySavings],
+    () => computeMilestoneResults(state.milestones, projection),
+    [state.milestones, projection],
   );
 
-  // Expense-filtered view (for Timeline, MilestoneList): filter the already-computed
-  // milestoneResults instead of running computeMilestoneResults a second time.
-  const visibleMilestoneResults = useMemo<MilestoneResult[]>(() => {
-    const total = state.goals.reduce((s, g) => s + g.monthlyAmount, 0);
-    return milestoneResults.filter((r) => r.type !== 'dividend' || (r.dividendTarget ?? 0) <= total);
-  }, [milestoneResults, state.goals]);
+  // Milestones up to the expense total (Timeline, Setup).
+  const visibleMilestoneResults = useMemo<MilestoneResult[]>(
+    () => milestoneResults.filter((r) => r.type !== 'dividend' || (r.dividendTarget ?? 0) <= totalExpenses),
+    [milestoneResults, totalExpenses],
+  );
 
-  return { state, actions, goalResults, milestoneResults, visibleMilestoneResults };
+  return { state, actions, projection, totalExpenses, goalResults, milestoneResults, visibleMilestoneResults };
 }

@@ -1,12 +1,9 @@
-import type { Goal, Milestone, Portfolio } from '../types';
+import type { Goal, GoalCategory, Milestone, Portfolio } from '../types';
 
-// Monthly dividends: 808 € → annual 9,696 € → at 4% yield → portfolio ~242,400 €
 export const DEFAULT_PORTFOLIO: Portfolio = {
-  value: 242_400,
   dividendYield: 4.0,
   monthlySavings: 4_000,
   dividendGrowth: 6.5,
-  priceReturn: 5.0,
   horizonYears: 10,
   monthlyIncome: 808,
   lifetimeDividends: 42_134.24,
@@ -14,6 +11,17 @@ export const DEFAULT_PORTFOLIO: Portfolio = {
 };
 
 export const CURRENT_YEAR = new Date().getFullYear();
+
+/** Every goal category in picker order. Must list each `GoalCategory` member. */
+export const GOAL_CATEGORIES: GoalCategory[] = [
+  'Wohnen', 'Nebenkosten', 'Mobilität', 'Auto',
+  'Ernährung', 'Restaurant',
+  'Gesundheit', 'Sport', 'Körperpflege',
+  'Kleidung', 'Elektronik', 'Haustiere', 'Freizeit', 'Gaming', 'Geschenke', 'Urlaub',
+  'Kommunikation', 'Streaming', 'Bildung',
+  'Versicherungen',
+  'Sonstiges',
+];
 
 /** Auto-managed goal that absorbs Hero-edited overshoot. Created on demand. */
 export const BONUS_GOAL_ID = 'bonus';
@@ -53,8 +61,8 @@ export const DEFAULT_GOALS: Goal[] = [
   { id: id(), name: 'Gaming',                 monthlyAmount:  50.00, category: 'Gaming'         },
   { id: id(), name: 'Zahnarzt',               monthlyAmount:  50.00, category: 'Gesundheit'     },
   { id: id(), name: 'Auto',                   monthlyAmount: 297.00, category: 'Auto'           },
-  { id: id(), name: 'NextDNS',               monthlyAmount:   1.66, category: 'Kommunikation'  },
-  { id: id(), name: 'ddownload',             monthlyAmount:   3.33, category: 'Streaming'      },
+  { id: id(), name: 'NextDNS',                monthlyAmount:   1.66, category: 'Kommunikation'  },
+  { id: id(), name: 'ddownload',              monthlyAmount:   3.33, category: 'Streaming'      },
 ];
 
 // Default milestones — even 250 €/month steps from 100 € all the way through
@@ -71,9 +79,9 @@ export const DEFAULT_MILESTONES: Milestone[] = [
   { id: 'ms-14', title: '1.500 € / Monat',            type: 'dividend', icon: 'mountain', dividendTarget: 1_500 },
   { id: 'ms-25', title: '1.750 € / Monat',            type: 'dividend', icon: 'gem',      dividendTarget: 1_750 },
   { id: 'ms-15', title: '2.000 € / Monat',            type: 'dividend', icon: 'flag',     dividendTarget: 2_000 },
-  { id: 'ms-26', title: '2.250 € / Monat',                 type: 'dividend', icon: 'target',   dividendTarget: 2_250 },
+  { id: 'ms-26', title: '2.250 € / Monat',            type: 'dividend', icon: 'target',   dividendTarget: 2_250 },
   { id: AUTO_EXPENSES_MS_ID, title: 'Alle Ausgaben / Monat', type: 'dividend', icon: 'trophy',   dividendTarget: 2_450 },
-  { id: 'ms-27', title: '2.500 € / Monat',                 type: 'dividend', icon: 'mountain', dividendTarget: 2_500 },
+  { id: 'ms-27', title: '2.500 € / Monat',            type: 'dividend', icon: 'mountain', dividendTarget: 2_500 },
   { id: 'ms-28', title: '2.750 € / Monat',            type: 'dividend', icon: 'gem',      dividendTarget: 2_750 },
   { id: 'ms-29', title: '3.000 € / Monat',            type: 'dividend', icon: 'mountain', dividendTarget: 3_000 },
   { id: 'ms-30', title: '3.250 € / Monat',            type: 'dividend', icon: 'gem',      dividendTarget: 3_250 },

@@ -3,16 +3,7 @@ import type { Goal, GoalCategory } from '../../types';
 import { newId, parseGerman } from '../../utils/formatting';
 import { useAmountInput } from '../../hooks/useAmountInput';
 import { CategoryIcon } from './CategoryIcon';
-
-const CATEGORIES: GoalCategory[] = [
-  'Wohnen', 'Nebenkosten', 'Mobilität', 'Auto',
-  'Ernährung', 'Restaurant',
-  'Gesundheit', 'Sport', 'Körperpflege',
-  'Kleidung', 'Elektronik', 'Haustiere', 'Freizeit', 'Gaming', 'Geschenke', 'Urlaub',
-  'Kommunikation', 'Streaming', 'Bildung',
-  'Versicherungen',
-  'Sonstiges',
-];
+import { GOAL_CATEGORIES } from '../../constants/defaultData';
 
 interface GoalFormProps {
   initial?: Goal;
@@ -102,7 +93,7 @@ export function GoalForm({ initial, onSave, onSaveAsDefault, onCancel }: GoalFor
           role="group"
           aria-label="Kategorie auswählen"
         >
-          {CATEGORIES.map((cat) => (
+          {GOAL_CATEGORIES.map((cat) => (
             <button
               key={cat}
               type="button"

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import type { Portfolio } from '../../types';
 import { liveFormatAmount, parseGerman } from '../../utils/formatting';
+import { MAX_YEARS } from '../../utils/calculations';
 
 const fmtInt = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 const fmtDec = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -16,7 +17,7 @@ interface TileFieldProps {
   fieldId: string;
   label: string;
   value: number;
-  unit: '€' | '%' | 'Jahr';
+  unit: '€' | '%' | 'Jahr' | 'Jahre';
   min: number;
   max: number;
   step: number;
@@ -54,7 +55,7 @@ function TileField({ fieldId, label, value, unit, min, max, step, valueClass, de
           id={`${fieldId}-input`}
           ref={inputRef}
           type="text"
-          inputMode={unit === 'Jahr' ? 'numeric' : 'decimal'}
+          inputMode={unit === 'Jahr' || unit === 'Jahre' ? 'numeric' : 'decimal'}
           style={{ fontSize: '16px' }}
           value={display}
           onFocus={handleFocus}
@@ -75,13 +76,13 @@ function TileField({ fieldId, label, value, unit, min, max, step, valueClass, de
 
 interface PortfolioFormProps {
   portfolio: Portfolio;
-  onSave: (p: Portfolio) => void;
+  onPatch: (partial: Partial<Portfolio>) => void;
   onReset: () => void;
 }
 
-export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps) {
+export function PortfolioForm({ portfolio, onPatch, onReset }: PortfolioFormProps) {
   function handleChange(field: keyof Portfolio, value: number) {
-    onSave({ ...portfolio, [field]: value });
+    onPatch({ [field]: value });
   }
 
   const monthly = portfolio.monthlyIncome;
@@ -137,6 +138,25 @@ export function PortfolioForm({ portfolio, onSave, onReset }: PortfolioFormProps
           min={0} max={15} step={0.5}
           valueClass="text-accent"
           onChange={(v) => handleChange('dividendGrowth', v)}
+        />
+        <TileField
+          fieldId="portfolio-monthlySavings"
+          label="Monatliche Sparrate"
+          value={portfolio.monthlySavings}
+          unit="€"
+          min={0} max={100_000} step={0.01}
+          decimals={2}
+          valueClass="text-accent"
+          onChange={(v) => handleChange('monthlySavings', v)}
+        />
+        <TileField
+          fieldId="portfolio-horizonYears"
+          label="Prognose-Horizont"
+          value={portfolio.horizonYears}
+          unit="Jahre"
+          min={1} max={MAX_YEARS} step={1}
+          valueClass="text-accent"
+          onChange={(v) => handleChange('horizonYears', v)}
         />
       </div>
 

@@ -32,7 +32,7 @@ export default function App() {
   const [focusMilestoneId, setFocusMilestoneId] = useState<string | null>(null);
   const [setupResetKey, setSetupResetKey] = useState(0);
   const prevTabRef = useRef<Tab>(tab);
-  const { state, actions, goalResults, milestoneResults, visibleMilestoneResults } = useAppState();
+  const { state, actions, projection, goalResults, milestoneResults, visibleMilestoneResults } = useAppState();
 
   // Remount SetupPage when navigating away so nothing stays expanded on return.
   useEffect(() => {
@@ -80,7 +80,7 @@ export default function App() {
       {/* Dashboard always mounted — no remount on tab switch, useMemo cache survives */}
       <div hidden={tab !== 'dashboard'}>
         <Dashboard
-          portfolio={state.portfolio}
+          projection={projection}
           goals={state.goals}
           goalResults={goalResults}
           milestoneResults={milestoneResults}
@@ -96,7 +96,7 @@ export default function App() {
       <Suspense fallback={tab === 'timeline' ? <TabFallback /> : null}>
         {visitedTabs.has('timeline') && (
           <div hidden={tab !== 'timeline'}>
-            <FreedomTimeline portfolio={state.portfolio} goals={state.goals} visibleMilestoneResults={visibleMilestoneResults} />
+            <FreedomTimeline projection={projection} goals={state.goals} visibleMilestoneResults={visibleMilestoneResults} />
           </div>
         )}
       </Suspense>
@@ -122,7 +122,7 @@ export default function App() {
               onAddMilestone={actions.addMilestone}
               onUpdateMilestone={actions.updateMilestone}
               onDeleteMilestone={actions.deleteMilestone}
-              onSavePortfolio={actions.setPortfolio}
+              onPatchPortfolio={actions.patchPortfolio}
               onReset={handleReset}
               focusGoalId={focusGoalId}
               onFocusConsumed={() => setFocusGoalId(null)}

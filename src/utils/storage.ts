@@ -1,46 +1,70 @@
 import type { AppState, Goal, Milestone, Portfolio } from '../types';
-import { AUTO_EXPENSES_MS_ID, DEFAULT_GOALS, DEFAULT_MILESTONES, DEFAULT_PORTFOLIO } from '../constants/defaultData';
+import {
+  DEFAULT_GOALS,
+  DEFAULT_MILESTONES,
+  DEFAULT_PORTFOLIO,
+  GOAL_CATEGORIES,
+} from '../constants/defaultData';
+import { MAX_YEARS, totalMonthlyCosts } from './calculations';
+import { syncAutoMilestone } from './milestones';
 
 const STORAGE_KEY   = 'dividend-goal-tracker-v1';
 const DEFAULTS_KEY  = 'dividend-goal-tracker-defaults-v1';
 
-// ── Migration helpers ────────────────────────────────────────────────────────
+/** IDs of every code-level default goal and milestone. Persisted with the
+ *  state so a later load can tell "deleted by the user" apart from "added in
+ *  a newer app version" — only the latter gets injected. */
+const DEFAULT_IDS = [...DEFAULT_GOALS.map((g) => g.id), ...DEFAULT_MILESTONES.map((m) => m.id)];
 
-function migratePortfolio(p: Portfolio): Portfolio {
-  let out = p;
-  if (out.monthlyIncome === undefined) {
-    out = { ...out, monthlyIncome: (out.value * out.dividendYield) / 100 / 12 };
-  }
-  if (out.lifetimeDividends === undefined) {
-    out = { ...out, lifetimeDividends: DEFAULT_PORTFOLIO.lifetimeDividends };
-  }
-  if (out.lifetimeStartYear === undefined || out.lifetimeStartYear === 2012) {
-    out = { ...out, lifetimeStartYear: DEFAULT_PORTFOLIO.lifetimeStartYear };
-  }
-  return out;
+interface StoredState extends AppState {
+  knownDefaults?: string[];
 }
 
+// ── Migration helpers ────────────────────────────────────────────────────────
+
+type LegacyPortfolio = Partial<Portfolio> & { value?: number };
+
+function num(v: unknown, fallback: number): number {
+  return typeof v === 'number' && Number.isFinite(v) ? v : fallback;
+}
+
+/** Rebuilds the portfolio from known fields only: fills gaps with defaults,
+ *  clamps the horizon and drops fields that are no longer used. */
+function migratePortfolio(p: LegacyPortfolio): Portfolio {
+  const d = DEFAULT_PORTFOLIO;
+  const dividendYield = num(p.dividendYield, d.dividendYield);
+  const startYear = num(p.lifetimeStartYear, d.lifetimeStartYear);
+  return {
+    monthlyIncome: num(p.monthlyIncome, p.value != null ? (p.value * dividendYield) / 1200 : d.monthlyIncome),
+    dividendYield,
+    dividendGrowth: num(p.dividendGrowth, d.dividendGrowth),
+    monthlySavings: num(p.monthlySavings, d.monthlySavings),
+    horizonYears: Math.min(MAX_YEARS, Math.max(1, Math.round(num(p.horizonYears, d.horizonYears)))),
+    lifetimeDividends: num(p.lifetimeDividends, d.lifetimeDividends),
+    lifetimeStartYear: startYear === 2012 ? d.lifetimeStartYear : startYear,
+  };
+}
+
+const VALID_CATEGORIES = new Set<string>(GOAL_CATEGORIES);
 const REMOVED_CATEGORY_MAP: Partial<Record<string, Goal['category']>> = {
   Medizin: 'Gesundheit',
 };
 
-function migrateGoals(goals: Goal[]): Goal[] {
-  const defaultById = new Map(DEFAULT_GOALS.map((g) => [g.id, g]));
+/** Append code-level defaults the stored data has never seen. Defaults the
+ *  user deleted stay deleted. */
+function injectNewDefaults<T extends { id: string }>(items: T[], defaults: T[], known: Set<string>): T[] {
+  const present = new Set(items.map((i) => i.id));
+  const fresh = defaults.filter((d) => !known.has(d.id) && !present.has(d.id));
+  return fresh.length > 0 ? [...items, ...fresh.map((d) => ({ ...d }))] : items;
+}
 
-  // Sync category from code-level defaults; remap removed categories.
-  let out = goals.map((g) => {
-    const def = defaultById.get(g.id);
-    const category = REMOVED_CATEGORY_MAP[def ? def.category : g.category]
-      ?? (def ? def.category : g.category);
-    return { ...g, category } as Goal;
+function migrateGoals(goals: Goal[], known: Set<string>): Goal[] {
+  const out = goals.map((g) => {
+    const category = REMOVED_CATEGORY_MAP[g.category]
+      ?? (VALID_CATEGORIES.has(g.category) ? g.category : 'Sonstiges');
+    return category === g.category ? g : { ...g, category };
   });
-
-  // Inject new default goals not yet in stored data.
-  const storedIds = new Set(out.map((g) => g.id));
-  const missing = DEFAULT_GOALS.filter((g) => !storedIds.has(g.id));
-  if (missing.length > 0) out = [...out, ...missing];
-
-  return out;
+  return injectNewDefaults(out, DEFAULT_GOALS, known);
 }
 
 const REMOVED_DEFAULT_MS_IDS = new Set([
@@ -53,31 +77,16 @@ const MS_TITLE_MIGRATIONS: Record<string, { from: string; to: string }> = {
   'ms-1': { from: 'Erste 100 € / Monat', to: '100 € / Monat' },
 };
 
-function migrateMilestones(stored: Milestone[] | undefined, goals: Goal[]): Milestone[] {
-  let out: Milestone[];
+function migrateMilestones(stored: Milestone[] | undefined, known: Set<string>): Milestone[] {
+  if (!Array.isArray(stored)) return DEFAULT_MILESTONES.map((m) => ({ ...m }));
 
-  if (!Array.isArray(stored)) {
-    out = DEFAULT_MILESTONES.map((m) => ({ ...m }));
-  } else {
-    out = stored.filter((m) => !REMOVED_DEFAULT_MS_IDS.has(m.id));
-
-    out = out.map((m) => {
+  const out = stored
+    .filter((m) => !REMOVED_DEFAULT_MS_IDS.has(m.id))
+    .map((m) => {
       const rename = MS_TITLE_MIGRATIONS[m.id];
       return rename && m.title === rename.from ? { ...m, title: rename.to } : m;
     });
-
-    const storedIds = new Set(out.map((m) => m.id));
-    const missing = DEFAULT_MILESTONES.filter((m) => !storedIds.has(m.id));
-    if (missing.length > 0) out = [...out, ...missing];
-  }
-
-  // Keep the auto-managed expenses milestone in sync with the actual goal sum.
-  const total = goals.reduce((s, g) => s + g.monthlyAmount, 0);
-  return out.map((m) =>
-    m.id === AUTO_EXPENSES_MS_ID && m.type === 'dividend' && m.dividendTarget !== total
-      ? { ...m, dividendTarget: total }
-      : m,
-  );
+  return injectNewDefaults(out, DEFAULT_MILESTONES, known);
 }
 
 // ── Public API ───────────────────────────────────────────────────────────────
@@ -86,14 +95,18 @@ export function loadState(): AppState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return getDefaultState();
-    const parsed = JSON.parse(raw) as AppState;
+    const parsed = JSON.parse(raw) as Partial<StoredState>;
     if (!parsed.portfolio || !Array.isArray(parsed.goals)) return getDefaultState();
 
-    const portfolio  = migratePortfolio(parsed.portfolio);
-    const goals      = migrateGoals(parsed.goals);
-    const milestones = migrateMilestones((parsed as Partial<AppState>).milestones, goals);
-
-    return { portfolio, goals, milestones };
+    // Data saved before `knownDefaults` existed always contained every default
+    // at load time, so treating all current defaults as known is safe.
+    const known = new Set(parsed.knownDefaults ?? DEFAULT_IDS);
+    const goals = migrateGoals(parsed.goals, known);
+    return {
+      portfolio: migratePortfolio(parsed.portfolio),
+      goals,
+      milestones: syncAutoMilestone(migrateMilestones(parsed.milestones, known), totalMonthlyCosts(goals)),
+    };
   } catch {
     return getDefaultState();
   }
@@ -101,41 +114,35 @@ export function loadState(): AppState {
 
 export function saveState(state: AppState): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch { /* quota exceeded */ }
-}
-
-/** Persist one goal as part of the user-defined reset baseline. */
-export function saveGoalDefault(goal: Goal): void {
-  try {
-    const raw = localStorage.getItem(DEFAULTS_KEY);
-    const defaults: Goal[] = raw ? JSON.parse(raw) : DEFAULT_GOALS.map(g => ({ ...g }));
-    const idx = defaults.findIndex(g => g.id === goal.id);
-    if (idx >= 0) defaults[idx] = goal;
-    else defaults.push(goal);
-    localStorage.setItem(DEFAULTS_KEY, JSON.stringify(defaults));
+    const stored: StoredState = { ...state, knownDefaults: DEFAULT_IDS };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
   } catch { /* quota exceeded */ }
 }
 
 function loadDefaultGoals(): Goal[] {
   try {
     const raw = localStorage.getItem(DEFAULTS_KEY);
-    return raw ? JSON.parse(raw) : DEFAULT_GOALS.map(g => ({ ...g }));
-  } catch {
-    return DEFAULT_GOALS.map(g => ({ ...g }));
-  }
+    if (raw) return JSON.parse(raw) as Goal[];
+  } catch { /* corrupt baseline → fall back to code defaults */ }
+  return DEFAULT_GOALS.map((g) => ({ ...g }));
+}
+
+/** Persist one goal as part of the user-defined reset baseline. */
+export function saveGoalDefault(goal: Goal): void {
+  try {
+    const defaults = loadDefaultGoals();
+    const idx = defaults.findIndex((g) => g.id === goal.id);
+    if (idx >= 0) defaults[idx] = goal;
+    else defaults.push(goal);
+    localStorage.setItem(DEFAULTS_KEY, JSON.stringify(defaults));
+  } catch { /* quota exceeded */ }
 }
 
 export function getDefaultState(): AppState {
+  const goals = loadDefaultGoals();
   return {
     portfolio: { ...DEFAULT_PORTFOLIO },
-    goals: loadDefaultGoals(),
-    milestones: DEFAULT_MILESTONES.map((m) => ({ ...m })),
+    goals,
+    milestones: syncAutoMilestone(DEFAULT_MILESTONES.map((m) => ({ ...m })), totalMonthlyCosts(goals)),
   };
-}
-
-export function resetState(): AppState {
-  const state = getDefaultState();
-  saveState(state);
-  return state;
 }

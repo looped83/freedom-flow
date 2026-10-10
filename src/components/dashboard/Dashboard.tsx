@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { Goal, GoalResult, MilestoneResult, Portfolio } from '../../types';
+import type { Goal, GoalResult, MilestoneResult, ProjectionInput } from '../../types';
 import {
   projectMonthlyDividendsAtYear,
   totalMonthlyCosts,
@@ -103,7 +103,7 @@ function MilestoneCard({ result, active, onClick }: { result: MilestoneResult; a
 }
 
 interface DashboardProps {
-  portfolio: Portfolio;
+  projection: ProjectionInput;
   goals: Goal[];
   goalResults: GoalResult[];
   milestoneResults: MilestoneResult[];
@@ -119,14 +119,14 @@ const DASHBOARD_ICON = (
   </svg>
 );
 
-export function Dashboard({ portfolio, goals, goalResults, milestoneResults, onIncomeChange, onTotalChange, onGoalClick, onMilestoneClick }: DashboardProps) {
+export function Dashboard({ projection, goals, goalResults, milestoneResults, onIncomeChange, onTotalChange, onGoalClick, onMilestoneClick }: DashboardProps) {
   const [showAllGoals, setShowAllGoals] = useState(false);
   const [showAllMilestones, setShowAllMilestones] = useState(false);
   const [goalsOrMilestones, setGoalsOrMilestones] = useState<'goals' | 'milestones'>('goals');
   const [freedomUnit, setFreedomUnit] = useState<FreedomTimeUnit>('days');
 
-  const monthly = portfolio.monthlyIncome;
-  const projectedMonthly = useMemo(() => projectMonthlyDividendsAtYear(portfolio, 1), [portfolio]);
+  const monthly = projection.monthlyIncome;
+  const projectedMonthly = useMemo(() => projectMonthlyDividendsAtYear(projection, 1), [projection]);
   const total        = useMemo(() => totalMonthlyCosts(goals), [goals]);
   const minExpenses  = useMemo(() => totalMonthlyCosts(goals.filter((g) => g.id !== BONUS_GOAL_ID)), [goals]);
   const financedTime = useMemo(() => calculateFinancedTime(monthly, total), [monthly, total]);

@@ -31,16 +31,25 @@ export interface Goal {
 }
 
 export interface Portfolio {
-  value: number;
-  dividendYield: number;
-  monthlySavings: number;
-  dividendGrowth: number;
-  priceReturn: number;
-  horizonYears: number;
+  /** Current monthly dividend income in €. */
   monthlyIncome: number;
+  /** Yield (%) at which new savings generate dividends. */
+  dividendYield: number;
+  /** Annual dividend growth (%) of the existing income. */
+  dividendGrowth: number;
+  /** Monthly savings in € that are invested at `dividendYield`. */
+  monthlySavings: number;
+  /** How many years ahead every projection looks. */
+  horizonYears: number;
   lifetimeDividends: number;
   lifetimeStartYear: number;
 }
+
+/** The portfolio fields that drive every forward / backward projection. */
+export type ProjectionInput = Pick<
+  Portfolio,
+  'monthlyIncome' | 'dividendYield' | 'dividendGrowth' | 'monthlySavings' | 'horizonYears'
+>;
 
 export interface TimelineEntry {
   year: number;

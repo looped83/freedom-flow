@@ -1,9 +1,9 @@
 import { Fragment, memo, useMemo, useState } from 'react';
-import type { TimelineEntry, Goal, MilestoneResult, Portfolio } from '../../types';
+import type { TimelineEntry, Goal, MilestoneResult, ProjectionInput } from '../../types';
 import { CategoryIcon } from '../goals/CategoryIcon';
 import { MilestoneIcon } from '../milestones/MilestoneIcon';
-import { buildFreedomTimeline, projectMonthlyDividendsAtYear, projectMonthlyDividendsYearsAgo } from '../../utils/calculations';
-import { formatMilestoneDate, milestoneAchievedYear, milestoneSortKey } from '../../utils/milestones';
+import { buildFreedomTimeline, projectMonthlyDividendsForYear } from '../../utils/calculations';
+import { formatMilestoneDate, milestoneSortKey } from '../../utils/milestones';
 import { IconChevron } from '../ui/Icons';
 
 const BAR_ICON = (
@@ -18,7 +18,7 @@ import { PageHeader } from '../layout/PageHeader';
 const EMPTY_MILESTONES: MilestoneResult[] = [];
 
 interface FreedomTimelineProps {
-  portfolio: Portfolio;
+  projection: ProjectionInput;
   goals: Goal[];
   visibleMilestoneResults: MilestoneResult[];
 }
@@ -170,8 +170,8 @@ function TimelineSeparator({ label }: { label: string }) {
   );
 }
 
-export function FreedomTimeline({ portfolio, goals, visibleMilestoneResults }: FreedomTimelineProps) {
-  const baseEntries = useMemo(() => buildFreedomTimeline(goals, portfolio), [goals, portfolio]);
+export function FreedomTimeline({ projection, goals, visibleMilestoneResults }: FreedomTimelineProps) {
+  const baseEntries = useMemo(() => buildFreedomTimeline(goals, projection), [goals, projection]);
 
   const beyondHorizonGoals = useMemo(() => {
     const ids = new Set(baseEntries.flatMap((e) => e.newGoals.map((g) => g.id)));
@@ -183,7 +183,7 @@ export function FreedomTimeline({ portfolio, goals, visibleMilestoneResults }: F
     const map = new Map<number, MilestoneResult[]>();
     const beyond: MilestoneResult[] = [];
     for (const m of visibleMilestoneResults) {
-      const year = milestoneAchievedYear(m, portfolio);
+      const year = m.achievedYear;
       if (year == null) {
         beyond.push(m);
         continue;
@@ -197,7 +197,7 @@ export function FreedomTimeline({ portfolio, goals, visibleMilestoneResults }: F
       list.sort((a, b) => milestoneSortKey(b) - milestoneSortKey(a));
     }
     return { map, beyond };
-  }, [visibleMilestoneResults, portfolio]);
+  }, [visibleMilestoneResults]);
 
   // Merge milestone-only years into the timeline so milestones always have a card.
   const allEntries = useMemo(() => {
@@ -211,15 +211,9 @@ export function FreedomTimeline({ portfolio, goals, visibleMilestoneResults }: F
     );
     for (const year of milestonesByYear.map.keys()) {
       if (entryByYear.has(year)) continue;
-      const delta = year - CURRENT_YEAR;
-      const projMonthly = delta === 0
-        ? portfolio.monthlyIncome
-        : delta > 0
-          ? projectMonthlyDividendsAtYear(portfolio, delta)
-          : projectMonthlyDividendsYearsAgo(portfolio, -delta);
       entryByYear.set(year, {
         year,
-        projectedMonthly: projMonthly,
+        projectedMonthly: projectMonthlyDividendsForYear(projection, year),
         newGoals: [],
         isCurrentYear: year === CURRENT_YEAR,
         isFreedomYear: false,
@@ -227,7 +221,7 @@ export function FreedomTimeline({ portfolio, goals, visibleMilestoneResults }: F
       });
     }
     return [...entryByYear.values()].sort((a, b) => a.year - b.year);
-  }, [baseEntries, milestonesByYear, portfolio]);
+  }, [baseEntries, milestonesByYear, projection]);
 
   const displayEntries = useMemo(() => [...allEntries].reverse(), [allEntries]);
 
@@ -239,7 +233,7 @@ export function FreedomTimeline({ portfolio, goals, visibleMilestoneResults }: F
       {displayEntries.length === 0 ? (
         <div className="bg-surface-1 rounded-2xl p-8 text-center">
           <p className="text-white/50 text-sm">Keine Ziele im Horizont erreichbar.</p>
-          <p className="text-xs text-white/55 mt-2">Erhöhe deine Sparrate oder passe den Anlagehorizont an.</p>
+          <p className="text-xs text-white/55 mt-2">Erhöhe Sparrate oder Prognose-Horizont unter Setup › Dividenden.</p>
         </div>
       ) : (
         <div className="relative">
