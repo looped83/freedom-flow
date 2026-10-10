@@ -2,7 +2,6 @@ import type { Milestone, MilestoneResult, ProjectionInput } from '../types';
 import { AUTO_EXPENSES_MS_ID, CURRENT_YEAR } from '../constants/defaultData';
 import { MAX_YEARS, projectMonthlyDividendsAtYear, projectMonthlyDividendsYearsAgo } from './calculations';
 
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
 const ISO_DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 function parseIsoDate(iso: string): Date | null {
@@ -36,7 +35,7 @@ export function syncAutoMilestone(milestones: Milestone[], total: number): Miles
   return out;
 }
 
-export function computeMilestoneResult(milestone: Milestone, p: ProjectionInput): MilestoneResult {
+function computeMilestoneResult(milestone: Milestone, p: ProjectionInput): MilestoneResult {
   if (milestone.type === 'dividend') {
     const target = milestone.dividendTarget ?? 0;
     const current = p.monthlyIncome;
@@ -47,7 +46,6 @@ export function computeMilestoneResult(milestone: Milestone, p: ProjectionInput)
       status: achieved ? 'achieved' : 'open',
       progressPercent: progress,
       missingMonthly: Math.max(0, target - current),
-      daysRemaining: null,
       achievedYear: milestoneAchievedYear(milestone, p),
     };
   }
@@ -58,19 +56,15 @@ export function computeMilestoneResult(milestone: Milestone, p: ProjectionInput)
       status: 'open',
       progressPercent: 0,
       missingMonthly: 0,
-      daysRemaining: null,
       achievedYear: null,
     };
   }
-  const today = startOfToday();
-  const daysRemaining = Math.round((target.getTime() - today.getTime()) / MS_PER_DAY);
-  const achieved = daysRemaining <= 0;
+  const achieved = target.getTime() <= startOfToday().getTime();
   return {
     ...milestone,
     status: achieved ? 'achieved' : 'open',
     progressPercent: achieved ? 100 : 0,
     missingMonthly: 0,
-    daysRemaining,
     achievedYear: milestoneAchievedYear(milestone, p),
   };
 }
@@ -95,13 +89,6 @@ const dateFormatter = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 
 export function formatMilestoneDate(iso: string): string {
   const d = parseIsoDate(iso);
   return d ? dateFormatter.format(d) : iso;
-}
-
-export function formatDaysRemaining(days: number): string {
-  if (days === 0) return 'Heute';
-  if (days > 0) return days === 1 ? 'noch 1 Tag' : `noch ${days} Tage`;
-  const abs = Math.abs(days);
-  return abs === 1 ? 'vor 1 Tag' : `vor ${abs} Tagen`;
 }
 
 /**

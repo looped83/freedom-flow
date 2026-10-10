@@ -1,72 +1,46 @@
-import type { ReactNode } from 'react';
+import type { ComponentType } from 'react';
+import { IconDashboard, IconLiveFlow, IconSetup, IconTimeline, type IconProps } from '../ui/Icons';
 
-type Tab = 'dashboard' | 'timeline' | 'liveflow' | 'setup';
+export type Tab = 'dashboard' | 'liveflow' | 'timeline' | 'setup';
+
+export const TABS: { id: Tab; label: string; Icon: ComponentType<IconProps> }[] = [
+  { id: 'dashboard', label: 'Dashboard', Icon: IconDashboard },
+  { id: 'liveflow',  label: 'Live Flow', Icon: IconLiveFlow  },
+  { id: 'timeline',  label: 'Timeline',  Icon: IconTimeline  },
+  { id: 'setup',     label: 'Setup',     Icon: IconSetup     },
+];
 
 interface TabNavProps {
   active: Tab;
   onChange: (tab: Tab) => void;
 }
 
-const ICONS: Record<Tab, ReactNode> = {
-  dashboard: (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden="true">
-      <path d="M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z"/>
-    </svg>
-  ),
-  timeline: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
-      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
-      <polyline points="16 7 22 7 22 13"/>
-    </svg>
-  ),
-  liveflow: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
-      <polyline points="2 12 6 8 10 16 14 4 18 12 22 12"/>
-    </svg>
-  ),
-  setup: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
-      <circle cx="12" cy="12" r="3"/>
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-    </svg>
-  ),
-};
-
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'dashboard', label: 'Dashboard' },
-  { id: 'liveflow',  label: 'Live Flow' },
-  { id: 'timeline',  label: 'Timeline'  },
-  { id: 'setup',     label: 'Setup'     },
-];
-
+/** Bottom bar on mobile (h-14 + safe area), top tab row from `sm` up. */
 export function TabNav({ active, onChange }: TabNavProps) {
   return (
     <nav
       aria-label="Hauptnavigation"
-      className="fixed bottom-0 inset-x-0 z-20 bg-surface-1 border-t border-white/5
-                 sm:static sm:border-t-0 sm:border-b sm:z-auto"
-      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
+      className="pb-safe fixed inset-x-0 bottom-0 z-20 border-t border-white/5 bg-surface-1
+                 sm:static sm:z-auto sm:border-b sm:border-t-0 sm:pb-0"
     >
-      <div className="max-w-4xl mx-auto flex sm:px-4 sm:gap-0">
-        {TABS.map((tab) => {
-          const isActive = active === tab.id;
+      <div className="mx-auto flex max-w-4xl sm:px-4">
+        {TABS.map(({ id, label, Icon }) => {
+          const isActive = active === id;
           return (
             <button
-              key={tab.id}
-              onClick={() => onChange(tab.id)}
+              key={id}
+              type="button"
+              onClick={() => onChange(id)}
               aria-current={isActive ? 'page' : undefined}
-              className={`
-                flex-1 flex flex-col items-center justify-center tabnav-btn gap-1.5 transition-colors
-                focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent
-                sm:flex-none sm:flex-row sm:py-3 sm:px-5 sm:gap-0
-                ${isActive
-                  ? 'text-accent sm:border-b-2 sm:border-accent'
-                  : 'text-white/50 hover:text-white/80 sm:border-b-2 sm:border-transparent'
-                }
-              `}
+              className={`focus-inset flex h-14 flex-1 flex-col items-center justify-center gap-1 transition-colors
+                sm:h-auto sm:flex-none sm:border-b-2 sm:px-5 sm:py-3 ${
+                isActive
+                  ? 'text-accent sm:border-accent'
+                  : 'text-white/50 hover:text-white sm:border-transparent'
+              }`}
             >
-              <span className="sm:hidden">{ICONS[tab.id]}</span>
-              <span className="text-[10px] font-medium sm:text-sm">{tab.label}</span>
+              <Icon className="w-5 h-5 sm:hidden" />
+              <span className="text-[10px] font-medium sm:text-sm">{label}</span>
             </button>
           );
         })}
@@ -74,5 +48,3 @@ export function TabNav({ active, onChange }: TabNavProps) {
     </nav>
   );
 }
-
-export type { Tab };

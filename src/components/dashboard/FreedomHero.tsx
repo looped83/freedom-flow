@@ -1,16 +1,40 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-
-const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-import { formatEuro } from '../../utils/formatting';
-import { freedomPercent, missingForFreedom } from '../../utils/calculations';
-import { useInlineNumberEdit } from '../../hooks/useInlineNumberEdit';
+import { useState, type CSSProperties } from 'react';
 import { CURRENT_YEAR } from '../../constants/defaultData';
+import { freedomPercent, missingForFreedom } from '../../utils/calculations';
+import { formatEuro, formatPercent } from '../../utils/formatting';
+import { Card } from '../ui/Card';
+import { EditableNumber } from '../ui/EditableNumber';
+import { IconWave } from '../ui/Icons';
+import { SegmentedControl } from '../ui/SegmentedControl';
+import { STAT_VALUE, StatTile } from '../ui/StatTile';
 
-const WAVE_ICON = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
-    <path d="M2 12c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/>
-  </svg>
-);
+const VIEWS = [
+  { id: 'month', label: 'Monat' },
+  { id: 'year',  label: 'Jahr'  },
+] as const;
+type View = (typeof VIEWS)[number]['id'];
+
+const R = 80;
+const CIRCUMFERENCE = 2 * Math.PI * R;
+const PROJECTION_YEAR = CURRENT_YEAR + 1;
+const TILE_VALUE = `${STAT_VALUE} text-sm`;
+
+function Arc({ percent, stroke }: { percent: number; stroke: string }) {
+  const style = {
+    '--ring-offset': CIRCUMFERENCE * (1 - Math.min(percent, 100) / 100),
+    '--ring-empty': CIRCUMFERENCE,
+  } as CSSProperties;
+  return (
+    <circle
+      cx="100" cy="100" r={R}
+      fill="none" stroke={stroke} strokeWidth="14" strokeLinecap="round"
+      strokeDasharray={CIRCUMFERENCE}
+      transform="rotate(-90 100 100)"
+      className="ring-arc"
+      style={style}
+    />
+  );
+}
 
 interface FreedomHeroProps {
   monthly: number;
@@ -21,207 +45,68 @@ interface FreedomHeroProps {
   onTotalChange: (v: number) => void;
 }
 
-const R = 80;
-const CIRCUMFERENCE = 2 * Math.PI * R;
-const heroId = 'freedom-hero-heading';
-
 export function FreedomHero({ monthly, projectedMonthly, total, minExpenses, onIncomeChange, onTotalChange }: FreedomHeroProps) {
-  const [view, setView] = useState<'month' | 'year'>('month');
+  const [view, setView] = useState<View>('month');
   const mul = view === 'year' ? 12 : 1;
 
-  const pct          = freedomPercent(monthly, total);
-  const projPct      = freedomPercent(projectedMonthly, total);
-  const missing      = missingForFreedom(monthly, total);
-  const dashOffset   = CIRCUMFERENCE * (1 - Math.min(pct, 100) / 100);
-  const projDashOffset = CIRCUMFERENCE * (1 - Math.min(projPct, 100) / 100);
-
-  const circleRef = useRef<SVGCircleElement>(null);
-  const [showProjected, setShowProjected] = useState(false);
-
-  const commitIncome  = useCallback((v: number) => onIncomeChange(v / mul), [onIncomeChange, mul]);
-  const commitExpense = useCallback((v: number) => onTotalChange(v / mul),  [onTotalChange,  mul]);
-
-  const income  = useInlineNumberEdit(monthly * mul, commitIncome);
-  const expense = useInlineNumberEdit(total * mul,   commitExpense, { min: minExpenses * mul });
-
-  useEffect(() => {
-    const el = circleRef.current;
-    if (!el) return;
-    if (prefersReducedMotion) {
-      el.style.strokeDashoffset = String(dashOffset);
-      return;
-    }
-    el.style.transition = 'none';
-    el.style.strokeDashoffset = String(CIRCUMFERENCE);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        el.style.transition = 'stroke-dashoffset 0.8s ease-out';
-        el.style.strokeDashoffset = String(dashOffset);
-      });
-    });
-  }, [dashOffset]);
+  const pct = freedomPercent(monthly, total);
+  const projPct = freedomPercent(projectedMonthly, total);
+  const showProjection = projPct > pct;
+  const ringLabel = `${formatPercent(pct)} finanziell frei`
+    + (showProjection ? `, Prognose ${PROJECTION_YEAR}: ${formatPercent(projPct)}` : '');
 
   return (
-    <section className="rounded-2xl p-5 bg-accent-muted border border-accent/20" aria-labelledby={heroId}>
-      <h2 id={heroId} className="sr-only">Finanzielle Freiheit</h2>
-
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{WAVE_ICON}</span>
-          <p className="text-sm font-semibold text-white">Freedom Flow</p>
-        </div>
-        <div className="flex rounded-lg overflow-hidden border border-white/10" role="group" aria-label="Ansicht wählen">
-          {(['month', 'year'] as const).map((v) => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              aria-pressed={view === v}
-              className={`text-xs px-3 py-1 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
-                view === v ? 'bg-accent/20 text-accent font-semibold' : 'text-white/55 hover:text-white/80'
-              }`}
-            >
-              {v === 'month' ? 'Monat' : 'Jahr'}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* SVG Ring */}
-      <div className="flex justify-center">
-        <svg
-          viewBox="0 0 200 200"
-          width="200"
-          height="200"
-          role="img"
-          aria-label={`${pct.toFixed(1)} % finanziell frei`}
-        >
-          {/* Track */}
+    <Card
+      tone="accent"
+      icon={<IconWave />}
+      title="Freedom Flow"
+      right={<SegmentedControl ariaLabel="Zeitraum" options={VIEWS} value={view} onChange={setView} />}
+    >
+      <figure className="flex flex-col items-center">
+        <svg viewBox="0 0 200 200" className="h-44 w-44" role="img" aria-label={ringLabel}>
           <circle cx="100" cy="100" r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="14" />
-          {/* Projected year-end arc */}
-          {projPct > pct && (
-            <circle
-              cx="100" cy="100" r={R}
-              fill="none" stroke="rgba(74,222,128,0.22)" strokeWidth="14"
-              strokeLinecap="round"
-              strokeDasharray={CIRCUMFERENCE}
-              strokeDashoffset={projDashOffset}
-              transform="rotate(-90 100 100)"
-              role="button"
-              tabIndex={0}
-              aria-label={`Prognose anzeigen: ${projPct.toFixed(1)} % in einem Jahr`}
-              aria-pressed={showProjected}
-              style={{ cursor: 'pointer', outline: 'none' }}
-              onClick={() => setShowProjected(true)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowProjected(true); }
-              }}
-            />
-          )}
-          {/* Current arc */}
-          <circle
-            ref={circleRef}
-            cx="100" cy="100" r={R}
-            fill="none" stroke="#4ade80" strokeWidth="14"
-            strokeLinecap="round"
-            strokeDasharray={CIRCUMFERENCE}
-            strokeDashoffset={CIRCUMFERENCE}
-            transform="rotate(-90 100 100)"
-            role={showProjected ? 'button' : undefined}
-            tabIndex={showProjected ? 0 : undefined}
-            aria-label={showProjected ? `Aktuelle ${pct.toFixed(1)} % anzeigen` : undefined}
-            aria-pressed={showProjected ? false : undefined}
-            style={{ cursor: showProjected ? 'pointer' : 'default', outline: 'none' }}
-            onClick={() => setShowProjected(false)}
-            onKeyDown={showProjected ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowProjected(false); }
-            } : undefined}
-          />
-          <text x="100" y="93" textAnchor="middle" dominantBaseline="middle"
-            fill="white" fontSize="28" fontWeight="700" fontFamily="inherit">
-            {(showProjected ? projPct : pct).toFixed(1)} %
+          {showProjection && <Arc percent={projPct} stroke="rgba(74,222,128,0.25)" />}
+          <Arc percent={pct} stroke="#4ade80" />
+          <text x="100" y="94" textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="28" fontWeight="700">
+            {formatPercent(pct)}
           </text>
-          <text x="100" y={showProjected ? 112 : 117} textAnchor="middle" dominantBaseline="middle"
-            fill="rgba(255,255,255,0.6)" fontSize="12" fontFamily="inherit">
-            {showProjected ? 'Prognose' : 'finanziell frei'}
+          <text x="100" y="120" textAnchor="middle" dominantBaseline="middle" fill="rgba(255,255,255,0.7)" fontSize="12">
+            finanziell frei
           </text>
-          {showProjected && (
-            <text x="100" y="128" textAnchor="middle" dominantBaseline="middle"
-              fill="rgba(255,255,255,0.6)" fontSize="12" fontFamily="inherit">
-              {CURRENT_YEAR + 1}
-            </text>
-          )}
         </svg>
+        {showProjection && (
+          <figcaption className="flex items-center gap-1.5 text-xs text-white/50" aria-hidden="true">
+            <span className="h-2 w-2 rounded-full bg-accent/30" />
+            Prognose {PROJECTION_YEAR}:
+            <span className="font-semibold tabular-nums text-white/70">{formatPercent(projPct)}</span>
+          </figcaption>
+        )}
+      </figure>
+
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        <StatTile label="Dividenden">
+          <EditableNumber
+            kind="euro"
+            label={view === 'month' ? 'Monatliche Dividenden' : 'Jährliche Dividenden'}
+            value={monthly * mul}
+            onCommit={(v) => onIncomeChange(v / mul)}
+            className={`${TILE_VALUE} text-accent`}
+          />
+        </StatTile>
+        <StatTile label="Ausgaben">
+          <EditableNumber
+            kind="euro"
+            label={view === 'month' ? 'Monatliche Ausgaben' : 'Jährliche Ausgaben'}
+            value={total * mul}
+            min={minExpenses * mul}
+            onCommit={(v) => onTotalChange(v / mul)}
+            className={`${TILE_VALUE} text-white`}
+          />
+        </StatTile>
+        <StatTile label="Offen">
+          <span className={`${TILE_VALUE} text-gold`}>{formatEuro(missingForFreedom(monthly, total) * mul)}</span>
+        </StatTile>
       </div>
-
-      {/* Mini tiles: Dividenden · Ausgaben · Offen */}
-      <div className="mt-4 grid grid-cols-3 gap-3">
-
-        {/* Dividenden – editable */}
-        <div className="bg-white/5 rounded-xl p-3">
-          <p className="text-xs text-white/60 mb-1.5">Dividenden</p>
-          {income.editing ? (
-            <input
-              ref={income.inputRef}
-              type="text"
-              inputMode="decimal"
-              value={income.raw}
-              autoFocus
-              onChange={(e) => income.setRaw(e.target.value)}
-              onBlur={(e) => income.commit(e.target.value)}
-              onKeyDown={income.handleKeyDown}
-              aria-label={view === 'month' ? 'Monatliche Dividenden eingeben' : 'Jährliche Dividenden eingeben'}
-              style={{ fontSize: '16px' }}
-              className="w-full font-bold text-sm text-accent tabular-nums leading-none bg-transparent border-b border-accent focus:outline-none"
-            />
-          ) : (
-            <button
-              onClick={income.startEdit}
-              aria-label={`Dividenden: ${formatEuro(monthly * mul)}, tippen zum Bearbeiten`}
-              className="block p-0 w-full text-left text-sm font-bold text-accent tabular-nums leading-none whitespace-nowrap hover:opacity-75 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
-            >
-              {formatEuro(monthly * mul)}
-            </button>
-          )}
-        </div>
-
-        {/* Ausgaben – editable */}
-        <div className="bg-white/5 rounded-xl p-3">
-          <p className="text-xs text-white/60 mb-1.5">Ausgaben</p>
-          {expense.editing ? (
-            <input
-              ref={expense.inputRef}
-              type="text"
-              inputMode="decimal"
-              value={expense.raw}
-              autoFocus
-              onChange={(e) => expense.setRaw(e.target.value)}
-              onBlur={(e) => expense.commit(e.target.value)}
-              onKeyDown={expense.handleKeyDown}
-              aria-label={view === 'month' ? 'Monatliche Ausgaben eingeben' : 'Jährliche Ausgaben eingeben'}
-              style={{ fontSize: '16px' }}
-              className="w-full font-bold text-sm text-accent tabular-nums leading-none bg-transparent border-b border-accent focus:outline-none"
-            />
-          ) : (
-            <button
-              onClick={expense.startEdit}
-              aria-label={`Ausgaben: ${formatEuro(total * mul)}, tippen zum Bearbeiten`}
-              className="block p-0 w-full text-left text-sm font-bold text-accent tabular-nums leading-none whitespace-nowrap hover:opacity-75 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
-            >
-              {formatEuro(total * mul)}
-            </button>
-          )}
-        </div>
-
-        {/* Offen – display only */}
-        <div className="bg-white/5 rounded-xl p-3">
-          <p className="text-xs text-white/60 mb-1.5">Offen</p>
-          <p className="text-sm font-bold text-gold tabular-nums leading-none whitespace-nowrap">
-            {formatEuro(missing * mul)}
-          </p>
-        </div>
-
-      </div>
-    </section>
+    </Card>
   );
 }

@@ -105,8 +105,6 @@ export interface MilestoneResult extends Milestone {
   progressPercent: number;
   /** €/month still missing (only for dividend milestones; 0 if achieved) */
   missingMonthly: number;
-  /** Whole days remaining (only for date milestones; negative if past) */
-  daysRemaining: number | null;
   /** Calendar year the milestone is (or was) reached; null if beyond lookahead */
   achievedYear: number | null;
 }

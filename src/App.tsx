@@ -2,7 +2,8 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { useAppState } from './hooks/useAppState';
 import { Header } from './components/layout/Header';
 import { TabNav, type Tab } from './components/layout/TabNav';
-import { Dashboard } from './components/dashboard/Dashboard';
+import { Dashboard, type SetupTarget } from './components/dashboard/Dashboard';
+import type { SetupFocus } from './components/setup/SetupPage';
 
 const FreedomTimeline = lazy(async () => {
   const { FreedomTimeline } = await import('./components/timeline/FreedomTimeline');
@@ -19,75 +20,57 @@ const LiveFlow = lazy(async () => {
 
 function TabFallback() {
   return (
-    <div className="flex items-center justify-center h-40" role="status" aria-label="Lade Inhalt…">
-      <div className="w-6 h-6 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+    <div className="flex h-40 items-center justify-center" role="status" aria-label="Lade Inhalt…">
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
     </div>
   );
 }
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('dashboard');
-  const [visitedTabs, setVisitedTabs] = useState<Set<Tab>>(() => new Set<Tab>());
-  const [focusGoalId, setFocusGoalId] = useState<string | null>(null);
-  const [focusMilestoneId, setFocusMilestoneId] = useState<string | null>(null);
+  const [visitedTabs, setVisitedTabs] = useState<ReadonlySet<Tab>>(() => new Set<Tab>(['dashboard']));
+  const [focus, setFocus] = useState<SetupFocus | null>(null);
   const [setupResetKey, setSetupResetKey] = useState(0);
   const prevTabRef = useRef<Tab>(tab);
-  const { state, actions, projection, goalResults, milestoneResults, visibleMilestoneResults } = useAppState();
+  const {
+    state, actions, projection, totalExpenses, goalResults, milestoneResults, visibleMilestoneResults,
+  } = useAppState();
 
   // Remount SetupPage when navigating away so nothing stays expanded on return.
   useEffect(() => {
-    if (prevTabRef.current === 'setup' && tab !== 'setup') {
-      setSetupResetKey((k) => k + 1);
-    }
+    if (prevTabRef.current === 'setup' && tab !== 'setup') setSetupResetKey((k) => k + 1);
     prevTabRef.current = tab;
   }, [tab]);
 
-  const handleTabChange = useCallback((next: Tab) => {
+  const showTab = useCallback((next: Tab, behavior: ScrollBehavior = 'smooth') => {
     setTab(next);
-    setVisitedTabs((prev) => prev.has(next) ? prev : new Set([...prev, next]));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setVisitedTabs((prev) => (prev.has(next) ? prev : new Set([...prev, next])));
+    window.scrollTo({ top: 0, behavior });
   }, []);
 
-  const handleGoalClick = useCallback((id: string) => {
-    window.scrollTo({ top: 0 });
-    setFocusGoalId(id);
-    setTab('setup');
-    setVisitedTabs((prev) => prev.has('setup') ? prev : new Set([...prev, 'setup']));
-  }, []);
+  const openInSetup = useCallback((target: SetupTarget, id: string) => {
+    setFocus({ target, id });
+    showTab('setup', 'auto');
+  }, [showTab]);
 
-  const handleMilestoneClick = useCallback((id: string) => {
-    window.scrollTo({ top: 0 });
-    setFocusMilestoneId(id);
-    setTab('setup');
-    setVisitedTabs((prev) => prev.has('setup') ? prev : new Set([...prev, 'setup']));
-  }, []);
-
-  const handleReset = useCallback(() => {
-    if (confirm('Alle Daten zurücksetzen?')) {
-      actions.reset();
-    }
-  }, [actions]);
-
-  const handleIncomeChange = useCallback((v: number) => {
-    actions.patchPortfolio({ monthlyIncome: v });
-  }, [actions]);
+  const clearFocus = useCallback(() => setFocus(null), []);
+  const handleIncomeChange = useCallback((v: number) => actions.patchPortfolio({ monthlyIncome: v }), [actions]);
 
   return (
-    <div className="min-h-screen bg-surface text-white pb-28 sm:pb-0">
+    <div className="pb-nav min-h-screen bg-surface text-white sm:pb-0">
       <Header />
-      <TabNav active={tab} onChange={handleTabChange} />
+      <TabNav active={tab} onChange={showTab} />
 
       {/* Dashboard always mounted — no remount on tab switch, useMemo cache survives */}
       <div hidden={tab !== 'dashboard'}>
         <Dashboard
           projection={projection}
-          goals={state.goals}
+          totalExpenses={totalExpenses}
           goalResults={goalResults}
           milestoneResults={milestoneResults}
           onIncomeChange={handleIncomeChange}
           onTotalChange={actions.setTotalExpenses}
-          onGoalClick={handleGoalClick}
-          onMilestoneClick={handleMilestoneClick}
+          onOpen={openInSetup}
         />
       </div>
 
@@ -103,7 +86,7 @@ export default function App() {
       <Suspense fallback={tab === 'liveflow' ? <TabFallback /> : null}>
         {visitedTabs.has('liveflow') && (
           <div hidden={tab !== 'liveflow'}>
-            <LiveFlow portfolio={state.portfolio} />
+            <LiveFlow portfolio={state.portfolio} active={tab === 'liveflow'} />
           </div>
         )}
       </Suspense>
@@ -112,22 +95,13 @@ export default function App() {
           <div hidden={tab !== 'setup'}>
             <SetupPage
               key={setupResetKey}
-              goals={state.goals}
               goalResults={goalResults}
+              totalExpenses={totalExpenses}
               visibleMilestoneResults={visibleMilestoneResults}
               portfolio={state.portfolio}
-              onAdd={actions.addGoal}
-              onUpdate={actions.updateGoal}
-              onDelete={actions.deleteGoal}
-              onAddMilestone={actions.addMilestone}
-              onUpdateMilestone={actions.updateMilestone}
-              onDeleteMilestone={actions.deleteMilestone}
-              onPatchPortfolio={actions.patchPortfolio}
-              onReset={handleReset}
-              focusGoalId={focusGoalId}
-              onFocusConsumed={() => setFocusGoalId(null)}
-              focusMilestoneId={focusMilestoneId}
-              onFocusMilestoneConsumed={() => setFocusMilestoneId(null)}
+              actions={actions}
+              focus={focus}
+              onFocusConsumed={clearFocus}
             />
           </div>
         )}

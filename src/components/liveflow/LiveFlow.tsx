@@ -1,300 +1,108 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Portfolio } from '../../types';
 import {
   calculateAnnualDividends,
-  calculateDividendRatePerMinute,
-  calculateDividendRatePerHour,
-  calculateDividendRatePerDay,
-  calculateDividendRatePerWeek,
-  calculateEarnedTodaySoFar,
-  calculateEarnedThisWeekSoFar,
-  calculateEarnedThisMonthSoFar,
-  calculateEarnedThisYearSoFar,
-  calculateDayProgress,
-  calculateWeekProgress,
-  calculateMonthProgress,
-  calculateYearProgress,
   calculateLifetimeDividends,
-  formatCurrencyForSmallAmounts,
+  calculatePeriodStats,
 } from '../../utils/liveFlowCalculations';
-import { formatEuro } from '../../utils/formatting';
-import { PageHeader } from '../layout/PageHeader';
+import { formatEuro, formatEuroAdaptive } from '../../utils/formatting';
+import { Page } from '../layout/Page';
+import { Card } from '../ui/Card';
+import { ProgressBar } from '../ui/ProgressBar';
+import { STAT_VALUE, StatTile } from '../ui/StatTile';
+import { IconDiamond, IconLiveFlow, IconRefresh, IconSun } from '../ui/Icons';
 
-const SUN_ICON = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
-    <circle cx="12" cy="12" r="4"/>
-    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
-  </svg>
-);
-const REFRESH_ICON = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
-    <polyline points="23 4 23 10 17 10"/>
-    <polyline points="1 20 1 14 7 14"/>
-    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-  </svg>
+const TICK_MS = 10_000;
+
+const PERIODS = [
+  { id: 'week',  label: 'Woche' },
+  { id: 'month', label: 'Monat' },
+  { id: 'year',  label: 'Jahr'  },
+] as const;
+
+// Average rates derived from the annual total.
+const RATES = [
+  { label: 'Minute', perYear: 525_600 },
+  { label: 'Stunde', perYear: 8_760   },
+  { label: 'Tag',    perYear: 365     },
+] as const;
+
+const LIVE_BADGE = (
+  <span className="flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1" aria-hidden="true">
+    <span className="h-1.5 w-1.5 rounded-full bg-accent motion-safe:animate-pulse" />
+    <span className="text-xs font-bold uppercase tracking-wide text-accent">Live</span>
+  </span>
 );
 
 interface LiveFlowProps {
   portfolio: Portfolio;
+  /** Tab is visible — the clock only ticks while true. */
+  active: boolean;
 }
 
-interface RateCard {
-  id: string;
-  label: string;
-  getValue: (m: number) => number;
-  small: boolean;
-}
-
-const RATE_CARDS: RateCard[] = [
-  { id: 'minute', label: 'Minute', getValue: (m) => calculateDividendRatePerMinute(m), small: true  },
-  { id: 'hour',   label: 'Stunde', getValue: (m) => calculateDividendRatePerHour(m),   small: true  },
-  { id: 'day',    label: 'Tag',    getValue: (m) => calculateDividendRatePerDay(m),    small: false },
-  { id: 'week',   label: 'Woche',  getValue: (m) => calculateDividendRatePerWeek(m),   small: false },
-  { id: 'month',  label: 'Monat',  getValue: (m) => m,                                 small: false },
-  { id: 'year',   label: 'Jahr',   getValue: (m) => calculateAnnualDividends(m),       small: false },
-];
-
-const LIVEFLOW_ICON = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
-    <polyline points="2 12 6 8 10 16 14 4 18 12 22 12"/>
-  </svg>
-);
-
-const LIVE_BADGE = (
-  <div className="flex items-center gap-1.5 bg-accent/15 border border-accent/35 rounded-full px-2.5 py-1" aria-hidden="true">
-    <span className="w-1.5 h-1.5 rounded-full bg-accent motion-safe:animate-pulse" />
-    <span className="text-xs text-accent font-bold uppercase tracking-wide">Live</span>
-  </div>
-);
-
-// r=10 → circumference = 2π·10 ≈ 62.83
-function RefreshRing({ nowMs }: { nowMs: number }) {
-  return (
-    <svg
-      width="26" height="26" viewBox="0 0 26 26"
-      className="flex-shrink-0"
-      style={{ transform: 'rotate(-90deg)' }}
-      aria-hidden="true"
-    >
-      <circle cx="13" cy="13" r="10" fill="none" stroke="rgba(74,222,128,0.15)" strokeWidth="2" />
-      <circle
-        key={String(nowMs)}
-        cx="13" cy="13" r="10"
-        fill="none"
-        stroke="#4ade80"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeDasharray="62.83"
-        className="lf-ring-fill"
-      />
-    </svg>
-  );
-}
-
-// Module-level: avoid constructing on every render / every formatTime call
-const timeFormatter = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' });
-function formatTime(date: Date): string { return timeFormatter.format(date); }
-
-// Cent-snap: stable reference, no allocation on every render
-function snap(v: number): number { return Math.round(v * 100) / 100; }
-
-export function LiveFlow({ portfolio }: LiveFlowProps) {
-  const monthly = portfolio.monthlyIncome;
+export function LiveFlow({ portfolio, active }: LiveFlowProps) {
   const [now, setNow] = useState(() => new Date());
 
+  // Tick only while this tab is shown and the document is visible; catch up
+  // immediately when either becomes true again.
   useEffect(() => {
-    function tick() {
-      if (!document.hidden) setNow(new Date());
-    }
-    const id = setInterval(tick, 10_000);
+    if (!active) return;
+    const tick = () => { if (!document.hidden) setNow(new Date()); };
+    tick();
+    const id = setInterval(tick, TICK_MS);
     document.addEventListener('visibilitychange', tick);
     return () => {
       clearInterval(id);
       document.removeEventListener('visibilitychange', tick);
     };
-  }, []);
+  }, [active]);
 
-  // startOfDay only changes when the calendar date changes (once per day), not every 10s tick.
-  const todayYear  = now.getFullYear();
-  const todayMonth = now.getMonth();
-  const todayDate  = now.getDate();
-  const startOfDay = useMemo(
-    () => new Date(todayYear, todayMonth, todayDate),
-    [todayYear, todayMonth, todayDate],
-  );
-
-  // Daily baselines: recompute only when income or calendar date changes.
-  const weekBase     = useMemo(() => snap(calculateEarnedThisWeekSoFar(monthly, startOfDay)),  [monthly, startOfDay]);
-  const monthBase    = useMemo(() => snap(calculateEarnedThisMonthSoFar(monthly, startOfDay)), [monthly, startOfDay]);
-  const yearBase     = useMemo(() => snap(calculateEarnedThisYearSoFar(monthly, startOfDay)),  [monthly, startOfDay]);
-  const lifetimeBase = useMemo(
-    () => snap(calculateLifetimeDividends(portfolio.lifetimeDividends, portfolio.lifetimeStartYear, monthly, startOfDay)),
-    [portfolio.lifetimeDividends, portfolio.lifetimeStartYear, monthly, startOfDay],
-  );
-
-  const dailyRate = useMemo(() => calculateDividendRatePerDay(monthly), [monthly]);
-
-  // The sole changing value each tick.
-  const earnedToday = calculateEarnedTodaySoFar(monthly, now);
-
-  const earnedWeek    = weekBase    + earnedToday;
-  const earnedMonth   = monthBase   + earnedToday;
-  const earnedYear    = yearBase    + earnedToday;
-  const lifetimeTotal = lifetimeBase + earnedToday;
-  const dayProgress   = calculateDayProgress(now);
-  const weekProgress  = calculateWeekProgress(now);
-  const monthProgress = calculateMonthProgress(now);
-  const yearProgress  = calculateYearProgress(now);
-  const dayPct        = Math.round(dayProgress * 100);
-  const weekPct       = Math.round(weekProgress * 100);
-  const monthPct      = Math.round(monthProgress * 100);
-  const yearPct       = Math.round(yearProgress * 100);
+  const monthly = portfolio.monthlyIncome;
+  const annual = calculateAnnualDividends(monthly);
+  const stats = calculatePeriodStats(monthly, now);
+  const lifetime = calculateLifetimeDividends(portfolio.lifetimeDividends, portfolio.lifetimeStartYear, monthly, now);
+  const dayPct = Math.round(stats.day.progress * 100);
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
-
-      <PageHeader icon={LIVEFLOW_ICON} title="Live Flow" right={LIVE_BADGE} />
-
-      {/* ── Hero: Heute + Woche/Monat/Jahr ── */}
-      <section
-        aria-labelledby="lf-hero-heading"
-        className="rounded-2xl p-5 border border-accent/20 bg-accent-muted"
-      >
-        {/* Top: Heute verdient */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{SUN_ICON}</span>
-            <p className="text-sm font-semibold text-white">Heute verdient</p>
-          </div>
-          <RefreshRing nowMs={now.getTime()} />
-        </div>
-        <p
-          id="lf-hero-heading"
-          className="text-5xl font-bold text-accent tabular-nums leading-none"
-          aria-live="off"
-          aria-atomic="true"
-        >
-          {formatEuro(earnedToday)}
-        </p>
-
-        {/* Day progress */}
-        <div className="mt-4 space-y-1.5">
-          <p className="text-xs text-white/50">
-            {formatEuro(dailyRate)} heute erwartet
-          </p>
-          <div className="flex items-center gap-2">
-            <div
-              role="progressbar"
-              aria-label={`Tagesfortschritt: ${dayPct} von 100 Prozent`}
-              aria-valuenow={dayPct}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"
-            >
-              <div
-                className="h-full bg-accent rounded-full "
-                style={{ width: `${dayPct}%` }}
-              />
-            </div>
-            <span className="text-xs font-bold text-accent flex-shrink-0 tabular-nums">
-              {dayPct}&thinsp;%
-            </span>
-          </div>
+    <Page icon={<IconLiveFlow className="w-5 h-5" />} title="Live Flow" right={LIVE_BADGE}>
+      <Card tone="accent" icon={<IconSun />} title="Heute verdient">
+        <p className="text-5xl font-bold leading-none tabular-nums text-accent">{formatEuro(stats.day.earned)}</p>
+        <p className="mt-3 text-xs text-white/50">von {formatEuro(stats.day.total)} erwartet</p>
+        <div className="mt-1.5 flex items-center gap-2">
+          <ProgressBar percent={dayPct} label={`Tagesfortschritt: ${dayPct} %`} />
+          <span className="flex-shrink-0 text-xs font-bold tabular-nums text-accent">{dayPct} %</span>
         </div>
 
-        {/* Mini tiles: Woche · Monat · Jahr */}
-        <div className="mt-5 grid grid-cols-3 gap-3">
-          {([
-            { label: 'Woche', value: earnedWeek,  pct: weekPct,  aria: `Wochenverlauf: ${weekPct} %`  },
-            { label: 'Monat', value: earnedMonth, pct: monthPct, aria: `Monatsverlauf: ${monthPct} %` },
-            { label: 'Jahr',  value: earnedYear,  pct: yearPct,  aria: `Jahresverlauf: ${yearPct} %`  },
-          ] as const).map(({ label, value, pct, aria }) => (
-            <div key={label} className="bg-white/5 rounded-xl p-3">
-              <p className="text-xs text-white/60 mb-1.5">{label}</p>
-              <p
-                className="text-sm font-bold text-accent tabular-nums leading-none whitespace-nowrap"
-                aria-live="off"
-              >
-                {formatEuro(value)}
-              </p>
-              <div className="mt-2">
-                <div
-                  role="progressbar"
-                  aria-label={aria}
-                  aria-valuenow={pct}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  className="h-1 bg-white/10 rounded-full overflow-hidden"
-                >
-                  <div
-                    className="h-full bg-accent rounded-full "
-                    style={{ width: `${pct}%` }}
-                  />
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          {PERIODS.map(({ id, label }) => {
+            const s = stats[id];
+            const pct = Math.round(s.progress * 100);
+            return (
+              <StatTile key={id} label={label}>
+                <span className={`${STAT_VALUE} text-sm text-accent`}>{formatEuro(s.earned)}</span>
+                <span className="mt-1 block truncate text-xs tabular-nums text-white/50">von {formatEuro(s.total, 0)}</span>
+                <div className="mt-2">
+                  <ProgressBar thin percent={pct} label={`${label}: ${pct} %`} />
                 </div>
-              </div>
-            </div>
+              </StatTile>
+            );
+          })}
+        </div>
+      </Card>
+
+      <Card icon={<IconDiamond />} title="Lifetime-Dividenden">
+        <p className="text-3xl font-bold leading-none tabular-nums text-accent">{formatEuro(lifetime)}</p>
+      </Card>
+
+      <Card icon={<IconRefresh />} title="Cashflow">
+        <div className="grid grid-cols-3 gap-2">
+          {RATES.map(({ label, perYear }) => (
+            <StatTile key={label} label={`pro ${label}`}>
+              <span className={`${STAT_VALUE} text-sm text-accent`}>{formatEuroAdaptive(annual / perYear)}</span>
+            </StatTile>
           ))}
         </div>
-      </section>
-
-      {/* ── Lifetime Dividenden ── */}
-      <section
-        aria-labelledby="lf-lifetime-heading"
-        className="rounded-2xl p-5 border border-accent/20 bg-accent-muted"
-      >
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-accent/70 flex-shrink-0" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                <path d="M6 3h12l4 6-10 13L2 9l4-6z"/>
-                <path d="M2 9h20"/>
-                <path d="M8.5 3 6 9m9-6 2.5 6M12 3v6"/>
-              </svg>
-            </span>
-            <p className="text-sm font-semibold text-white">Lifetime Dividenden</p>
-          </div>
-          <RefreshRing nowMs={now.getTime()} />
-        </div>
-        <p
-          id="lf-lifetime-heading"
-          className="text-5xl font-bold text-accent tabular-nums leading-none"
-          aria-live="off"
-          aria-atomic="true"
-        >
-          {formatEuro(lifetimeTotal)}
-        </p>
-      </section>
-
-      {/* ── Cashflow ── */}
-      <section aria-labelledby="lf-cashflow-heading">
-        <h2
-          id="lf-cashflow-heading"
-          className="text-sm font-semibold text-white mb-3 flex items-center gap-2"
-        >
-          <span className="text-accent/70 flex-shrink-0" aria-hidden="true">{REFRESH_ICON}</span>
-          Cashflow
-        </h2>
-        <div className="grid grid-cols-3 gap-3">
-          {RATE_CARDS.map(({ id, label, getValue, small }) => (
-            <div key={id} className="bg-surface-1 rounded-2xl p-4 border border-white/5">
-              <p className="text-xs text-white/60 mb-2">{label}</p>
-              <p className="text-accent font-bold text-base tabular-nums">
-                {small
-                  ? formatCurrencyForSmallAmounts(getValue(monthly))
-                  : formatEuro(getValue(monthly))
-                }
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <div className="pb-2">
-        <p className="text-center text-xs text-white/50">
-          Zuletzt aktualisiert:&nbsp;{formatTime(now)}
-        </p>
-      </div>
-
-    </main>
+      </Card>
+    </Page>
   );
 }

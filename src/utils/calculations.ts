@@ -25,6 +25,13 @@ export function missingForFreedom(monthly: number, total: number): number {
   return Math.max(0, total - monthly);
 }
 
+/** Days / hours / minutes per month that dividends pay for, assuming a
+ *  30-day month: (monthly / expenses) × 30 days. */
+export function calculateFinancedTime(monthly: number, totalExpenses: number) {
+  const days = totalExpenses > 0 && monthly > 0 ? (monthly / totalExpenses) * 30 : 0;
+  return { days, hours: days * 24, minutes: days * 1440 };
+}
+
 function goalStatus(pct: number): GoalStatus {
   if (pct >= 100) return 'covered';
   if (pct > 0) return 'partial';

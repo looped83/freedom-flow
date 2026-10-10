@@ -1,127 +1,109 @@
 import { useEffect, useState } from 'react';
-import type { Goal, GoalResult, Milestone, MilestoneResult, Portfolio } from '../../types';
+import type { GoalResult, MilestoneResult, Portfolio } from '../../types';
+import type { AppActions } from '../../hooks/useAppState';
+import type { SetupTarget } from '../dashboard/Dashboard';
 import { GoalList } from '../goals/GoalList';
 import { MilestoneList } from '../milestones/MilestoneList';
 import { PortfolioForm } from '../portfolio/PortfolioForm';
-import { PageHeader } from '../layout/PageHeader';
+import { Page } from '../layout/Page';
+import { IconSetup } from '../ui/Icons';
 
 type SetupTab = 'goals' | 'milestones' | 'portfolio';
-type TabKeys = Record<SetupTab, number>;
 
-interface SetupPageProps {
-  goals: Goal[];
-  goalResults: GoalResult[];
-  visibleMilestoneResults: MilestoneResult[];
-  portfolio: Portfolio;
-  onAdd: (g: Goal) => void;
-  onUpdate: (g: Goal) => void;
-  onDelete: (id: string) => void;
-  onAddMilestone: (m: Milestone) => void;
-  onUpdateMilestone: (m: Milestone) => void;
-  onDeleteMilestone: (id: string) => void;
-  onPatchPortfolio: (partial: Partial<Portfolio>) => void;
-  onReset: () => void;
-  focusGoalId?: string | null;
-  onFocusConsumed?: () => void;
-  focusMilestoneId?: string | null;
-  onFocusMilestoneConsumed?: () => void;
+const TABS: { id: SetupTab; label: string }[] = [
+  { id: 'goals',      label: 'Ausgaben'     },
+  { id: 'milestones', label: 'Meilensteine' },
+  { id: 'portfolio',  label: 'Dividenden'   },
+];
+
+export interface SetupFocus {
+  target: SetupTarget;
+  id: string;
 }
 
-const SETUP_ICON = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
-    <circle cx="12" cy="12" r="3"/>
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-  </svg>
-);
+interface SetupPageProps {
+  goalResults: GoalResult[];
+  totalExpenses: number;
+  visibleMilestoneResults: MilestoneResult[];
+  portfolio: Portfolio;
+  actions: AppActions;
+  /** Entry to expand and scroll to (deep link from the Dashboard). */
+  focus: SetupFocus | null;
+  onFocusConsumed: () => void;
+}
 
-export function SetupPage({
-  goals,
-  goalResults,
-  visibleMilestoneResults,
-  portfolio,
-  onAdd,
-  onUpdate,
-  onDelete,
-  onAddMilestone,
-  onUpdateMilestone,
-  onDeleteMilestone,
-  onPatchPortfolio,
-  onReset,
-  focusGoalId,
-  onFocusConsumed,
-  focusMilestoneId,
-  onFocusMilestoneConsumed,
-}: SetupPageProps) {
+export function SetupPage({ goalResults, totalExpenses, visibleMilestoneResults, portfolio, actions, focus, onFocusConsumed }: SetupPageProps) {
   const [active, setActive] = useState<SetupTab>('goals');
-  const [tabKeys, setTabKeys] = useState<TabKeys>({ goals: 0, milestones: 0, portfolio: 0 });
+  // Bumping a tab's key when leaving it remounts the panel → filters, sort
+  // and open forms are reset on return.
+  const [tabKeys, setTabKeys] = useState<Record<SetupTab, number>>({ goals: 0, milestones: 0, portfolio: 0 });
 
   function changeTab(next: SetupTab) {
-    if (next !== active) {
-      setTabKeys((prev) => ({ ...prev, [active]: prev[active] + 1 }));
-    }
+    if (next === active) return;
+    setTabKeys((prev) => ({ ...prev, [active]: prev[active] + 1 }));
     setActive(next);
   }
 
-  // When navigating here via a goal click, always surface the Goals sub-tab.
   useEffect(() => {
-    if (focusGoalId) setActive('goals');
-  }, [focusGoalId]);
+    if (focus) setActive(focus.target === 'goal' ? 'goals' : 'milestones');
+  }, [focus]);
 
-  // When navigating here via a milestone click, always surface the Milestones sub-tab.
-  useEffect(() => {
-    if (focusMilestoneId) setActive('milestones');
-  }, [focusMilestoneId]);
+  function handleTabKey(e: React.KeyboardEvent) {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    const idx = TABS.findIndex((t) => t.id === active);
+    const next = TABS[(idx + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length].id;
+    changeTab(next);
+    document.getElementById(`setup-tab-${next}`)?.focus();
+  }
 
   return (
-    <main className="max-w-4xl mx-auto">
-      <div className="px-4 pt-6 pb-0">
-        <PageHeader icon={SETUP_ICON} title="Setup" />
-        <div
-          className="flex gap-0 bg-surface-2 rounded-xl p-1"
-          role="tablist"
-          aria-label="Setup-Bereiche"
-        >
-          {([
-            { id: 'goals',      label: 'Ausgaben'     },
-            { id: 'milestones', label: 'Meilensteine' },
-            { id: 'portfolio',  label: 'Dividenden'   },
-          ] as { id: SetupTab; label: string }[]).map((t) => (
-            <button
-              key={t.id}
-              role="tab"
-              aria-selected={active === t.id}
-              onClick={() => changeTab(t.id)}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
-                active === t.id
-                  ? 'bg-surface-1 text-white shadow-sm'
-                  : 'text-white/50 hover:text-white/80'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+    <Page icon={<IconSetup className="w-5 h-5" />} title="Setup">
+      <div role="tablist" aria-label="Setup-Bereiche" onKeyDown={handleTabKey} className="flex rounded-xl bg-surface-2 p-1">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            id={`setup-tab-${t.id}`}
+            type="button"
+            role="tab"
+            aria-selected={active === t.id}
+            aria-controls={`setup-panel-${t.id}`}
+            tabIndex={active === t.id ? 0 : -1}
+            onClick={() => changeTab(t.id)}
+            className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
+              active === t.id ? 'bg-surface-1 text-white shadow-sm' : 'text-white/50 hover:text-white'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      <div role="tabpanel">
-        <div hidden={active !== 'goals'}>
-          <GoalList key={tabKeys.goals} goals={goals} goalResults={goalResults} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} focusGoalId={focusGoalId} onFocusConsumed={onFocusConsumed} />
-        </div>
-        <div hidden={active !== 'milestones'}>
-          <MilestoneList
-            key={tabKeys.milestones}
-            milestoneResults={visibleMilestoneResults}
-            onAdd={onAddMilestone}
-            onUpdate={onUpdateMilestone}
-            onDelete={onDeleteMilestone}
-            focusMilestoneId={focusMilestoneId}
-            onFocusConsumed={onFocusMilestoneConsumed}
-          />
-        </div>
-        <div hidden={active !== 'portfolio'}>
-          <PortfolioForm key={tabKeys.portfolio} portfolio={portfolio} onPatch={onPatchPortfolio} onReset={onReset} />
-        </div>
+      <div id="setup-panel-goals" role="tabpanel" aria-labelledby="setup-tab-goals" hidden={active !== 'goals'}>
+        <GoalList
+          key={tabKeys.goals}
+          goalResults={goalResults}
+          total={totalExpenses}
+          onAdd={actions.addGoal}
+          onUpdate={actions.updateGoal}
+          onDelete={actions.deleteGoal}
+          focusId={focus?.target === 'goal' ? focus.id : null}
+          onFocusConsumed={onFocusConsumed}
+        />
       </div>
-    </main>
+      <div id="setup-panel-milestones" role="tabpanel" aria-labelledby="setup-tab-milestones" hidden={active !== 'milestones'}>
+        <MilestoneList
+          key={tabKeys.milestones}
+          milestoneResults={visibleMilestoneResults}
+          onAdd={actions.addMilestone}
+          onUpdate={actions.updateMilestone}
+          onDelete={actions.deleteMilestone}
+          focusId={focus?.target === 'milestone' ? focus.id : null}
+          onFocusConsumed={onFocusConsumed}
+        />
+      </div>
+      <div id="setup-panel-portfolio" role="tabpanel" aria-labelledby="setup-tab-portfolio" hidden={active !== 'portfolio'}>
+        <PortfolioForm key={tabKeys.portfolio} portfolio={portfolio} onPatch={actions.patchPortfolio} onReset={actions.reset} />
+      </div>
+    </Page>
   );
 }

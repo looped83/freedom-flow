@@ -1,20 +1,21 @@
 import { useRef, useState } from 'react';
-import { formatDecimal, liveFormatAmount } from '../utils/formatting';
+import { liveFormatAmount } from '../utils/formatting';
 
 /**
- * Hook for a German-formatted decimal input that preserves caret position
- * while inserting thousand separators on the fly.
- *
- * Initial state is the formatted value of `initial` (e.g. "42,90"). On every
- * change the visible string is reformatted and the caret is repositioned so
- * that typed-character-count stays stable.
+ * Controlled text input for German-formatted numbers. With `live` (default)
+ * thousand separators are inserted while typing and the caret is moved so
+ * the count of typed characters before it stays stable.
  */
-export function useAmountInput(initial?: number) {
-  const [value, setValue] = useState(initial != null ? formatDecimal(initial) : '');
+export function useAmountInput(initial = '', { live = true }: { live?: boolean } = {}) {
+  const [value, setValue] = useState(initial);
   const ref = useRef<HTMLInputElement>(null);
 
   function onChange(e: React.ChangeEvent<HTMLInputElement>) {
     const input = e.target;
+    if (!live) {
+      setValue(input.value);
+      return;
+    }
     const cursorPos = input.selectionStart ?? input.value.length;
     const raw = input.value;
     const formatted = liveFormatAmount(raw);
@@ -30,10 +31,11 @@ export function useAmountInput(initial?: number) {
       for (; i < formatted.length && count < charsBeforeCursor; i++) {
         if (formatted[i] !== '.') count++;
       }
-      ref.current.selectionStart = i;
-      ref.current.selectionEnd = i;
+      ref.current.setSelectionRange(i, i);
     });
   }
 
   return { value, setValue, ref, onChange };
 }
+
+export type AmountInput = ReturnType<typeof useAmountInput>;

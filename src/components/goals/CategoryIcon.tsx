@@ -1,8 +1,8 @@
+import type { ReactNode } from 'react';
 import type { GoalCategory } from '../../types';
+import { Svg } from '../ui/Icons';
 
-type IconPath = React.ReactNode;
-
-const PATHS: Record<GoalCategory, IconPath> = {
+const PATHS: Record<GoalCategory, ReactNode> = {
   Wohnen: (
     <>
       <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
@@ -147,18 +147,5 @@ interface CategoryIconProps {
 }
 
 export function CategoryIcon({ category, className = 'w-5 h-5' }: CategoryIconProps) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      {PATHS[category]}
-    </svg>
-  );
+  return <Svg className={className}>{PATHS[category]}</Svg>;
 }

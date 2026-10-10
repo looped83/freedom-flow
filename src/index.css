@@ -3,98 +3,67 @@
 @tailwind utilities;
 
 @layer base {
-  * {
-    box-sizing: border-box;
-  }
-
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* No double-tap zoom delay; pinch zoom stays available. */
+    touch-action: manipulation;
   }
 
   body {
-    margin: 0;
     background-color: #0f0f11;
     color: #ffffff;
-    font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
   }
 
   :focus-visible {
     outline: 2px solid #4ade80;
     outline-offset: 2px;
   }
-
-  input[type='range'] {
-    -webkit-appearance: none;
-    appearance: none;
-    height: 6px;
-    border-radius: 9999px;
-    background: rgba(255, 255, 255, 0.1);
-    cursor: pointer;
-  }
-
-  input[type='range']::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #4ade80;
-    cursor: pointer;
-    border: 2px solid #0f0f11;
-  }
-
-  input[type='range']::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #4ade80;
-    cursor: pointer;
-    border: 2px solid #0f0f11;
-  }
 }
 
 @layer utilities {
-  .bg-white\/2 {
-    background-color: rgba(255, 255, 255, 0.02);
+  /* Focus ring drawn inside the element — for controls in overflow-hidden containers. */
+  .focus-inset:focus-visible {
+    outline-offset: -2px;
   }
 
   /* Hide scrollbar while keeping scroll functionality */
   .no-scrollbar {
-    -ms-overflow-style: none;
     scrollbar-width: none;
   }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Bottom padding that clears the fixed mobile nav (h-14) plus safe area. */
+  .pb-nav {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 
-/* Live Flow: circular progress ring — stroke-dashoffset fills arc over 10s */
-@keyframes lf-ring-fill {
-  from { stroke-dashoffset: 81.68; }
-  to   { stroke-dashoffset: 0; }
-}
-.lf-ring-fill {
-  animation: lf-ring-fill 10s linear forwards;
-}
-
-/* Live Flow: 10s refresh countdown bar — restarted by React key-remount on each tick */
-@keyframes lf-countdown {
-  from { transform: scaleX(0); }
-  to   { transform: scaleX(1); }
-}
-.lf-countdown-bar {
-  transform-origin: left;
-  animation: lf-countdown 10s linear forwards;
-}
-
-/* Goal card expand – composited: only opacity + transform, no layout recalculation */
+/* Expand animation – composited: only opacity + transform, no layout recalculation */
 @keyframes slide-down {
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .animate-slide-down {
   animation: slide-down 0.22s ease-out forwards;
+}
+
+/* Freedom ring: arcs ease to new values; on first render they grow from
+   empty (@starting-style — browsers without support simply skip it). */
+.ring-arc {
+  stroke-dashoffset: var(--ring-offset);
+  transition: stroke-dashoffset 0.8s ease-out;
+}
+@starting-style {
+  .ring-arc {
+    stroke-dashoffset: var(--ring-empty);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -109,28 +78,9 @@
 
 /* Prevent iOS Safari auto-zoom on input focus (triggers when font-size < 16px) */
 @supports (-webkit-touch-callout: none) {
-  input:not([type='range']),
+  input,
   select,
   textarea {
     font-size: max(16px, 1em);
-  }
-}
-
-/*
- * Mobile nav height: compact in Safari browser, taller in standalone PWA.
- * In browser mode the browser chrome already fills vertical space, so py-3
- * keeps the nav unobtrusive. In standalone (home-screen app) we restore py-5
- * for comfortable thumb reach above the home indicator.
- * The `sm:py-3` Tailwind class takes over at ≥ 640 px regardless.
- */
-.tabnav-btn {
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
-}
-
-@media (display-mode: standalone) and (max-width: 639px) {
-  .tabnav-btn {
-    padding-top: 1.25rem;
-    padding-bottom: 1.25rem;
   }
 }
